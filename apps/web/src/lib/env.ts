@@ -10,6 +10,10 @@ export const env = {
   get origin() {
     return required('AMPLIFY_APP_ORIGIN');
   },
+  /** Address players use to join (shown with the QR). Defaults to the app origin. */
+  get publicOrigin() {
+    return process.env.CHACOTA_PUBLIC_ORIGIN || required('AMPLIFY_APP_ORIGIN');
+  },
   get cognito() {
     return {
       userPoolId: required('COGNITO_USER_POOL_ID'),

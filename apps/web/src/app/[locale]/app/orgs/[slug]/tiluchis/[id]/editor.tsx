@@ -21,6 +21,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { AnswerIcon, ANSWER_STYLES } from '@/components/answer-icons';
 import { buttonClass, Notice } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
+import { startGameAction } from '../../../../../host/actions';
 import { deleteTiluchiAction, importQuestionsAction, saveTiluchiAction } from './actions';
 
 type Status = 'idle' | 'saving' | 'saved' | 'conflict' | 'invalid';
@@ -38,6 +39,9 @@ export function TiluchiEditor({
   initialVersion: number;
 }) {
   const t = useTranslations('editor');
+  const th = useTranslations('host');
+  const [presentError, setPresentError] = useState<string | null>(null);
+  const [presenting, startPresenting] = useTransition();
   const [tiluchi, setTiluchi] = useState<Tiluchi>(initial);
   const [version, setVersion] = useState(initialVersion);
   const [selected, setSelected] = useState(0);
@@ -166,8 +170,23 @@ export function TiluchiEditor({
           <button type="button" className={buttonClass('primary')} onClick={save} disabled={saving || status === 'conflict'}>
             {saving ? t('saving') : t('save')}
           </button>
+          <button
+            type="button"
+            className={buttonClass('secondary', 'border-sol/50 text-sol')}
+            disabled={presenting || dirty || tiluchi.questions.length === 0}
+            title={dirty ? th('presentHint') : undefined}
+            onClick={() =>
+              startPresenting(async () => {
+                const result = await startGameAction(slug, tiluchi.id);
+                if (result?.error) setPresentError(result.error === 'org_not_active' ? th('orgNotActive') : th('notPlayable'));
+              })
+            }
+          >
+            ▶ {th('present')}
+          </button>
         </div>
       </div>
+      {presentError && <Notice>{presentError}</Notice>}
 
       {status === 'conflict' && <Notice>{t('conflict')}</Notice>}
       {status === 'invalid' && <Notice>{t('invalid', { count: invalidIds.size })}</Notice>}

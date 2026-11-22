@@ -13,8 +13,8 @@ Es open source (Apache-2.0) y cualquiera puede desplegarlo en su propia cuenta d
 | `@chacota/core`: schema, puntaje, import/export | ✅ |
 | Auth + organizaciones | ✅ |
 | Editor + import/export | ✅ |
-| Motor de partida en tiempo real (AppSync Events) | ⏳ |
-| Presentador + participante | ⏳ |
+| Motor de partida en tiempo real (AppSync Events) | ✅ |
+| Presentador + participante | ✅ |
 
 ## Desarrollo local
 
@@ -34,8 +34,20 @@ pnpm db:init
 # 3. Variables de entorno: copia apps/web/.env.example a apps/web/.env.local
 #    y completa COGNITO_* con los valores de infra/cdk-outputs.dev.json
 
+pnpm dev:game              # API de juego :4000 + broker de eventos :4001 (emula AppSync Events)
 pnpm dev                   # http://localhost:3000
 ```
+
+Para jugar desde celulares en la misma red WiFi, el presentador sigue en `localhost` y en `apps/web/.env.local` usas la IP de tu máquina (por ejemplo `192.168.1.10`):
+
+```sh
+CHACOTA_PUBLIC_ORIGIN=http://192.168.1.10:3000   # lo que muestra el QR
+GAME_API_URL=http://192.168.1.10:4000
+EVENTS_HTTP_DNS=192.168.1.10:4001
+EVENTS_REALTIME_URL=ws://192.168.1.10:4001/event/realtime
+```
+
+y arrancas el juego con `ALLOWED_ORIGINS=http://localhost:3000,http://192.168.1.10:3000 pnpm dev:game`.
 
 Para ser superadmin (aprobar organizaciones), regístrate una vez y luego:
 

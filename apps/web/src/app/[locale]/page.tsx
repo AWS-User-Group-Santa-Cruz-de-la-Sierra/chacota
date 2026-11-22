@@ -29,7 +29,7 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
             {t('landing.join')}
           </h1>
           <p className="max-w-xl text-lg text-niebla">{t('common.tagline')}</p>
-          <form className="flex max-w-md flex-col gap-3 sm:flex-row" action="#">
+          <form className="flex max-w-md flex-col gap-3 sm:flex-row" action="/play" method="get">
             <label htmlFor="pin" className="sr-only">
               {t('landing.pin')}
             </label>
@@ -37,15 +37,17 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
               id="pin"
               name="pin"
               inputMode="numeric"
+              pattern="\d{6}"
+              maxLength={6}
+              required
               autoComplete="off"
               placeholder={t('landing.pin')}
               className="min-h-14 flex-1 rounded-xl border-2 border-noche-3 bg-noche-2 px-4 text-center font-display text-2xl font-bold tracking-[0.2em] placeholder:text-base placeholder:font-medium placeholder:tracking-normal placeholder:text-niebla/70 focus:border-sol focus:outline-none"
             />
-            <button type="submit" disabled className={buttonClass('primary', 'min-h-14 px-6 text-lg')}>
+            <button type="submit" className={buttonClass('primary', 'min-h-14 px-6 text-lg')}>
               {t('landing.joinButton')}
             </button>
           </form>
-          <p className="text-sm text-niebla">{t('landing.soon')}</p>
         </section>
 
         <section className="grid grid-cols-2 gap-3" aria-hidden="true">

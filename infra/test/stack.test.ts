@@ -13,7 +13,8 @@ const base: ChacotaConfig = {
 };
 
 function synth(overrides: Partial<ChacotaConfig> = {}) {
-  const app = new App();
+  // Skip bundling the Lambda in unit tests; the template is what we assert on.
+  const app = new App({ context: { 'aws:cdk:bundling-stacks': [] } });
   const stack = new ChacotaStack(app, 'Test', { config: { ...base, ...overrides }, env: { region: 'us-east-1' } });
   return Template.fromStack(stack);
 }
@@ -87,5 +88,28 @@ describe('stages', () => {
     t.hasResourceProperties('AWS::DynamoDB::GlobalTable', { Replicas: [Match.objectLike({ DeletionProtectionEnabled: false })] });
     t.hasResourceProperties('AWS::Cognito::UserPool', { DeletionProtection: 'INACTIVE' });
     t.hasResourceProperties('AWS::Cognito::UserPoolDomain', { Domain: 'chacota-test-dev' });
+  });
+});
+
+describe('live games', () => {
+  const t = synth();
+
+  it('lets participants subscribe with an API key but only IAM publish', () => {
+    t.hasResourceProperties('AWS::AppSync::ChannelNamespace', {
+      Name: 'game',
+      SubscribeAuthModes: [{ AuthType: 'API_KEY' }],
+      PublishAuthModes: [{ AuthType: 'AWS_IAM' }],
+    });
+  });
+
+  it('runs the participant API on arm64 Node 22 with throttling', () => {
+    t.hasResourceProperties('AWS::Lambda::Function', {
+      Runtime: 'nodejs22.x',
+      Architectures: ['arm64'],
+      Environment: { Variables: Match.objectLike({ ALLOWED_ORIGINS: 'https://chacota.example.org,http://localhost:3000' }) },
+    });
+    t.hasResourceProperties('AWS::ApiGatewayV2::Stage', {
+      DefaultRouteSettings: { ThrottlingBurstLimit: 2000, ThrottlingRateLimit: 1000 },
+    });
   });
 });

@@ -4,6 +4,7 @@ import { ChacotaAuth } from './auth.js';
 import { ChacotaBudget } from './budget.js';
 import type { ChacotaConfig } from './config.js';
 import { ChacotaData } from './data.js';
+import { ChacotaGame } from './game.js';
 
 export interface ChacotaStackProps extends StackProps {
   config: ChacotaConfig;
@@ -12,6 +13,7 @@ export interface ChacotaStackProps extends StackProps {
 export class ChacotaStack extends Stack {
   readonly data: ChacotaData;
   readonly auth: ChacotaAuth;
+  readonly game: ChacotaGame;
 
   constructor(scope: Construct, id: string, props: ChacotaStackProps) {
     super(scope, id, props);
@@ -29,6 +31,8 @@ export class ChacotaStack extends Stack {
       googleOAuthSecretName: config.googleOAuthSecretName,
       protect,
     });
+    this.game = new ChacotaGame(this, 'Game', { table: this.data.table, allowedOrigins: appOrigins, protect });
+
     if (config.budgetEmail) {
       new ChacotaBudget(this, 'Budget', { name: `chacota-${config.stage}-monthly`, monthlyUsd: config.monthlyBudgetUsd, email: config.budgetEmail });
     }
