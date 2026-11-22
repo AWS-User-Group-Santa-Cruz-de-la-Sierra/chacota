@@ -1,12 +1,12 @@
-import { importCsv } from './csv.js';
-import { importChacotaJson } from './json.js';
-import { ImportError, type ImportResult } from './types.js';
-import { importXlsx } from './xlsx.js';
+import { importCsv } from './csv';
+import { importChacotaJson } from './json';
+import { ImportError, type ImportResult } from './types';
+import { importXlsx } from './xlsx';
 
-export * from './types.js';
-export { importCsv } from './csv.js';
-export { importXlsx } from './xlsx.js';
-export { importChacotaJson, ChacotaDocument, CHACOTA_FORMAT, CHACOTA_FORMAT_VERSION } from './json.js';
+export * from './types';
+export { importCsv } from './csv';
+export { importXlsx } from './xlsx';
+export { importChacotaJson, ChacotaDocument, CHACOTA_FORMAT, CHACOTA_FORMAT_VERSION } from './json';
 
 export const SUPPORTED_IMPORT_EXTENSIONS = ['.xlsx', '.csv', '.json'] as const;
 

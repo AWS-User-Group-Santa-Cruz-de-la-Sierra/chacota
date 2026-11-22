@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
-import { parseQuestionRows } from './rows.js';
-import { ImportError, type ImportResult } from './types.js';
+import { parseQuestionRows } from './rows';
+import { ImportError, type ImportResult } from './types';
 
 function sheetRows(sheet: ExcelJS.Worksheet): string[][] {
   const rows: string[][] = [];

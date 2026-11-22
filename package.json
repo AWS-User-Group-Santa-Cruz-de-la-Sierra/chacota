@@ -4,8 +4,13 @@
   "description": "Chacota: juegos comunitarios para meetups y streams (Tiluchi = quizzes estilo Kahoot)",
   "license": "Apache-2.0",
   "packageManager": "pnpm@10.18.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
+    "dev:services": "podman compose up -d || docker compose up -d",
+    "db:init": "CHACOTA_TABLE=chacota-local pnpm --filter @chacota/db create-local-table",
+    "dev": "pnpm --filter @chacota/web dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",

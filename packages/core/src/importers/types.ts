@@ -1,4 +1,4 @@
-import type { Question } from '../schema.js';
+import type { Question } from '../schema';
 
 export type ImportWarningCode =
   | 'time_limit_defaulted'

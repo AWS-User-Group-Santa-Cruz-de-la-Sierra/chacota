@@ -1,0 +1,10 @@
+{
+  "app": "npx tsx bin/chacota.ts",
+  "context": {
+    "chacota:stage": "prod",
+    "chacota:domainName": "chacota.awsug.scz.net",
+    "chacota:authDomainPrefix": "chacota-awsugscz",
+    "chacota:monthlyBudgetUsd": 20,
+    "chacota:extraCallbackOrigins": ["http://localhost:3000"]
+  }
+}

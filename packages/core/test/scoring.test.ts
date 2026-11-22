@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { computePoints, isAnswerCorrect } from '../src/scoring.js';
-import type { Question } from '../src/schema.js';
+import { computePoints, isAnswerCorrect } from '../src/scoring';
+import type { Question } from '../src/schema';
 
 const quiz: Question = {
   id: 'q1',

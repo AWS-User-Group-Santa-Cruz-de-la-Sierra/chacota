@@ -1,6 +1,6 @@
 import Papa from 'papaparse';
-import { parseQuestionRows } from './rows.js';
-import type { ImportResult } from './types.js';
+import { parseQuestionRows } from './rows';
+import type { ImportResult } from './types';
 
 export function importCsv(text: string): ImportResult {
   const { data } = Papa.parse<string[]>(text.replace(/^﻿/, ''), { skipEmptyLines: false });

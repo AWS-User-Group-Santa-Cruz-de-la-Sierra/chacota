@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { Question, Tiluchi } from '../schema.js';
-import { ImportError, type ImportResult } from './types.js';
+import { Question, Tiluchi } from '../schema';
+import { ImportError, type ImportResult } from './types';
 
 export const CHACOTA_FORMAT = 'chacota.tiluchi';
 export const CHACOTA_FORMAT_VERSION = 1;

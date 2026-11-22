@@ -1,0 +1,27 @@
+{
+  "name": "@chacota/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "create-local-table": "tsx scripts/create-local-table.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1175.0",
+    "@aws-sdk/lib-dynamodb": "^3.1175.0",
+    "@chacota/core": "workspace:*",
+    "zod": "^4.6.7"
+  }
+}

@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import Papa from 'papaparse';
-import { CHACOTA_FORMAT, CHACOTA_FORMAT_VERSION, type ChacotaDocument } from '../importers/json.js';
-import { LIMITS, type Language, type Question, type Tiluchi } from '../schema.js';
+import { CHACOTA_FORMAT, CHACOTA_FORMAT_VERSION, type ChacotaDocument } from '../importers/json';
+import { LIMITS, type Language, type Question, type Tiluchi } from '../schema';
 
 type Exportable = Pick<Tiluchi, 'title' | 'description' | 'questions'>;
 

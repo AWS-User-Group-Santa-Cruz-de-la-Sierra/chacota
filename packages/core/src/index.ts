@@ -1,3 +1,5 @@
-export * from './schema.js';
-export * from './scoring.js';
-export { newId } from './ids.js';
+export * from './schema';
+export * from './scoring';
+export { newId } from './ids';
+export * from './org';
+export * from './editing';

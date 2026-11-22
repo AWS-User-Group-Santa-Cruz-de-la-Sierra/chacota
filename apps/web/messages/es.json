@@ -1,0 +1,166 @@
+{
+  "common": {
+    "appName": "Chacota",
+    "tagline": "Juegos para la comunidad. Hecho en Santa Cruz de la Sierra, para todos los AWS User Groups.",
+    "signIn": "Entrar",
+    "signOut": "Salir",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "back": "Volver",
+    "language": "Idioma",
+    "invalidField": "Revisá este campo."
+  },
+  "landing": {
+    "join": "Unirse a un juego",
+    "pin": "PIN del juego",
+    "joinButton": "Entrar al juego",
+    "soon": "Muy pronto: los juegos en vivo llegan en el próximo hito.",
+    "forLeads": "¿Organizás un user group?",
+    "forLeadsBody": "Creá tu organización, armá tiluchis (quizzes) e invitá a tu equipo.",
+    "games": "Juegos",
+    "tiluchi": "Tiluchi",
+    "tiluchiBody": "Preguntas y respuestas en vivo, con podio. Importá tus quizzes de Kahoot."
+  },
+  "nav": {
+    "dashboard": "Mis organizaciones",
+    "profile": "Perfil",
+    "admin": "Administración"
+  },
+  "dashboard": {
+    "title": "Mis organizaciones",
+    "empty": "Todavía no sos parte de ninguna organización.",
+    "emptyHint": "Creá una para tu user group, o pedile a un lead que te invite.",
+    "newOrg": "Nueva organización",
+    "pending": "Pendiente de aprobación",
+    "suspended": "Suspendida"
+  },
+  "roles": {
+    "owner": "Dueño",
+    "admin": "Admin",
+    "editor": "Editor"
+  },
+  "orgForm": {
+    "title": "Nueva organización",
+    "name": "Nombre",
+    "namePlaceholder": "AWS User Group Santa Cruz",
+    "slug": "Dirección",
+    "slugHint": "Se usa en el link: chacota/o/tu-direccion",
+    "description": "Descripción",
+    "primaryColor": "Color principal",
+    "websiteUrl": "Sitio web",
+    "pendingNotice": "Un administrador de Chacota revisará tu organización antes de que puedas jugar en vivo.",
+    "slugTaken": "Esa dirección ya está en uso.",
+    "invalid": "Revisá los campos marcados."
+  },
+  "org": {
+    "tiluchis": "Tiluchis",
+    "members": "Miembros",
+    "settings": "Configuración",
+    "newTiluchi": "Nuevo tiluchi",
+    "tiluchiTitle": "Título",
+    "tiluchiLanguage": "Idioma de las preguntas",
+    "noTiluchis": "Esta organización todavía no tiene tiluchis.",
+    "questions": "{count, plural, =0 {Sin preguntas} one {# pregunta} other {# preguntas}}",
+    "updated": "Actualizado {date}",
+    "pendingBanner": "Esta organización está pendiente de aprobación. Ya podés preparar tus tiluchis."
+  },
+  "members": {
+    "title": "Miembros",
+    "invite": "Invitar",
+    "inviteRole": "Rol",
+    "createInvite": "Crear link de invitación",
+    "inviteLink": "Compartí este link (sirve una sola vez, vence en 7 días):",
+    "remove": "Quitar",
+    "you": "vos",
+    "lastOwner": "La organización necesita al menos un dueño.",
+    "changeRole": "Cambiar rol"
+  },
+  "invite": {
+    "title": "Te invitaron a {org}",
+    "body": "Vas a entrar como {role}.",
+    "accept": "Aceptar invitación",
+    "invalid": "Esta invitación no existe, ya se usó o venció."
+  },
+  "profile": {
+    "title": "Tu perfil",
+    "name": "Nombre",
+    "email": "Email",
+    "builder": "Perfil de AWS Builder Center",
+    "builderHint": "Opcional. Por ejemplo https://builder.aws.com/community/@tu-usuario",
+    "saved": "Guardado."
+  },
+  "admin": {
+    "title": "Organizaciones pendientes",
+    "empty": "No hay organizaciones esperando aprobación.",
+    "approve": "Aprobar",
+    "suspend": "Suspender"
+  },
+  "errors": {
+    "forbidden": "No tenés permiso para ver esto.",
+    "notFound": "No encontramos lo que buscabas.",
+    "home": "Ir al inicio"
+  },
+  "editor": {
+    "title": "Título",
+    "description": "Descripción",
+    "language": "Idioma",
+    "questions": "Preguntas",
+    "addQuestion": "Agregar pregunta",
+    "duplicate": "Duplicar",
+    "delete": "Borrar",
+    "moveUp": "Subir",
+    "moveDown": "Bajar",
+    "type": "Tipo",
+    "types": {
+      "quiz": "Quiz",
+      "true_false": "Verdadero o falso",
+      "poll": "Encuesta"
+    },
+    "prompt": "Pregunta",
+    "promptPlaceholder": "Escribí la pregunta…",
+    "timeLimit": "Tiempo",
+    "seconds": "{n} s",
+    "points": "Puntos",
+    "pointsModes": {
+      "standard": "Normales",
+      "double": "Dobles",
+      "none": "Sin puntos"
+    },
+    "choices": "Respuestas",
+    "choice": "Respuesta {n}",
+    "correct": "Correcta",
+    "addChoice": "Agregar respuesta",
+    "removeChoice": "Quitar respuesta {n}",
+    "trueLabel": "Verdadero",
+    "falseLabel": "Falso",
+    "correctAnswer": "Respuesta correcta",
+    "empty": "Este tiluchi no tiene preguntas. Agregá una o importá un archivo.",
+    "untitled": "Pregunta sin texto",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "saved": "Guardado",
+    "unsaved": "Cambios sin guardar",
+    "conflict": "Alguien más guardó este tiluchi mientras lo editabas. Recargá la página para ver la última versión.",
+    "invalid": "{count, plural, one {Hay # pregunta con errores} other {Hay # preguntas con errores}}. Revisá las marcadas.",
+    "questionInvalid": "Revisá esta pregunta: necesita texto, al menos 2 respuestas y (en quiz) una correcta.",
+    "import": "Importar",
+    "importHint": "Kahoot (.xlsx), CSV o JSON de Chacota. Las preguntas se agregan al final.",
+    "imported": "{count, plural, one {Se importó # pregunta} other {Se importaron # preguntas}}. Guardá para conservarlas.",
+    "importError": "No pudimos leer el archivo: {message}",
+    "warnings": "Avisos de la importación",
+    "warning": {
+      "time_limit_defaulted": "Fila {row}: sin tiempo, usamos 20 s.",
+      "time_limit_adjusted": "Fila {row}: ajustamos el tiempo ({detail}).",
+      "imported_as_poll": "Fila {row}: sin respuesta correcta, quedó como encuesta.",
+      "row_skipped_not_enough_answers": "Fila {row}: se omitió (necesita pregunta y 2 respuestas).",
+      "text_truncated": "Fila {row}: recortamos textos muy largos."
+    },
+    "export": "Exportar",
+    "deleteTiluchi": "Borrar tiluchi",
+    "confirmDelete": "¿Borrar este tiluchi? No se puede deshacer.",
+    "preview": "Vista previa",
+    "back": "Volver a tiluchis"
+  }
+}

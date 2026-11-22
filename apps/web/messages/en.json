@@ -1,0 +1,166 @@
+{
+  "common": {
+    "appName": "Chacota",
+    "tagline": "Games for the community. Made in Santa Cruz de la Sierra, for every AWS User Group.",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "create": "Create",
+    "back": "Back",
+    "language": "Language",
+    "invalidField": "Check this field."
+  },
+  "landing": {
+    "join": "Join a game",
+    "pin": "Game PIN",
+    "joinButton": "Join game",
+    "soon": "Coming soon: live games arrive in the next milestone.",
+    "forLeads": "Running a user group?",
+    "forLeadsBody": "Create your organization, build tiluchis (quizzes) and invite your team.",
+    "games": "Games",
+    "tiluchi": "Tiluchi",
+    "tiluchiBody": "Live questions and answers with a podium. Import your Kahoot quizzes."
+  },
+  "nav": {
+    "dashboard": "My organizations",
+    "profile": "Profile",
+    "admin": "Admin"
+  },
+  "dashboard": {
+    "title": "My organizations",
+    "empty": "You are not part of any organization yet.",
+    "emptyHint": "Create one for your user group, or ask a lead to invite you.",
+    "newOrg": "New organization",
+    "pending": "Pending approval",
+    "suspended": "Suspended"
+  },
+  "roles": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "editor": "Editor"
+  },
+  "orgForm": {
+    "title": "New organization",
+    "name": "Name",
+    "namePlaceholder": "AWS User Group Santa Cruz",
+    "slug": "Address",
+    "slugHint": "Used in the link: chacota/o/your-address",
+    "description": "Description",
+    "primaryColor": "Primary color",
+    "websiteUrl": "Website",
+    "pendingNotice": "A Chacota admin will review your organization before you can play live.",
+    "slugTaken": "That address is already taken.",
+    "invalid": "Check the highlighted fields."
+  },
+  "org": {
+    "tiluchis": "Tiluchis",
+    "members": "Members",
+    "settings": "Settings",
+    "newTiluchi": "New tiluchi",
+    "tiluchiTitle": "Title",
+    "tiluchiLanguage": "Question language",
+    "noTiluchis": "This organization has no tiluchis yet.",
+    "questions": "{count, plural, =0 {No questions} one {# question} other {# questions}}",
+    "updated": "Updated {date}",
+    "pendingBanner": "This organization is pending approval. You can already prepare your tiluchis."
+  },
+  "members": {
+    "title": "Members",
+    "invite": "Invite",
+    "inviteRole": "Role",
+    "createInvite": "Create invite link",
+    "inviteLink": "Share this link (single use, expires in 7 days):",
+    "remove": "Remove",
+    "you": "you",
+    "lastOwner": "The organization needs at least one owner.",
+    "changeRole": "Change role"
+  },
+  "invite": {
+    "title": "You were invited to {org}",
+    "body": "You will join as {role}.",
+    "accept": "Accept invite",
+    "invalid": "This invite does not exist, was already used or expired."
+  },
+  "profile": {
+    "title": "Your profile",
+    "name": "Name",
+    "email": "Email",
+    "builder": "AWS Builder Center profile",
+    "builderHint": "Optional. For example https://builder.aws.com/community/@your-handle",
+    "saved": "Saved."
+  },
+  "admin": {
+    "title": "Pending organizations",
+    "empty": "No organizations are waiting for approval.",
+    "approve": "Approve",
+    "suspend": "Suspend"
+  },
+  "errors": {
+    "forbidden": "You don't have permission to see this.",
+    "notFound": "We couldn't find what you were looking for.",
+    "home": "Go home"
+  },
+  "editor": {
+    "title": "Title",
+    "description": "Description",
+    "language": "Language",
+    "questions": "Questions",
+    "addQuestion": "Add question",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "type": "Type",
+    "types": {
+      "quiz": "Quiz",
+      "true_false": "True or false",
+      "poll": "Poll"
+    },
+    "prompt": "Question",
+    "promptPlaceholder": "Type the question…",
+    "timeLimit": "Time",
+    "seconds": "{n} s",
+    "points": "Points",
+    "pointsModes": {
+      "standard": "Standard",
+      "double": "Double",
+      "none": "No points"
+    },
+    "choices": "Answers",
+    "choice": "Answer {n}",
+    "correct": "Correct",
+    "addChoice": "Add answer",
+    "removeChoice": "Remove answer {n}",
+    "trueLabel": "True",
+    "falseLabel": "False",
+    "correctAnswer": "Correct answer",
+    "empty": "This tiluchi has no questions. Add one or import a file.",
+    "untitled": "Untitled question",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "unsaved": "Unsaved changes",
+    "conflict": "Someone else saved this tiluchi while you were editing. Reload the page to see the latest version.",
+    "invalid": "{count, plural, one {# question has errors} other {# questions have errors}}. Check the highlighted ones.",
+    "questionInvalid": "Check this question: it needs text, at least 2 answers and (for quizzes) one correct answer.",
+    "import": "Import",
+    "importHint": "Kahoot (.xlsx), CSV or Chacota JSON. Questions are appended at the end.",
+    "imported": "{count, plural, one {Imported # question} other {Imported # questions}}. Save to keep them.",
+    "importError": "We could not read the file: {message}",
+    "warnings": "Import notes",
+    "warning": {
+      "time_limit_defaulted": "Row {row}: no time limit, using 20 s.",
+      "time_limit_adjusted": "Row {row}: time limit adjusted ({detail}).",
+      "imported_as_poll": "Row {row}: no correct answer, imported as a poll.",
+      "row_skipped_not_enough_answers": "Row {row}: skipped (needs a question and 2 answers).",
+      "text_truncated": "Row {row}: long texts were shortened."
+    },
+    "export": "Export",
+    "deleteTiluchi": "Delete tiluchi",
+    "confirmDelete": "Delete this tiluchi? This cannot be undone.",
+    "preview": "Preview",
+    "back": "Back to tiluchis"
+  }
+}

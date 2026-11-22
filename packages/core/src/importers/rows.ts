@@ -1,6 +1,6 @@
-import { newId } from '../ids.js';
-import { DEFAULT_TIME_LIMIT, LIMITS, TIME_LIMITS, type Choice, type Question } from '../schema.js';
-import { ImportError, type ImportResult, type ImportWarning } from './types.js';
+import { newId } from '../ids';
+import { DEFAULT_TIME_LIMIT, LIMITS, TIME_LIMITS, type Choice, type Question } from '../schema';
+import { ImportError, type ImportResult, type ImportWarning } from './types';
 
 /**
  * Shared parser for the Kahoot spreadsheet layout (also used for CSV):

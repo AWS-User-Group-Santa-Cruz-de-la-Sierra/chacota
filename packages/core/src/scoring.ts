@@ -1,4 +1,4 @@
-import type { AnswerValue, PointsMode, Question } from './schema.js';
+import type { AnswerValue, PointsMode, Question } from './schema';
 
 export const MAX_BASE_POINTS = 1000;
 export const STREAK_BONUS_STEP = 100;
