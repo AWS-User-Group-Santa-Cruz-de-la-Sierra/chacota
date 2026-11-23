@@ -1,8 +1,7 @@
 import 'server-only';
-import { PutObjectCommand, type S3Client } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { S3Client } from '@aws-sdk/client-s3';
 import { mediaUrl, newOrgMediaKey, type MediaContentType } from '@chacota/core';
-import { s3FromEnv } from '@chacota/db';
+import { presignPut, s3FromEnv } from '@chacota/db';
 import { env } from './env';
 
 let s3: S3Client | undefined;
@@ -16,8 +15,5 @@ export async function createUploadUrl(orgId: string, contentType: MediaContentTy
   const { bucket, publicUrl, uploadMode } = env.media;
   if (uploadMode === 'local') return { key, url: mediaUrl(publicUrl, key) };
   s3 ??= s3FromEnv();
-  const url = await getSignedUrl(s3, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: size }), {
-    expiresIn: 300,
-  });
-  return { key, url };
+  return { key, url: await presignPut(s3, { bucket, key, contentType, size }) };
 }

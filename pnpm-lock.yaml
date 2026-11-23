@@ -16,9 +16,6 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1175.0
         version: 3.1175.0
-      '@aws-sdk/s3-request-presigner':
-        specifier: ^3.1175.0
-        version: 3.1175.0
       '@chacota/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -231,6 +228,9 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: ^3.1175.0
         version: 3.1175.0(@aws-sdk/client-dynamodb@3.1175.0)
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.1175.0
+        version: 3.1175.0
       '@chacota/core':
         specifier: workspace:*
         version: link:../core

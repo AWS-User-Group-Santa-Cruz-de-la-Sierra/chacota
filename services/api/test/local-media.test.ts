@@ -17,7 +17,7 @@ const KEY = 'orgs/o1/media/abc.webp';
 
 describe('local media proxy', () => {
   it('stores an upload and serves it back with its type', async () => {
-    const app = localMediaRoutes(memoryStore(), ['http://localhost:3000']);
+    const app = localMediaRoutes(memoryStore, ['http://localhost:3000']);
     const put = await app.request(`/media/${KEY}`, { method: 'PUT', headers: { 'content-type': 'image/webp' }, body: new Uint8Array([1, 2, 3]) });
     expect(put.status).toBe(200);
     const get = await app.request(`/media/${KEY}`);
@@ -27,12 +27,12 @@ describe('local media proxy', () => {
   });
 
   it('answers 404 for a missing file', async () => {
-    const app = localMediaRoutes(memoryStore(), []);
+    const app = localMediaRoutes(memoryStore, []);
     expect((await app.request(`/media/${KEY}`)).status).toBe(404);
   });
 
   it('refuses keys outside orgs/<id>/media and non-image types', async () => {
-    const app = localMediaRoutes(memoryStore(), []);
+    const app = localMediaRoutes(memoryStore, []);
     const badKey = await app.request('/media/tmp/x.webp', { method: 'PUT', headers: { 'content-type': 'image/webp' }, body: 'x' });
     expect(badKey.status).toBe(400);
     const badType = await app.request(`/media/${KEY}`, { method: 'PUT', headers: { 'content-type': 'image/svg+xml' }, body: 'x' });
@@ -40,12 +40,19 @@ describe('local media proxy', () => {
   });
 
   it('lets the web app upload from the browser (CORS preflight)', async () => {
-    const app = localMediaRoutes(memoryStore(), ['http://localhost:3000']);
+    const app = localMediaRoutes(memoryStore, ['http://localhost:3000']);
     const res = await app.request(`/media/${KEY}`, {
       method: 'OPTIONS',
       headers: { origin: 'http://localhost:3000', 'access-control-request-method': 'PUT', 'access-control-request-headers': 'content-type' },
     });
     expect(res.headers.get('access-control-allow-origin')).toBe('http://localhost:3000');
     expect(res.headers.get('access-control-allow-methods')).toContain('PUT');
+  });
+
+  it('keeps the API up when the emulator is not running', async () => {
+    const app = localMediaRoutes(() => {
+      throw new Error('ENOENT: ca.pem');
+    }, []);
+    expect((await app.request(`/media/${KEY}`)).status).toBe(503);
   });
 });

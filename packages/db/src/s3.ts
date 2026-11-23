@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { Agent } from 'node:https';
 import { GetObjectCommand, NoSuchKey, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
 export interface S3Options {
@@ -14,6 +15,8 @@ export interface S3Options {
 export function createS3({ endpoint, caFile, region }: S3Options = {}): S3Client {
   return new S3Client({
     region: region ?? process.env.AWS_REGION ?? 'us-east-1',
+    // Otherwise presigned PUTs carry the CRC32 of an empty body and S3 rejects every real upload.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
     ...(endpoint
       ? {
           endpoint,
@@ -50,4 +53,13 @@ export function s3MediaStore(s3: S3Client, bucket: string) {
       await s3.send(new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }));
     },
   };
+}
+
+/** URL the browser PUTs one file to, valid for 5 minutes; S3 checks its type and size. */
+export function presignPut(s3: S3Client, { bucket, key, contentType, size }: { bucket: string; key: string; contentType: string; size: number }): Promise<string> {
+  return getSignedUrl(s3, new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: size }), {
+    expiresIn: 300,
+    // Fixes the type too, so nobody can upload HTML or SVG to a signed key.
+    signableHeaders: new Set(['content-type']),
+  });
 }
