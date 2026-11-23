@@ -16,6 +16,11 @@ const newSession = (orgId = 'org1', rounds = 2) =>
   live.createSession({ orgId, orgName: 'AWS UG', hostUserId: 'host', module: 'echo', content: { rounds } });
 
 describe('LiveService', () => {
+  it('copies the org logo to the session', async () => {
+    const s = await live.createSession({ orgId: 'org1', orgName: 'AWS UG', logoKey: 'orgs/org1/media/l.webp', hostUserId: 'host', module: 'echo', content: { rounds: 1 } });
+    expect((await live.snapshot(s.id)).session.logoKey).toBe('orgs/org1/media/l.webp');
+  });
+
   it('runs a session of any activity', async () => {
     const session = await newSession();
     expect(session).toMatchObject({ module: 'echo', title: 'Echo 2', status: 'lobby', version: 1 });

@@ -168,6 +168,8 @@ export function Presenter(props: Props) {
             setAdvanceLabel={setAdvanceLabel}
             setSubtitle={setSubtitle}
             hostAction={hostAction}
+            setBackground={() => {}}
+            mediaUrl={(key) => key}
           />
         )}
 
