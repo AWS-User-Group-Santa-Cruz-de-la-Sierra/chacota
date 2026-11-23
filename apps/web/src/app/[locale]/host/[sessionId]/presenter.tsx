@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { activityWebs } from '@/activities/registry.client';
 import { useRealtime } from '@/components/game/use-realtime';
+import { BackLink } from '@/components/back-link';
 import { buttonClass } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
 import { advanceSessionAction, endSessionAction, hostActionAction } from '../actions';
@@ -190,7 +191,11 @@ export function Presenter(props: Props) {
 
           <div className="flex flex-wrap items-center justify-end gap-3">
             {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
-            <span className="mr-auto text-sm text-niebla">{t('keyboardHint')}</span>
+            <div className="mr-auto flex flex-wrap items-center gap-4">
+              {/* Leaving the lobby is harmless: nobody is playing yet and the session expires on its own. */}
+              <BackLink href={`/app/orgs/${props.orgSlug}/${props.module}`}>{t('backToActivity', { name: ta('card.name') })}</BackLink>
+              <span className="text-sm text-niebla">{t('keyboardHint')}</span>
+            </div>
             {fullscreenButton}
             <button
               type="button"
