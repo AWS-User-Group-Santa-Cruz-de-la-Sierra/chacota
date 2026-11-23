@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, Inter } from 'next/font/google';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
@@ -9,6 +9,10 @@ import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const bricolage = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-bricolage' });
+
+// The UI is always dark. Declaring it lets browsers with a forced dark mode
+// (Samsung Internet, Chrome's auto dark) leave our colors alone.
+export const viewport: Viewport = { colorScheme: 'dark', themeColor: '#1a0e2e' };
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
