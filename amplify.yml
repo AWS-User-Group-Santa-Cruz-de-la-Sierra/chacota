@@ -16,6 +16,14 @@ applications:
           commands:
             - env | grep -E '^(AMPLIFY_APP_ORIGIN|COGNITO_|CHACOTA_|GAME_API_URL|EVENTS_|MEDIA_)' > .env.production
             - pnpm build
+            # Turbopack links external server packages (@aws-sdk/client-s3-<hash>...) into
+            # .next/node_modules with relative symlinks to the repo root, which break once Amplify
+            # moves the bundle to /var/task. Replace them with real copies.
+            - |
+              [ ! -d .next/node_modules ] || find .next/node_modules -type l | while read -r l; do
+                t=$(readlink -f "$l") && [ -e "$t" ] || { echo "Broken link $l"; exit 1; }
+                rm "$l" && cp -R "$t" "$l"
+              done
       artifacts:
         baseDirectory: .next
         files:
