@@ -54,6 +54,9 @@ describe('Tiluchi activity', () => {
     expect(reveal.correct).toEqual(['a']);
     expect(reveal.counts).toEqual({ a: 1, b: 1 });
     expect((reveal.ranks as Record<string, unknown>)[ana.player.id]).toEqual({ rank: 1, score: 1000, points: 1000, correct: true, answered: true });
+    // A presenter who reloads during the reveal gets the answer and the counts back; phones don't.
+    expect((await live.snapshot(session.id)).module).toMatchObject({ phase: 'reveal', reveal: { correct: ['a'], counts: { a: 1, b: 1 }, answered: 2 } });
+    expect((await live.snapshot(session.id, ana.player.id)).module).not.toHaveProperty('reveal');
 
     await live.advance(session.id); // leaderboard
     expect((publisher.last('tiluchi.leaderboard')!.top as unknown[])[0]).toEqual({ nickname: 'Ana', score: 1000 });
@@ -61,6 +64,10 @@ describe('Tiluchi activity', () => {
     expect(publisher.last('tiluchi.leaderboard')!.before).toEqual(
       expect.arrayContaining([{ nickname: 'Ana', score: 0 }, { nickname: 'Beto', score: 0 }]),
     );
+
+    // A presenter who reloads during the ranking gets it back; phones don't need it.
+    expect((await live.snapshot(session.id)).module).toMatchObject({ phase: 'leaderboard', top: [{ nickname: 'Ana', score: 1000 }, { nickname: 'Beto', score: 0 }] });
+    expect((await live.snapshot(session.id, ana.player.id)).module).not.toHaveProperty('top');
 
     // Question 2 (double points): Ana keeps her streak
     await live.advance(session.id);

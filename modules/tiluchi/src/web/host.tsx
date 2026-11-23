@@ -20,9 +20,10 @@ function fromSnapshot(s: TiluchiSnapshot): Screen {
     case 'question':
       return s.startedAt ? { kind: 'question', index: s.index, startedAt: s.startedAt } : { kind: 'waiting' };
     case 'reveal':
-      return { kind: 'reveal', index: s.index, correct: [], counts: {}, answered: 0 };
+      return { kind: 'reveal', index: s.index, correct: [], counts: {}, answered: 0, ...s.reveal };
     case 'leaderboard':
-      return { kind: 'leaderboard', index: s.index, top: [], before: [] };
+      // No previous order after a reload: the current one shows without moving.
+      return { kind: 'leaderboard', index: s.index, top: s.top ?? [], before: [] };
     default:
       return { kind: 'waiting' };
   }

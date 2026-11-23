@@ -89,4 +89,8 @@ export interface TiluchiSnapshot {
   answered?: { value: string };
   /** Presenter only. */
   questions?: PublicQuestion[];
+  /** Presenter only, during the reveal: the answer and how many picked each choice, to redraw it after a reload. */
+  reveal?: { correct: string[]; counts: Record<string, number>; answered: number };
+  /** Presenter only, during the ranking: the current top, to redraw it after a reload. */
+  top?: Standing[];
 }
