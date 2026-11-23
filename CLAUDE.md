@@ -20,7 +20,7 @@ pnpm typecheck
 pnpm --filter @chacota/live test                           # one package
 pnpm --filter @chacota/tiluchi exec vitest run test/activity.test.ts -t "full game"   # one test
 cd apps/web && npx eslint src                              # lint (only apps/web has an ESLint config; root `pnpm lint` has none)
-cd apps/web && npx next typegen                            # after moving/renaming routes, if tsc complains about .next/types
+cd apps/web && npx next typegen                            # route types (RouteContext…); the web typecheck script runs it first
 pnpm e2e                   # full game in Chrome; needs dev services + E2E_EMAIL/E2E_PASSWORD + AWS creds (see e2e/README.md)
 ```
 
