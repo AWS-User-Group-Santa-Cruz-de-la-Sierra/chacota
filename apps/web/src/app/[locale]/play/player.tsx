@@ -161,7 +161,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
   const Play = session ? activityWebs[session.module]?.Play : undefined;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-noche px-4 pb-6 pt-4">
+    <div className="flex min-h-svh flex-col bg-noche px-4 pb-6 pt-4">
       <header className="flex items-center justify-between gap-3 pb-4">
         {session ? (
           <>

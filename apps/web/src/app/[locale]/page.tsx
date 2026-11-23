@@ -23,7 +23,7 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
         </div>
       </header>
 
-      <main className="grid flex-1 items-center gap-12 lg:grid-cols-[1.2fr_1fr]">
+      <main className="grid flex-1 grid-cols-1 items-center gap-12 lg:grid-cols-[1.2fr_1fr]">
         <section className="flex flex-col gap-6">
           <h1 className="font-display text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl">
             {t('landing.join')}
@@ -42,7 +42,7 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
               required
               autoComplete="off"
               placeholder={t('landing.pin')}
-              className="min-h-14 flex-1 rounded-xl border-2 border-noche-3 bg-noche-2 px-4 text-center font-display text-2xl font-bold tracking-[0.2em] placeholder:text-base placeholder:font-medium placeholder:tracking-normal placeholder:text-niebla/70 focus:border-sol focus:outline-none"
+              className="min-h-14 min-w-0 flex-1 rounded-xl border-2 border-noche-3 bg-noche-2 px-4 text-center font-display text-2xl font-bold tracking-[0.2em] placeholder:text-base placeholder:font-medium placeholder:tracking-normal placeholder:text-niebla/70 focus:border-sol focus:outline-none"
             />
             <button type="submit" className={buttonClass('primary', 'min-h-14 px-6 text-lg')}>
               {t('landing.joinButton')}
