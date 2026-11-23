@@ -5,7 +5,7 @@ import { requireOrgAccess } from '@/lib/auth';
 import { ActivitiesForm } from './activities-form';
 import { setOrgActivitiesAction } from './actions';
 
-const GUIDE_URL = 'https://github.com/AWS-User-Group-Santa-Cruz-de-la-Sierra/chacota/blob/main/docs/actividades.md';
+const GUIDE_URL = 'https://github.com/awsugscz/chacota/blob/main/docs/actividades.md';
 
 export default async function ActivitiesAdmin({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
