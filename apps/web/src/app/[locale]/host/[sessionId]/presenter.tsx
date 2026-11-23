@@ -139,7 +139,7 @@ export function Presenter(props: Props) {
           style={{ background: props.primaryColor, color: onOrgColor }}
         >
           <div className="flex flex-col gap-4">
-            {orgLogo('h-40 w-full max-w-full object-contain object-left lg:h-56') ?? (
+            {orgLogo('h-48 w-full max-w-full object-contain object-left lg:h-72') ?? (
               <span className="font-display text-5xl font-extrabold leading-tight">{props.orgName}</span>
             )}
             <span className="text-xl font-semibold">{t('presents', { org: props.orgName })}</span>
@@ -220,7 +220,7 @@ export function Presenter(props: Props) {
       {/* Header as in the "Pregunta" mockups: org and progress on the left, activity and PIN on the right. */}
       <header className="relative flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          {orgLogo('h-20 max-w-80 object-contain') ?? <span className="font-display text-xl font-bold">{props.orgName}</span>}
+          {orgLogo('h-24 max-w-96 object-contain') ?? <span className="font-display text-xl font-bold">{props.orgName}</span>}
           <span className="text-niebla">{status === 'running' && subtitle ? subtitle : props.title}</span>
         </div>
         <div className="flex items-center gap-3">
