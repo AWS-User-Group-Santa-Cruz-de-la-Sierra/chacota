@@ -23,7 +23,8 @@ export function createS3({ endpoint, caFile, region }: S3Options = {}): S3Client
           // The emulator only accepts the bucket in the path.
           forcePathStyle: true,
           credentials: { accessKeyId: 'local', secretAccessKey: 'local' },
-          ...(caFile ? { requestHandler: new NodeHttpHandler({ httpsAgent: new Agent({ ca: readFileSync(caFile) }) }) } : {}),
+          // Local dev only. The ignore comment keeps Turbopack from tracing the whole repo into the server bundle.
+          ...(caFile ? { requestHandler: new NodeHttpHandler({ httpsAgent: new Agent({ ca: readFileSync(/*turbopackIgnore: true*/ caFile) }) }) } : {}),
         }
       : {}),
   });
