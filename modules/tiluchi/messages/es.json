@@ -1,7 +1,7 @@
 {
   "card": {
     "name": "Tiluchi",
-    "description": "Quizzes en vivo con PIN y celulares"
+    "description": "Poné a prueba a tu comunidad: preguntas en vivo, respuestas a contrarreloj y un podio para los mejores."
   },
   "host": {
     "questionOf": "Pregunta {n} de {total}",
