@@ -169,7 +169,13 @@
     "deleteTiluchi": "Delete tiluchi",
     "confirmDelete": "Delete this tiluchi? This cannot be undone.",
     "preview": "Preview",
-    "back": "Back to tiluchis"
+    "back": "Back to tiluchis",
+    "background": "Background (all questions)",
+    "backgroundHint": "Optional. Shown behind every question on the projected screen, under a dark veil.",
+    "questionImage": "Image",
+    "questionImageHint": "Optional. Shown next to the question on the projected screen.",
+    "questionBackground": "Background for this question",
+    "inheritsBackground": "Uses the quiz background."
   },
   "host": {
     "present": "Present",

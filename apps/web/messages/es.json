@@ -169,7 +169,13 @@
     "deleteTiluchi": "Borrar tiluchi",
     "confirmDelete": "¿Borrar este tiluchi? No se puede deshacer.",
     "preview": "Vista previa",
-    "back": "Volver a tiluchis"
+    "back": "Volver a tiluchis",
+    "background": "Fondo (todas las preguntas)",
+    "backgroundHint": "Opcional. Se ve detrás de cada pregunta en la pantalla proyectada, con un velo oscuro.",
+    "questionImage": "Imagen",
+    "questionImageHint": "Opcional. Se muestra junto a la pregunta en la pantalla proyectada.",
+    "questionBackground": "Fondo de esta pregunta",
+    "inheritsBackground": "Usa el fondo del cuestionario."
   },
   "host": {
     "present": "Presentar",

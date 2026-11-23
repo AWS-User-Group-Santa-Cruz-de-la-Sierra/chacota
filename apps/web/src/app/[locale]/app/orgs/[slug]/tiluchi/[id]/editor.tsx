@@ -6,6 +6,7 @@ import type { ImportWarning } from '@chacota/tiluchi/importers';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { AnswerIcon, ANSWER_STYLES } from '@chacota/tiluchi/web';
+import { ImagePicker } from '@/components/image-picker';
 import { buttonClass, Notice } from '@/components/ui';
 import { BackLink } from '@/components/back-link';
 import { startTiluchiAction } from '@/app/[locale]/host/actions';
@@ -20,10 +21,13 @@ export function TiluchiEditor({
   slug,
   initial,
   initialVersion,
+  mediaBaseUrl,
 }: {
   slug: string;
   initial: Tiluchi;
   initialVersion: number;
+  /** Base URL that turns image keys into URLs for the previews. */
+  mediaBaseUrl: string;
 }) {
   const t = useTranslations('editor');
   const th = useTranslations('host');
@@ -209,6 +213,16 @@ export function TiluchiEditor({
           </select>
         </div>
       </div>
+      <ImagePicker
+        label={t('background')}
+        hint={t('backgroundHint')}
+        value={tiluchi.backgroundKey}
+        slug={slug}
+        purpose="content"
+        maxSide={1920}
+        mediaBaseUrl={mediaBaseUrl}
+        onChange={(key) => update({ backgroundKey: key ?? undefined })}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
         {/* Question list */}
@@ -259,6 +273,9 @@ export function TiluchiEditor({
               index={selected}
               total={tiluchi.questions.length}
               invalid={invalidIds.has(current.id)}
+              slug={slug}
+              mediaBaseUrl={mediaBaseUrl}
+              quizBackgroundKey={tiluchi.backgroundKey}
               onChange={updateQuestion}
               onMove={(to) => setQuestions(move(tiluchi.questions, selected, to), to)}
               onDuplicate={() => {
@@ -333,6 +350,9 @@ function QuestionForm({
   index,
   total,
   invalid,
+  slug,
+  mediaBaseUrl,
+  quizBackgroundKey,
   onChange,
   onMove,
   onDuplicate,
@@ -342,6 +362,9 @@ function QuestionForm({
   index: number;
   total: number;
   invalid: boolean;
+  slug: string;
+  mediaBaseUrl: string;
+  quizBackgroundKey?: string;
   onChange: (q: Question) => void;
   onMove: (to: number) => void;
   onDuplicate: () => void;
@@ -422,6 +445,29 @@ function QuestionForm({
             ))}
           </select>
         </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <ImagePicker
+          label={t('questionImage')}
+          hint={t('questionImageHint')}
+          value={q.imageKey}
+          slug={slug}
+          purpose="content"
+          maxSide={1920}
+          mediaBaseUrl={mediaBaseUrl}
+          onChange={(key) => onChange({ ...q, imageKey: key ?? undefined })}
+        />
+        <ImagePicker
+          label={t('questionBackground')}
+          hint={!q.backgroundKey && quizBackgroundKey ? t('inheritsBackground') : undefined}
+          value={q.backgroundKey}
+          slug={slug}
+          purpose="content"
+          maxSide={1920}
+          mediaBaseUrl={mediaBaseUrl}
+          onChange={(key) => onChange({ ...q, backgroundKey: key ?? undefined })}
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
