@@ -72,6 +72,20 @@ describe('ChacotaStack', () => {
     t.hasOutput('WebServerPolicyArn', {});
   });
 
+  it('gives Amplify SSR a compute role for the table, events and media', () => {
+    const t = synth();
+    t.hasResourceProperties('AWS::IAM::Role', {
+      AssumeRolePolicyDocument: {
+        Statement: [Match.objectLike({ Principal: { Service: 'amplify.amazonaws.com' } })],
+      },
+      ManagedPolicyArns: [Match.anyValue()],
+    });
+    const policies = JSON.stringify(t.findResources('AWS::IAM::Policy'));
+    expect(policies).toContain('dynamodb:PutItem');
+    expect(policies).toContain('appsync:EventPublish');
+    t.hasOutput('WebComputeRoleArn', {});
+  });
+
   it('registers OAuth callbacks for production and local origins', () => {
     synth().hasResourceProperties('AWS::Cognito::UserPoolClient', {
       CallbackURLs: [

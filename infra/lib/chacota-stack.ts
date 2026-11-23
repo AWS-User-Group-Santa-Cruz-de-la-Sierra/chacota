@@ -1,4 +1,5 @@
 import { CfnOutput, Stack, Tags, type StackProps } from 'aws-cdk-lib';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { ChacotaAuth } from './auth.js';
 import { ChacotaBudget } from './budget.js';
@@ -15,6 +16,7 @@ export class ChacotaStack extends Stack {
   readonly data: ChacotaData;
   readonly auth: ChacotaAuth;
   readonly game: ChacotaGame;
+  readonly webComputeRole: iam.Role;
 
   constructor(scope: Construct, id: string, props: ChacotaStackProps) {
     super(scope, id, props);
@@ -33,6 +35,16 @@ export class ChacotaStack extends Stack {
       protect,
     });
     this.game = new ChacotaGame(this, 'Game', { table: this.data.table, allowedOrigins: appOrigins, protect });
+    // Role the Amplify Hosting SSR compute assumes: the web server reads and writes the table,
+    // publishes presenter events and signs media uploads.
+    this.webComputeRole = new iam.Role(this, 'WebComputeRole', {
+      assumedBy: new iam.ServicePrincipal('amplify.amazonaws.com'),
+      description: 'Amplify SSR compute role for the Chacota web app',
+      managedPolicies: [this.data.webServerPolicy],
+    });
+    this.data.table.grantReadWriteData(this.webComputeRole);
+    this.game.events.grantPublish(this.webComputeRole);
+
     if (config.loadTest) new ChacotaLoadTest(this, 'LoadTest', { game: this.game, table: this.data.table });
 
     if (config.budgetEmail) {
@@ -43,6 +55,7 @@ export class ChacotaStack extends Stack {
     new CfnOutput(this, 'MediaBucketName', { value: this.data.mediaBucket.bucketName });
     new CfnOutput(this, 'MediaUrl', { value: `https://${this.data.mediaDistribution.distributionDomainName}` });
     new CfnOutput(this, 'WebServerPolicyArn', { value: this.data.webServerPolicy.managedPolicyArn });
+    new CfnOutput(this, 'WebComputeRoleArn', { value: this.webComputeRole.roleArn });
     new CfnOutput(this, 'UserPoolId', { value: this.auth.userPool.userPoolId });
     new CfnOutput(this, 'UserPoolClientId', { value: this.auth.webClient.userPoolClientId });
     new CfnOutput(this, 'AuthDomain', { value: this.auth.domain.baseUrl() });
