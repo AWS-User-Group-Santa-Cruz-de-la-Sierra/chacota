@@ -266,5 +266,11 @@
     "activities": "Activities",
     "back": "Back to activities",
     "title": "Administration"
+  },
+  "tiluchiList": {
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "confirmDelete": "Delete “{title}”? This cannot be undone.",
+    "copySuffix": "(copy)"
   }
 }

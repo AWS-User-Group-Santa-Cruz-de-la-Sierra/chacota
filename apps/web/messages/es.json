@@ -266,5 +266,11 @@
     "activities": "Actividades",
     "back": "Volver a las actividades",
     "title": "Administración"
+  },
+  "tiluchiList": {
+    "duplicate": "Duplicar",
+    "delete": "Borrar",
+    "confirmDelete": "¿Borrar «{title}»? No se puede deshacer.",
+    "copySuffix": "(copia)"
   }
 }

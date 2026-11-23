@@ -1,5 +1,5 @@
 import { createDb, createOrg, getOrgBySlug, setOrgActivities } from '@chacota/db';
-import { createTiluchi } from '@chacota/tiluchi/content';
+import { createTiluchi, listTiluchis } from '@chacota/tiluchi/content';
 import { webEnv } from './env';
 
 export const ORG_SLUG = 'e2e-ug';
@@ -13,6 +13,9 @@ export async function seed(ownerUserId: string): Promise<{ orgSlug: string; tilu
     (await createOrg(db, { slug: ORG_SLUG, name: 'E2E User Group', primaryColor: '#0B8048' }, ownerUserId, 'active'));
   // A previous run may have stopped with Tiluchi disabled.
   await setOrgActivities(db, org.id, ['tiluchi']);
+  // Reuse the test tiluchi so the list does not grow on every run.
+  const existing = (await listTiluchis(db, org.id)).find((t) => t.title === 'Trivia de prueba');
+  if (existing) return { orgSlug: org.slug, tiluchiId: existing.id };
   const tiluchi = await createTiluchi(
     db,
     org.id,

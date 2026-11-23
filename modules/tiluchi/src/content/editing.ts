@@ -4,6 +4,7 @@ import {
   Question,
   type Choice,
   type QuestionType,
+  type Tiluchi,
 } from './schema';
 import { newId } from '@chacota/core';
 
@@ -57,4 +58,15 @@ export function move<T>(list: T[], from: number, to: number): T[] {
   const [item] = next.splice(from, 1);
   next.splice(to, 0, item!);
   return next;
+}
+
+/** Content for a copy of a tiluchi: same questions with new ids, and the suffix after the title. */
+export function copyOf(tiluchi: Pick<Tiluchi, 'title' | 'language' | 'description' | 'questions'>, suffix: string) {
+  const room = LIMITS.title - suffix.length - 1;
+  return {
+    title: `${tiluchi.title.slice(0, room).trimEnd()} ${suffix}`,
+    language: tiluchi.language,
+    description: tiluchi.description,
+    questions: tiluchi.questions.map(withFreshIds),
+  };
 }

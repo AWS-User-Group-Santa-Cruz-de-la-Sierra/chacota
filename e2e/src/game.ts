@@ -34,8 +34,8 @@ try {
   await host.getByRole('link', { name: /Volver a tiluchis/ }).click();
   await host.waitForURL(new RegExp(`/app/orgs/${orgSlug}/tiluchi$`));
   step('editor back link returns to the Tiluchi list');
-  await host.goto(`${BASE}/app/orgs/${orgSlug}/tiluchi/${tiluchiId}`);
-  await host.getByRole('button', { name: /Presentar/ }).click();
+  // Present straight from the list, without opening the editor.
+  await host.locator(`[data-tiluchi="${tiluchiId}"]`).getByRole('button', { name: /Presentar/ }).click();
   await host.waitForURL(/\/host\//, { timeout: 15000 });
   const pinText = (await host.locator('p.font-display').filter({ hasText: /^\d{3} \d{3}$/ }).first().textContent()) ?? '';
   const pin = pinText.replace(' ', '');
@@ -182,6 +182,19 @@ try {
   await admin.setViewportSize({ width: 1280, height: 900 });
   await shot(admin, '9-hub');
   step('re-enabled Tiluchi is back on the hub');
+
+  // List toolbar: duplicate, then delete the copy.
+  admin.on('dialog', (d) => void d.accept());
+  await admin.goto(`${BASE}/app/orgs/${orgSlug}/tiluchi`);
+  const copies = admin.getByText('Trivia de prueba (copia)');
+  const before = await copies.count();
+  await admin.locator(`[data-tiluchi="${tiluchiId}"]`).getByRole('button', { name: 'Duplicar' }).click();
+  await admin.waitForFunction((n) => document.body.innerText.split('Trivia de prueba (copia)').length - 1 > n, before, { timeout: 10000 });
+  await shot(admin, '10-tiluchi-list');
+  const copy = admin.locator('article', { hasText: 'Trivia de prueba (copia)' }).first();
+  await copy.getByRole('button', { name: 'Borrar' }).click();
+  await admin.waitForFunction((n) => document.body.innerText.split('Trivia de prueba (copia)').length - 1 === n, before, { timeout: 10000 });
+  step('list toolbar duplicates and deletes a tiluchi');
   console.log('ALL PASSED');
 } finally {
   await browser.close();

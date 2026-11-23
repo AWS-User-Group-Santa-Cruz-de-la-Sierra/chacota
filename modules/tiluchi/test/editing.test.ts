@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { changeType, isQuestionValid, move, newQuestion, withFreshIds } from '../src/content/editing';
+import { changeType, copyOf, isQuestionValid, move, newQuestion, withFreshIds } from '../src/content/editing';
+import { LIMITS, type Tiluchi } from '../src/content/schema';
 
 describe('newQuestion', () => {
   it('creates a quiz with four answers and the first one correct', () => {
@@ -44,5 +45,32 @@ describe('helpers', () => {
     expect(copy.id).not.toBe(q.id);
     if (copy.type !== 'quiz' || q.type !== 'quiz') throw new Error('expected quiz');
     expect(copy.choices[0]?.id).not.toBe(q.choices[0]?.id);
+  });
+});
+
+describe('copyOf', () => {
+  const original: Tiluchi = {
+    id: 't1',
+    title: 'Trivia AWS',
+    language: 'es',
+    description: 'Para el meetup',
+    questions: [
+      { id: 'q1', type: 'quiz', prompt: 'P', timeLimitSec: 20, points: 'standard', choices: [{ id: 'a', text: 'A', correct: true }, { id: 'b', text: 'B', correct: false }] },
+      { id: 'q2', type: 'true_false', prompt: 'T', timeLimitSec: 10, points: 'double', correct: true },
+    ],
+  };
+
+  it('copies content with a suffix and new ids', () => {
+    const copy = copyOf(original, '(copia)');
+    expect(copy).toMatchObject({ title: 'Trivia AWS (copia)', language: 'es', description: 'Para el meetup' });
+    expect(copy.questions.map((q) => q.prompt)).toEqual(['P', 'T']);
+    expect(copy.questions.map((q) => q.id)).not.toContain('q1');
+    expect(copy.questions[0]!.type === 'quiz' && copy.questions[0]!.choices.map((c) => c.id)).not.toContain('a');
+  });
+
+  it('keeps long titles within the limit', () => {
+    const copy = copyOf({ ...original, title: 'x'.repeat(LIMITS.title) }, '(copia)');
+    expect(copy.title.length).toBeLessThanOrEqual(LIMITS.title);
+    expect(copy.title.endsWith('(copia)')).toBe(true);
   });
 });
