@@ -165,6 +165,11 @@ export const tiluchiActivity: ActivityServer<Tiluchi, TiluchiState> = {
       // Only the presenter gets every question, to redraw after a reload.
       questions: playerId ? undefined : questions.map((q) => publicQuestion(q, session.state.backgroundKey)),
     };
+    if (!playerId && phase === 'reveal' && question) {
+      const answers = await listAnswers(live, session.id, index);
+      snapshot.reveal = { correct: correctValues(question), counts: countAnswers(question, answers), answered: answers.length };
+    }
+    if (!playerId && phase === 'leaderboard') snapshot.top = topStandings(await live.listPlayers(session.id));
     return { ...snapshot };
   },
 
