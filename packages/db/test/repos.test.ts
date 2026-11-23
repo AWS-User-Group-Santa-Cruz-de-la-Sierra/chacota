@@ -14,6 +14,7 @@ import {
   NotFoundError,
   removeMember,
   setMemberRole,
+  setOrgActivities,
   setOrgStatus,
   updateOrg,
   updateProfile,
@@ -76,6 +77,16 @@ describe('organizations', () => {
     const updated = await updateOrg(db(), org.id, { name: 'Después', primaryColor: '#6B2FD6' });
     expect(updated).toMatchObject({ name: 'Después', primaryColor: '#6B2FD6', slug: org.slug });
     await expect(updateOrg(db(), 'nope', { name: 'X' })).rejects.toThrow(NotFoundError);
+  });
+
+  it('stores which activities an org enabled', async () => {
+    const org = await createOrg(db(), { slug: unique('a'), name: 'Acts' }, unique('o'));
+    expect(org.activities).toBeUndefined();
+    await setOrgActivities(db(), org.id, ['tiluchi']);
+    expect((await getOrgBySlug(db(), org.slug))?.activities).toEqual(['tiluchi']);
+    await setOrgActivities(db(), org.id, []);
+    expect((await getOrgBySlug(db(), org.slug))?.activities).toEqual([]);
+    await expect(setOrgActivities(db(), 'nope', [])).rejects.toThrow(NotFoundError);
   });
 });
 

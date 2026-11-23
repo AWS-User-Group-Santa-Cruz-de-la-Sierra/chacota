@@ -17,6 +17,8 @@ export interface Org extends OrgInput {
   id: string;
   status: OrgStatus;
   logoKey?: string;
+  /** Enabled activity ids; undefined means the stable defaults. */
+  activities?: string[];
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -124,6 +126,24 @@ export async function setOrgStatus(db: Db, orgId: string, status: OrgStatus): Pr
         UpdateExpression: 'SET #status = :status, gsi1pk = :g, updatedAt = :now',
         ExpressionAttributeNames: { '#status': 'status' },
         ExpressionAttributeValues: { ':status': status, ':g': orgStatusIndex(status), ':now': nowIso() },
+      }),
+    );
+  } catch (error) {
+    if (isConditionalCheckFailure(error)) throw new NotFoundError('Organization not found');
+    throw error;
+  }
+}
+
+/** Which activities the organization offers. Undefined means the stable defaults. */
+export async function setOrgActivities(db: Db, orgId: string, activities: string[]): Promise<void> {
+  try {
+    await db.doc.send(
+      new UpdateCommand({
+        TableName: db.tableName,
+        Key: keys.org(orgId),
+        ConditionExpression: 'attribute_exists(pk)',
+        UpdateExpression: 'SET activities = :a, updatedAt = :now',
+        ExpressionAttributeValues: { ':a': activities, ':now': nowIso() },
       }),
     );
   } catch (error) {
