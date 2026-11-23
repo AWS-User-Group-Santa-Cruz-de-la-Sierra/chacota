@@ -272,5 +272,20 @@
     "delete": "Borrar",
     "confirmDelete": "¿Borrar «{title}»? No se puede deshacer.",
     "copySuffix": "(copia)"
+  },
+  "imagePicker": {
+    "choose": "Elegir imagen",
+    "change": "Cambiar",
+    "remove": "Quitar",
+    "uploading": "Subiendo…",
+    "none": "Sin imagen",
+    "missing": "No se encontró la imagen",
+    "errors": {
+      "bad_type": "Ese formato no se puede subir.",
+      "too_big": "La imagen pesa más de 2 MB incluso achicada.",
+      "empty": "El archivo está vacío.",
+      "upload": "No se pudo subir la imagen. Probá de nuevo.",
+      "not_an_image": "Ese archivo no es una imagen que el navegador pueda abrir."
+    }
   }
 }

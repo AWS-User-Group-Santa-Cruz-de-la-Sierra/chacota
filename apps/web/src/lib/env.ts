@@ -24,6 +24,15 @@ export const env = {
   get autoApproveOrgs() {
     return process.env.CHACOTA_AUTO_APPROVE_ORGS === 'true';
   },
+  /** Logos and images: bucket, public base URL and how the browser uploads. See .env.example. */
+  get media() {
+    return {
+      bucket: required('MEDIA_BUCKET'),
+      publicUrl: required('MEDIA_PUBLIC_URL'),
+      /** presigned: PUT to S3 with a signed URL. local: PUT to the local server (AWS Emulator). */
+      uploadMode: process.env.MEDIA_UPLOAD_MODE === 'local' ? ('local' as const) : ('presigned' as const),
+    };
+  },
   get googleEnabled() {
     return process.env.CHACOTA_GOOGLE_ENABLED === 'true';
   },
