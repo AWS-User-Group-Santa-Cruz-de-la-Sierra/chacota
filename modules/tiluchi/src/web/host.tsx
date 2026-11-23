@@ -28,7 +28,25 @@ function fromSnapshot(s: TiluchiSnapshot): Screen {
 }
 
 /** Presenter screen while a Tiluchi runs: question with timer, reveal and ranking. */
-export function TiluchiHost({ snapshot, clock, playerCount, subscribe, advance, setAdvanceLabel, setSubtitle, hostAction }: HostScreenProps) {
+/** The question's image, hidden if it can't be loaded. */
+function QuestionImage({ src }: { src: string }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) return null;
+  return <img src={src} alt="" className="max-h-[45vh] w-full rounded-3xl object-contain" onError={() => setBroken(true)} />;
+}
+
+export function TiluchiHost({
+  snapshot,
+  clock,
+  playerCount,
+  subscribe,
+  advance,
+  setAdvanceLabel,
+  setSubtitle,
+  hostAction,
+  setBackground,
+  mediaUrl,
+}: HostScreenProps) {
   const t = useTranslations('tiluchi.host');
   const tp = useTranslations('tiluchi.play');
   const labels = { true: tp('trueLabel'), false: tp('falseLabel') };
@@ -71,6 +89,10 @@ export function TiluchiHost({ snapshot, clock, playerCount, subscribe, advance, 
   const subtitle = screen.kind === 'question' || screen.kind === 'reveal' ? t('questionOf', { n: screen.index + 1, total }) : null;
   useEffect(() => setSubtitle(subtitle), [subtitle, setSubtitle]);
 
+  // Background of the current question (or the quiz's); "get ready" already shows the first one's.
+  const bgKey = questions[screen.kind === 'waiting' ? 0 : screen.index]?.backgroundKey ?? null;
+  useEffect(() => setBackground(bgKey), [bgKey, setBackground]);
+
   // While a question is open: poll the answer count, reveal when time is up or everyone answered.
   const question = screen.kind === 'question' ? questions[screen.index] : undefined;
   const deadline = screen.kind === 'question' && question ? screen.startedAt + question.timeLimitSec * 1000 : undefined;
@@ -103,23 +125,44 @@ export function TiluchiHost({ snapshot, clock, playerCount, subscribe, advance, 
 
       {screen.kind === 'question' && question && (
         <>
-          <div className="flex items-center gap-8">
-            <div
-              className="flex h-32 w-32 shrink-0 items-center justify-center rounded-full font-display text-6xl font-extrabold"
-              style={{
-                background: `conic-gradient(#FFC629 0 ${!ready || leadLeft > 0 ? 100 : Math.round((msLeft / (question.timeLimitSec * 1000)) * 1000) / 10}%, #2B1A47 0)`,
-              }}
-            >
-              <span className="flex h-26 w-26 items-center justify-center rounded-full bg-noche tabular-nums">
-                {!ready ? '' : leadLeft > 0 ? Math.ceil(leadLeft / 1000) : Math.ceil(msLeft / 1000)}
-              </span>
-            </div>
-            <h1 className="flex-1 font-display text-4xl font-extrabold leading-tight tracking-tight lg:text-6xl">{question.prompt}</h1>
-            <div className="flex shrink-0 flex-col items-center">
-              <span className="font-display text-6xl font-extrabold tabular-nums">{answerCount}</span>
-              <span className="text-niebla">{t('answers', { count: answerCount })}</span>
-            </div>
-          </div>
+          {(() => {
+            const timer = (
+              <div
+                className="flex h-32 w-32 shrink-0 items-center justify-center rounded-full font-display text-6xl font-extrabold"
+                style={{
+                  background: `conic-gradient(#FFC629 0 ${!ready || leadLeft > 0 ? 100 : Math.round((msLeft / (question.timeLimitSec * 1000)) * 1000) / 10}%, #2B1A47 0)`,
+                }}
+              >
+                <span className="flex h-26 w-26 items-center justify-center rounded-full bg-noche tabular-nums">
+                  {!ready ? '' : leadLeft > 0 ? Math.ceil(leadLeft / 1000) : Math.ceil(msLeft / 1000)}
+                </span>
+              </div>
+            );
+            const count = (
+              <div className="flex shrink-0 flex-col items-center">
+                <span className="font-display text-6xl font-extrabold tabular-nums">{answerCount}</span>
+                <span className="text-niebla">{t('answers', { count: answerCount })}</span>
+              </div>
+            );
+            return question.imageKey ? (
+              <div className="grid items-center gap-8 lg:grid-cols-[2fr_3fr]">
+                <QuestionImage key={question.imageKey} src={mediaUrl(question.imageKey)} />
+                <div className="flex flex-col gap-6">
+                  <div className="flex items-center gap-6">
+                    {timer}
+                    {count}
+                  </div>
+                  <h1 className="font-display text-4xl font-extrabold leading-tight tracking-tight lg:text-5xl">{question.prompt}</h1>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-8">
+                {timer}
+                <h1 className="flex-1 font-display text-4xl font-extrabold leading-tight tracking-tight lg:text-6xl">{question.prompt}</h1>
+                {count}
+              </div>
+            );
+          })()}
           {leadLeft > QUESTION_LEAD_MS / 3 ? (
             <p className="text-center font-display text-4xl font-bold text-sol">{t('getReady')}</p>
           ) : (
@@ -130,7 +173,14 @@ export function TiluchiHost({ snapshot, clock, playerCount, subscribe, advance, 
 
       {screen.kind === 'reveal' && questions[screen.index] && (
         <>
-          <h1 className="font-display text-4xl font-extrabold leading-tight lg:text-5xl">{questions[screen.index]!.prompt}</h1>
+          {questions[screen.index]!.imageKey ? (
+            <div className="grid items-center gap-8 lg:grid-cols-[2fr_3fr]">
+              <QuestionImage key={questions[screen.index]!.imageKey} src={mediaUrl(questions[screen.index]!.imageKey!)} />
+              <h1 className="font-display text-4xl font-extrabold leading-tight lg:text-5xl">{questions[screen.index]!.prompt}</h1>
+            </div>
+          ) : (
+            <h1 className="font-display text-4xl font-extrabold leading-tight lg:text-5xl">{questions[screen.index]!.prompt}</h1>
+          )}
           <AnswerTiles question={questions[screen.index]!} labels={labels} highlight={screen.correct} counts={screen.counts} />
           <p className="text-center text-xl text-niebla">{t('answers', { count: screen.answered })}</p>
         </>
