@@ -1,0 +1,39 @@
+{
+  "name": "@chacota/live",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client/index.ts",
+    "./web": "./src/web.ts",
+    "./testing": "./src/testing/echo-activity.ts",
+    "./react": "./src/react.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/credential-provider-node": "^3.972.98",
+    "@aws-sdk/lib-dynamodb": "^3.1175.0",
+    "@chacota/core": "workspace:*",
+    "@chacota/db": "workspace:*",
+    "@smithy/protocol-http": "^5.6.2",
+    "@smithy/signature-v4": "^5.7.5",
+    "hono": "^4.13.20"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1175.0",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.2.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1",
+    "react": "19.3.0"
+  },
+  "peerDependencies": {
+    "react": "^19"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@chacota/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx watch src/local-server.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.1175.0",
+    "@chacota/db": "workspace:*",
+    "@chacota/live": "workspace:*",
+    "@chacota/tiluchi": "workspace:*",
+    "@hono/node-server": "^2.1.11",
+    "hono": "^4.13.20",
+    "ws": "^8.23.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1175.0",
+    "@aws-sdk/client-lambda": "^3.1175.0",
+    "@types/node": "^26.6.6",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}

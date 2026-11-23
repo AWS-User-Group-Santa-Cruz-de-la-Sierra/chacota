@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.next/
+out/
+cdk.out/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+.claude/settings.local.json
+cdk-outputs*.json
+
+.superpowers/
+e2e/out/
