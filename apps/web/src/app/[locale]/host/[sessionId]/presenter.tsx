@@ -142,7 +142,7 @@ export function Presenter(props: Props) {
             {orgLogo('h-48 w-full max-w-full object-contain object-left lg:h-72') ?? (
               <span className="font-display text-5xl font-extrabold leading-tight">{props.orgName}</span>
             )}
-            <span className="text-xl font-semibold">{t('presents', { org: props.orgName })}</span>
+            <span className="font-display text-3xl font-bold leading-tight lg:text-4xl">{t('presents', { org: props.orgName })}</span>
           </div>
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-4">
