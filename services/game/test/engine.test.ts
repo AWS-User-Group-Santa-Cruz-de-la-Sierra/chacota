@@ -60,3 +60,13 @@ describe('player tokens', () => {
     expect(verifyPlayerToken('s3cret', 'garbage')).toBeNull();
   });
 });
+
+describe('shardOf', () => {
+  it('spreads ids evenly and deterministically', async () => {
+    const { shardOf, SHARDS } = await import('../src/service');
+    const counts = new Array(SHARDS).fill(0);
+    for (let i = 0; i < 10_000; i++) counts[shardOf(crypto.randomUUID())]++;
+    expect(Math.min(...counts)).toBeGreaterThan(800);
+    expect(shardOf('same-id')).toBe(shardOf('same-id'));
+  });
+});

@@ -10,6 +10,7 @@ const base: ChacotaConfig = {
   authDomainPrefix: 'chacota-test',
   monthlyBudgetUsd: 20,
   extraCallbackOrigins: ['http://localhost:3000'],
+  loadTest: false,
 };
 
 function synth(overrides: Partial<ChacotaConfig> = {}) {

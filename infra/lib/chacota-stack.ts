@@ -5,6 +5,7 @@ import { ChacotaBudget } from './budget.js';
 import type { ChacotaConfig } from './config.js';
 import { ChacotaData } from './data.js';
 import { ChacotaGame } from './game.js';
+import { ChacotaLoadTest } from './load-test.js';
 
 export interface ChacotaStackProps extends StackProps {
   config: ChacotaConfig;
@@ -32,6 +33,7 @@ export class ChacotaStack extends Stack {
       protect,
     });
     this.game = new ChacotaGame(this, 'Game', { table: this.data.table, allowedOrigins: appOrigins, protect });
+    if (config.loadTest) new ChacotaLoadTest(this, 'LoadTest', { game: this.game, table: this.data.table });
 
     if (config.budgetEmail) {
       new ChacotaBudget(this, 'Budget', { name: `chacota-${config.stage}-monthly`, monthlyUsd: config.monthlyBudgetUsd, email: config.budgetEmail });

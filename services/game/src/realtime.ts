@@ -8,6 +8,20 @@ export interface Publisher {
   publish(channel: string, event: GameEvent): Promise<void>;
 }
 
+type Credentials = Awaited<ReturnType<ReturnType<typeof defaultProvider>>>;
+
+/** Resolves credentials once and reuses them until five minutes before they expire. */
+function cachedCredentials(): () => Promise<Credentials> {
+  const provider = defaultProvider();
+  let current: Promise<Credentials> | undefined;
+  return async () => {
+    const creds = current && (await current.catch(() => undefined));
+    if (creds && (!creds.expiration || creds.expiration.getTime() - Date.now() > 5 * 60_000)) return creds;
+    current = provider();
+    return current;
+  };
+}
+
 /** Publishes to AppSync Events over HTTP, signed with the caller's IAM credentials. */
 export class AppSyncPublisher implements Publisher {
   private readonly signer: SignatureV4;
@@ -16,7 +30,7 @@ export class AppSyncPublisher implements Publisher {
     private readonly httpDns: string,
     region: string,
   ) {
-    this.signer = new SignatureV4({ service: 'appsync', region, credentials: defaultProvider(), sha256: Sha256 });
+    this.signer = new SignatureV4({ service: 'appsync', region, credentials: cachedCredentials(), sha256: Sha256 });
   }
 
   async publish(channel: string, event: GameEvent): Promise<void> {

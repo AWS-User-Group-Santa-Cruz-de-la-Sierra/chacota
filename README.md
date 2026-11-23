@@ -65,6 +65,27 @@ pnpm test        # core, db (necesita DynamoDB Local corriendo) e infra
 pnpm typecheck
 ```
 
+## Prueba de carga
+
+La prueba corre dentro de AWS: una conexión doméstica no aguanta 1000 sockets. Lambdas "trabajadoras" simulan 100 jugadores cada una, y otra hace de presentador.
+
+```sh
+cd infra && npx cdk deploy Chacota-dev -c chacota:stage=dev -c chacota:loadTest=true --outputs-file cdk-outputs.dev.json
+aws lambda invoke --function-name <LoadTestFunction> --cli-read-timeout 900 \
+  --cli-binary-format raw-in-base64-out --payload '{"role":"orchestrator","players":1000,"questions":3}' out.json
+```
+
+Resultado en `us-east-1` (noviembre 2026), con 1000 jugadores y 3 preguntas y sin errores:
+
+| Métrica | p50 | p95 |
+|---|---|---|
+| Unirse (HTTP) | 299 ms | 1.7 s (arranque de Lambdas) |
+| Responder (HTTP) | 46 ms | 65 ms |
+| Pregunta → celulares (AppSync Events) | 79 ms | 204 ms |
+| Revelación con ranking → celulares | 0.6–0.9 s | 0.8–1.1 s |
+
+Desde Bolivia suma unos 150 ms de red. Para pruebas chicas desde tu máquina: `pnpm --filter @chacota/game exec tsx scripts/load-test.ts --players 300 --concurrency 20`.
+
 ## Importar preguntas
 
 | Formato | Notas |

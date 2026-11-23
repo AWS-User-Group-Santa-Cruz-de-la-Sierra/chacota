@@ -81,6 +81,7 @@ describe('GameService', () => {
     const ended = await service.advance(game.id); // no more questions → end
     expect(ended.status).toBe('ended');
     expect(publisher.last('ended')?.podium.map((p) => p.nickname)).toEqual(['Ana', 'Beto']);
+
   });
 
   it('rejects duplicate nicknames regardless of case', async () => {
@@ -123,5 +124,14 @@ describe('GameService', () => {
     await service.join(game.pin, 'Uno');
     const results = await Promise.allSettled([service.advance(game.id), service.advance(game.id)]);
     expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+  });
+});
+
+describe('concurrency', () => {
+  it('lets many players join the same game at once', async () => {
+    const game = await newGame();
+    const results = await Promise.allSettled(Array.from({ length: 40 }, (_, i) => service.join(game.pin, `p${i}`)));
+    expect(results.filter((r) => r.status === 'rejected')).toEqual([]);
+    expect((await service.getGame(game.id))?.playerCount).toBe(40);
   });
 });

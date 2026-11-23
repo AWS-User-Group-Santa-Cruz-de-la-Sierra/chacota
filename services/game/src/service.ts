@@ -27,14 +27,37 @@ export class GameError extends Error {
   }
 }
 
+/**
+ * Players, nicknames and answers are spread over SHARDS partition keys: DynamoDB allows about
+ * 1000 writes/second per partition key, and a 1000-player game writes faster than that.
+ */
+export const SHARDS = 10;
+
+export function shardOf(value: string): number {
+  // FNV-1a: cheap and stable across runtimes.
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0) % SHARDS;
+}
+
+const pad = (index: number) => String(index).padStart(3, '0');
+
 const k = {
   game: (id: string) => ({ pk: `GAME#${id}`, sk: 'META' }),
   pin: (pin: string) => ({ pk: `PIN#${pin}`, sk: 'PIN' }),
-  player: (gameId: string, playerId: string) => ({ pk: `GAME#${gameId}`, sk: `PLAYER#${playerId}` }),
-  nickname: (gameId: string, nickname: string) => ({ pk: `GAME#${gameId}`, sk: `NICK#${nickname.toLocaleLowerCase()}` }),
+  playersPk: (gameId: string, shard: number) => `GAME#${gameId}#P${shard}`,
+  player: (gameId: string, playerId: string) => ({ pk: k.playersPk(gameId, shardOf(playerId)), sk: `PLAYER#${playerId}` }),
+  nickname: (gameId: string, nickname: string) => {
+    const lower = nickname.toLocaleLowerCase();
+    return { pk: `GAME#${gameId}#N${shardOf(lower)}`, sk: `NICK#${lower}` };
+  },
+  answersPk: (gameId: string, index: number, shard: number) => `GAME#${gameId}#A${pad(index)}#${shard}`,
   answer: (gameId: string, index: number, playerId: string) => ({
-    pk: `GAME#${gameId}`,
-    sk: `ANSWER#${String(index).padStart(3, '0')}#${playerId}`,
+    pk: k.answersPk(gameId, index, shardOf(playerId)),
+    sk: `ANSWER#${playerId}`,
   }),
 };
 
@@ -239,22 +262,27 @@ export class GameService {
   }
 
   async countAnswers(gameId: string, index: number): Promise<number> {
-    let count = 0;
-    let start: Record<string, unknown> | undefined;
-    do {
-      const page = await this.db.doc.send(
-        new QueryCommand({
-          TableName: this.db.tableName,
-          KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
-          ExpressionAttributeValues: { ':pk': `GAME#${gameId}`, ':prefix': `ANSWER#${String(index).padStart(3, '0')}#` },
-          Select: 'COUNT',
-          ExclusiveStartKey: start,
-        }),
-      );
-      count += page.Count ?? 0;
-      start = page.LastEvaluatedKey;
-    } while (start);
-    return count;
+    const counts = await Promise.all(
+      Array.from({ length: SHARDS }, async (_, shard) => {
+        let count = 0;
+        let start: Record<string, unknown> | undefined;
+        do {
+          const page = await this.db.doc.send(
+            new QueryCommand({
+              TableName: this.db.tableName,
+              KeyConditionExpression: 'pk = :pk',
+              ExpressionAttributeValues: { ':pk': k.answersPk(gameId, index, shard) },
+              Select: 'COUNT',
+              ExclusiveStartKey: start,
+            }),
+          );
+          count += page.Count ?? 0;
+          start = page.LastEvaluatedKey;
+        } while (start);
+        return count;
+      }),
+    );
+    return counts.reduce((a, b) => a + b, 0);
   }
 
   // ---------- players ----------
@@ -281,14 +309,6 @@ export class GameService {
               },
             },
             { Put: { TableName: this.db.tableName, Item: { ...k.player(game.id, player.id), ...player, ttl: this.ttl() } } },
-            {
-              Update: {
-                TableName: this.db.tableName,
-                Key: k.game(game.id),
-                UpdateExpression: 'ADD playerCount :one',
-                ExpressionAttributeValues: { ':one': 1 },
-              },
-            },
           ],
         }),
       );
@@ -296,9 +316,20 @@ export class GameService {
       if (isConditionalCheckFailure(error)) throw new GameError('nickname_taken');
       throw error;
     }
+    // Kept outside the transaction: hundreds of players join at once, and transactions touching
+    // the same game item would conflict. A plain atomic ADD never does.
+    const { Attributes } = await this.db.doc.send(
+      new UpdateCommand({
+        TableName: this.db.tableName,
+        Key: k.game(game.id),
+        UpdateExpression: 'ADD playerCount :one',
+        ExpressionAttributeValues: { ':one': 1 },
+        ReturnValues: 'UPDATED_NEW',
+      }),
+    );
     await this.publish(
       game.id,
-      { type: 'player_joined', nickname, playerCount: game.playerCount + 1 },
+      { type: 'player_joined', nickname, playerCount: Number(Attributes?.playerCount ?? game.playerCount + 1) },
       channels.host(game.id),
     );
     return { token: signPlayerToken(this.options.tokenSecret, game.id, player.id), player, gameId: game.id };
@@ -371,11 +402,11 @@ export class GameService {
   // ---------- reads ----------
 
   async listPlayers(gameId: string): Promise<Player[]> {
-    return this.queryAll<Player>(gameId, 'PLAYER#');
+    return this.queryShards<Player>((shard) => k.playersPk(gameId, shard));
   }
 
   async listAnswers(gameId: string, index: number): Promise<Answer[]> {
-    return this.queryAll<Answer>(gameId, `ANSWER#${String(index).padStart(3, '0')}#`);
+    return this.queryShards<Answer>((shard) => k.answersPk(gameId, index, shard));
   }
 
   async getAnswer(gameId: string, index: number, playerId: string): Promise<Answer | undefined> {
@@ -385,23 +416,28 @@ export class GameService {
     return Item ? strip<Answer>(Item) : undefined;
   }
 
-  private async queryAll<T>(gameId: string, prefix: string): Promise<T[]> {
-    const items: T[] = [];
-    let start: Record<string, unknown> | undefined;
-    do {
-      const page = await this.db.doc.send(
-        new QueryCommand({
-          TableName: this.db.tableName,
-          KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
-          ExpressionAttributeValues: { ':pk': `GAME#${gameId}`, ':prefix': prefix },
-          ConsistentRead: true,
-          ExclusiveStartKey: start,
-        }),
-      );
-      items.push(...(page.Items ?? []).map((i) => strip<T>(i)));
-      start = page.LastEvaluatedKey;
-    } while (start);
-    return items;
+  private async queryShards<T>(pkOf: (shard: number) => string): Promise<T[]> {
+    const pages = await Promise.all(
+      Array.from({ length: SHARDS }, async (_, shard) => {
+        const items: T[] = [];
+        let start: Record<string, unknown> | undefined;
+        do {
+          const page = await this.db.doc.send(
+            new QueryCommand({
+              TableName: this.db.tableName,
+              KeyConditionExpression: 'pk = :pk',
+              ExpressionAttributeValues: { ':pk': pkOf(shard) },
+              ConsistentRead: true,
+              ExclusiveStartKey: start,
+            }),
+          );
+          items.push(...(page.Items ?? []).map((i) => strip<T>(i)));
+          start = page.LastEvaluatedKey;
+        } while (start);
+        return items;
+      }),
+    );
+    return pages.flat();
   }
 
   /** A player who skips a question loses their streak. */

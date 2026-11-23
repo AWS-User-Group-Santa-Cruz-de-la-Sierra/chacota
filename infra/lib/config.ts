@@ -14,6 +14,8 @@ export interface ChacotaConfig {
   monthlyBudgetUsd: number;
   /** Extra origins allowed for OAuth callbacks (local development). */
   extraCallbackOrigins: string[];
+  /** Deploys the in-AWS load test Lambdas. Never needed in production. */
+  loadTest: boolean;
 }
 
 export function readConfig(node: Node): ChacotaConfig {
@@ -32,5 +34,6 @@ export function readConfig(node: Node): ChacotaConfig {
     budgetEmail: get('budgetEmail'),
     monthlyBudgetUsd: Number(get('monthlyBudgetUsd') ?? 20),
     extraCallbackOrigins: typeof origins === 'string' ? origins.split(',') : origins,
+    loadTest: String(get('loadTest') ?? 'false') === 'true',
   };
 }
