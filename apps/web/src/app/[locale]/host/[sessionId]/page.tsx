@@ -27,6 +27,8 @@ export default async function HostPage({ params }: { params: Promise<{ sessionId
       orgName={session.orgName}
       orgSlug={org?.slug ?? ''}
       primaryColor={session.primaryColor ?? '#6B2FD6'}
+      logoKey={session.logoKey}
+      mediaBaseUrl={env.media.publicUrl}
       joinUrl={joinUrl}
       joinHost={new URL(env.publicOrigin).host}
       qrSvg={qrSvg}

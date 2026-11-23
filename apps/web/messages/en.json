@@ -188,7 +188,8 @@
     "confirmEnd": "End the game now?",
     "results": "See results",
     "activityDisabled": "This activity is disabled for the organization.",
-    "backToActivity": "Back to {name}"
+    "backToActivity": "Back to {name}",
+    "presents": "{org} presents"
   },
   "play": {
     "title": "Join",

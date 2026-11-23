@@ -188,7 +188,8 @@
     "confirmEnd": "¿Terminar el juego ahora?",
     "results": "Ver resultados",
     "activityDisabled": "Esta actividad está desactivada en la organización.",
-    "backToActivity": "Volver a {name}"
+    "backToActivity": "Volver a {name}",
+    "presents": "{org} presenta"
   },
   "play": {
     "title": "Unirse",
