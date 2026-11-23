@@ -5,7 +5,9 @@ export type ImportWarningCode =
   | 'time_limit_adjusted'
   | 'imported_as_poll'
   | 'row_skipped_not_enough_answers'
-  | 'text_truncated';
+  | 'text_truncated'
+  /** Images from another organization were left out; detail is how many. */
+  | 'media_removed';
 
 export interface ImportWarning {
   /** 1-based row number in the source sheet. */
@@ -17,6 +19,7 @@ export interface ImportWarning {
 export interface ImportedTiluchi {
   title?: string;
   description?: string;
+  backgroundKey?: string;
   questions: Question[];
 }
 

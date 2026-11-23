@@ -27,7 +27,7 @@ export function newQuestion(type: QuestionType = 'quiz'): Question {
 /** Converts a question to another type, keeping the prompt, time and as many answers as possible. */
 export function changeType(q: Question, type: QuestionType): Question {
   if (q.type === type) return q;
-  const common = { id: q.id, prompt: q.prompt, timeLimitSec: q.timeLimitSec, imageUrl: q.imageUrl };
+  const common = { id: q.id, prompt: q.prompt, timeLimitSec: q.timeLimitSec, imageKey: q.imageKey, backgroundKey: q.backgroundKey };
   const existing = q.type === 'true_false' ? [] : q.choices;
   const choices = existing.length >= LIMITS.minChoices ? existing : [newChoice(), newChoice()];
   switch (type) {

@@ -1,4 +1,4 @@
-export function TiluchiMark({ size = 40, color = '#6B2FD6' }: { size?: number; color?: string }) {
+export function ChacotaMark({ size = 40, color = '#6B2FD6' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 96 96" aria-hidden="true">
       <circle cx="48" cy="48" r="46" fill={color} />
@@ -14,7 +14,7 @@ export function TiluchiMark({ size = 40, color = '#6B2FD6' }: { size?: number; c
 export function Logo({ size = 36 }: { size?: number }) {
   return (
     <span className="inline-flex items-center gap-2.5">
-      <TiluchiMark size={size} />
+      <ChacotaMark size={size} />
       <span className="font-display font-extrabold tracking-tight" style={{ fontSize: size * 0.8 }}>
         chacota
       </span>

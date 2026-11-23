@@ -1,7 +1,7 @@
 {
   "card": {
     "name": "Tiluchi",
-    "description": "Quizzes en vivo con PIN y celulares"
+    "description": "Preguntas en vivo, a contrarreloj y por el podio."
   },
   "host": {
     "questionOf": "Pregunta {n} de {total}",
@@ -11,7 +11,8 @@
     "showAnswer": "Mostrar respuesta",
     "showRanking": "Ver ranking",
     "nextQuestion": "Siguiente pregunta",
-    "showPodium": "Ver podio"
+    "showPodium": "Ver podio",
+    "lobbySummary": "{count, plural, one {# pregunta} other {# preguntas}} · {minutes, plural, one {unos # minuto} other {unos # minutos}}"
   },
   "play": {
     "getReady": "¡Preparate!",

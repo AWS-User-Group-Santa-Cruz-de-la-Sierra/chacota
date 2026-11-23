@@ -1,6 +1,8 @@
 import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
+import { OrgAvatar } from '@/components/org-avatar';
 import { Badge, Notice } from '@/components/ui';
+import { env } from '@/lib/env';
 import { requireOrgAccess } from '@/lib/auth';
 import { organizationHref } from '@/lib/org-links';
 import { OrgNav } from './org-nav';
@@ -14,7 +16,7 @@ export default async function OrgLayout({ children, params }: { children: ReactN
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <span className="h-14 w-14 shrink-0 rounded-2xl" style={{ background: org.primaryColor ?? '#6B2FD6' }} aria-hidden="true" />
+          <OrgAvatar name={org.name} logoKey={org.logoKey} primaryColor={org.primaryColor} mediaBaseUrl={env.media.publicUrl} size="lg" />
           <div className="flex flex-col gap-1">
             <h1 className="font-display text-4xl font-extrabold tracking-tight">{org.name}</h1>
             <span className="flex gap-2">{role && <Badge>{t(`roles.${role}`)}</Badge>}</span>

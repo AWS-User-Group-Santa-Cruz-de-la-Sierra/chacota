@@ -21,11 +21,16 @@ export const PointsMode = z.enum(['standard', 'double', 'none']);
 export type PointsMode = z.infer<typeof PointsMode>;
 
 const id = z.string().min(1).max(64);
+/** S3 key of an uploaded image. Whether it belongs to the org is checked when saving. */
+const mediaKey = z.string().min(1).max(200);
 
 const questionBase = {
   id,
   prompt: z.string().trim().min(1).max(LIMITS.prompt),
-  imageUrl: z.string().url().optional(),
+  /** Image shown next to the question on the projected screen. */
+  imageKey: mediaKey.optional(),
+  /** Background for this question; replaces the quiz background. */
+  backgroundKey: mediaKey.optional(),
   timeLimitSec: z.number().int().min(5).max(240),
   points: PointsMode,
 };
@@ -78,6 +83,8 @@ export const Tiluchi = z.object({
   description: z.string().max(LIMITS.description).optional(),
   language: Language,
   coverImageUrl: z.string().url().optional(),
+  /** Background for every question that has none of its own. */
+  backgroundKey: mediaKey.optional(),
   questions: z.array(Question).max(LIMITS.maxQuestions),
 });
 export type Tiluchi = z.infer<typeof Tiluchi>;

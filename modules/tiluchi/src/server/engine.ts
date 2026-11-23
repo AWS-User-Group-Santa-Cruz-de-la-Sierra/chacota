@@ -7,11 +7,12 @@ const TF_CHOICES = [
   { id: 'false', text: 'false' },
 ];
 
-export function publicQuestion(q: Question): PublicQuestion {
+export function publicQuestion(q: Question, quizBackgroundKey?: string): PublicQuestion {
   return {
     type: q.type,
     prompt: q.prompt,
-    imageUrl: q.imageUrl,
+    imageKey: q.imageKey,
+    backgroundKey: q.backgroundKey ?? quizBackgroundKey,
     timeLimitSec: q.timeLimitSec,
     choices: q.type === 'true_false' ? TF_CHOICES : q.choices.map(({ id, text }) => ({ id, text })),
   };

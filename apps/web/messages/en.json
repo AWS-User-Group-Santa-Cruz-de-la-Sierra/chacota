@@ -52,7 +52,10 @@
     "websiteUrl": "Website",
     "pendingNotice": "A Chacota admin will review your organization before you can play live.",
     "slugTaken": "That address is already taken.",
-    "invalid": "Check the highlighted fields."
+    "invalid": "Check the highlighted fields.",
+    "logo": "Logo",
+    "logoHint": "Shown on the projected screen. A PNG with a transparent background works best.",
+    "primaryColorHint": "The color fills the lobby and a stripe on the projected screen."
   },
   "org": {
     "tiluchis": "Tiluchis",
@@ -159,13 +162,20 @@
       "time_limit_adjusted": "Row {row}: time limit adjusted ({detail}).",
       "imported_as_poll": "Row {row}: no correct answer, imported as a poll.",
       "row_skipped_not_enough_answers": "Row {row}: skipped (needs a question and 2 answers).",
-      "text_truncated": "Row {row}: long texts were shortened."
+      "text_truncated": "Row {row}: long texts were shortened.",
+      "media_removed": "Left out {detail} images that belong to another organization."
     },
     "export": "Export",
     "deleteTiluchi": "Delete tiluchi",
     "confirmDelete": "Delete this tiluchi? This cannot be undone.",
     "preview": "Preview",
-    "back": "Back to tiluchis"
+    "back": "Back to tiluchis",
+    "background": "Background (all questions)",
+    "backgroundHint": "Optional. Shown behind every question on the projected screen, under a dark veil.",
+    "questionImage": "Image",
+    "questionImageHint": "Optional. Shown next to the question on the projected screen.",
+    "questionBackground": "Background for this question",
+    "inheritsBackground": "Uses the quiz background."
   },
   "host": {
     "present": "Present",
@@ -185,7 +195,9 @@
     "confirmEnd": "End the game now?",
     "results": "See results",
     "activityDisabled": "This activity is disabled for the organization.",
-    "backToActivity": "Back to {name}"
+    "backToActivity": "Back to {name}",
+    "presents": "{org} presents",
+    "playersReady": "{count, plural, =0 {waiting for players…} one {player ready} other {players ready}}"
   },
   "play": {
     "title": "Join",
@@ -272,5 +284,20 @@
     "delete": "Delete",
     "confirmDelete": "Delete “{title}”? This cannot be undone.",
     "copySuffix": "(copy)"
+  },
+  "imagePicker": {
+    "choose": "Choose image",
+    "change": "Change",
+    "remove": "Remove",
+    "uploading": "Uploading…",
+    "none": "No image",
+    "missing": "Image not found",
+    "errors": {
+      "bad_type": "That format can't be uploaded.",
+      "too_big": "The image is larger than 2 MB even after shrinking.",
+      "empty": "The file is empty.",
+      "upload": "The image couldn't be uploaded. Try again.",
+      "not_an_image": "That file isn't an image the browser can open."
+    }
   }
 }

@@ -98,10 +98,11 @@ export const ruletaWeb: ActivityWeb = {
   Host: RuletaHost,              // presentador mientras corre
   Play: RuletaPlay,              // celular mientras corre; omitilo si no usa celulares
   ResultsDetails: RuletaDetails, // detalle en el historial, opcional
+  LobbySummary: RuletaResumen,   // texto bajo el título en el lobby ("12 preguntas · unos 8 minutos"), opcional
 };
 ```
 
-- **`Host`** recibe `subscribe` (los eventos de tu actividad, incluidos los que llegaron antes de montarse), `advance`, `setAdvanceLabel` (el texto del botón principal), `setSubtitle` (el progreso que se muestra junto al título, por ejemplo "Pregunta 2 de 10"), `hostAction` y `clock`. El lobby, el podio, el botón "Terminar" y la pantalla completa son de la plataforma.
+- **`Host`** recibe `subscribe` (los eventos de tu actividad, incluidos los que llegaron antes de montarse), `advance`, `setAdvanceLabel` (el texto del botón principal), `setSubtitle` (el progreso que se muestra junto al título, por ejemplo "Pregunta 2 de 10"), `hostAction` y `clock`. Para imágenes: `mediaUrl(key)` da la URL pública de una clave de S3 (guardá claves, nunca URLs) y `setBackground(key | null)` pone una imagen detrás de toda la pantalla, con un velo oscuro, por ejemplo `useEffect(() => setBackground(ronda.fondo ?? null), [ronda])`. El lobby, el podio, el botón "Terminar" y la pantalla completa son de la plataforma.
 - **`Play`** recibe `token` y `apiUrl` para llamar a tus rutas (`${apiUrl}/m/<id>/...`), `subscribe`, `clock` y `setScore`. Unirse, el lobby, la reconexión y la pantalla final con el código son de la plataforma.
 - **Estilos:** usá las clases de Tailwind y los colores de la marca (`bg-noche`, `bg-morado`, `bg-verde`, `bg-tajibo`, `bg-sol`, `text-niebla`). Tailwind lee `modules/*/src`, así que tus clases funcionan.
 - **Accesibilidad:** los botones son `<button>` y las respuestas no dependen solo del color.

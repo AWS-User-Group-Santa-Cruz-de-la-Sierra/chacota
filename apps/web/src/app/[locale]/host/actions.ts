@@ -25,6 +25,7 @@ export async function startTiluchiAction(slug: string, tiluchiId: string): Promi
       orgId: org.id,
       orgName: org.name,
       primaryColor: org.primaryColor,
+      logoKey: org.logoKey,
       hostUserId: user.id,
       module: 'tiluchi',
       content: tiluchi,

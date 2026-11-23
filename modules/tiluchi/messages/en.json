@@ -1,7 +1,7 @@
 {
   "card": {
     "name": "Tiluchi",
-    "description": "Live quizzes with a PIN and phones"
+    "description": "Live questions, against the clock, for the podium."
   },
   "host": {
     "questionOf": "Question {n} of {total}",
@@ -11,7 +11,8 @@
     "showAnswer": "Show answer",
     "showRanking": "Show ranking",
     "nextQuestion": "Next question",
-    "showPodium": "Show podium"
+    "showPodium": "Show podium",
+    "lobbySummary": "{count, plural, one {# question} other {# questions}} · {minutes, plural, one {about # minute} other {about # minutes}}"
   },
   "play": {
     "getReady": "Get ready!",

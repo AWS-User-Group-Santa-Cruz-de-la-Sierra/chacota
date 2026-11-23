@@ -3,13 +3,13 @@ import Papa from 'papaparse';
 import { CHACOTA_FORMAT, CHACOTA_FORMAT_VERSION, type ChacotaDocument } from '../importers/json';
 import { LIMITS, type Language, type Question, type Tiluchi } from '../schema';
 
-type Exportable = Pick<Tiluchi, 'title' | 'description' | 'questions'>;
+type Exportable = Pick<Tiluchi, 'title' | 'description' | 'backgroundKey' | 'questions'>;
 
 export function exportChacotaJson(tiluchi: Exportable): string {
   const doc: ChacotaDocument = {
     format: CHACOTA_FORMAT,
     version: CHACOTA_FORMAT_VERSION,
-    tiluchi: { title: tiluchi.title, description: tiluchi.description, questions: tiluchi.questions },
+    tiluchi: { title: tiluchi.title, description: tiluchi.description, backgroundKey: tiluchi.backgroundKey, questions: tiluchi.questions },
   };
   return JSON.stringify(doc, null, 2);
 }

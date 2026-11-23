@@ -52,7 +52,10 @@
     "websiteUrl": "Sitio web",
     "pendingNotice": "Un administrador de Chacota revisará tu organización antes de que puedas jugar en vivo.",
     "slugTaken": "Esa dirección ya está en uso.",
-    "invalid": "Revisá los campos marcados."
+    "invalid": "Revisá los campos marcados.",
+    "logo": "Logo",
+    "logoHint": "Se muestra en la pantalla proyectada. Mejor un PNG con fondo transparente.",
+    "primaryColorHint": "El color pinta el lobby y una franja de la pantalla proyectada."
   },
   "org": {
     "tiluchis": "Tiluchis",
@@ -159,13 +162,20 @@
       "time_limit_adjusted": "Fila {row}: ajustamos el tiempo ({detail}).",
       "imported_as_poll": "Fila {row}: sin respuesta correcta, quedó como encuesta.",
       "row_skipped_not_enough_answers": "Fila {row}: se omitió (necesita pregunta y 2 respuestas).",
-      "text_truncated": "Fila {row}: recortamos textos muy largos."
+      "text_truncated": "Fila {row}: recortamos textos muy largos.",
+      "media_removed": "Se quitaron {detail} imágenes que son de otra organización."
     },
     "export": "Exportar",
     "deleteTiluchi": "Borrar tiluchi",
     "confirmDelete": "¿Borrar este tiluchi? No se puede deshacer.",
     "preview": "Vista previa",
-    "back": "Volver a tiluchis"
+    "back": "Volver a tiluchis",
+    "background": "Fondo (todas las preguntas)",
+    "backgroundHint": "Opcional. Se ve detrás de cada pregunta en la pantalla proyectada, con un velo oscuro.",
+    "questionImage": "Imagen",
+    "questionImageHint": "Opcional. Se muestra junto a la pregunta en la pantalla proyectada.",
+    "questionBackground": "Fondo de esta pregunta",
+    "inheritsBackground": "Usa el fondo del cuestionario."
   },
   "host": {
     "present": "Presentar",
@@ -185,7 +195,9 @@
     "confirmEnd": "¿Terminar el juego ahora?",
     "results": "Ver resultados",
     "activityDisabled": "Esta actividad está desactivada en la organización.",
-    "backToActivity": "Volver a {name}"
+    "backToActivity": "Volver a {name}",
+    "presents": "{org} presenta",
+    "playersReady": "{count, plural, =0 {esperando jugadores…} one {jugador listo} other {jugadores listos}}"
   },
   "play": {
     "title": "Unirse",
@@ -272,5 +284,20 @@
     "delete": "Borrar",
     "confirmDelete": "¿Borrar «{title}»? No se puede deshacer.",
     "copySuffix": "(copia)"
+  },
+  "imagePicker": {
+    "choose": "Elegir imagen",
+    "change": "Cambiar",
+    "remove": "Quitar",
+    "uploading": "Subiendo…",
+    "none": "Sin imagen",
+    "missing": "No se encontró la imagen",
+    "errors": {
+      "bad_type": "Ese formato no se puede subir.",
+      "too_big": "La imagen pesa más de 2 MB incluso achicada.",
+      "empty": "El archivo está vacío.",
+      "upload": "No se pudo subir la imagen. Probá de nuevo.",
+      "not_an_image": "Ese archivo no es una imagen que el navegador pueda abrir."
+    }
   }
 }

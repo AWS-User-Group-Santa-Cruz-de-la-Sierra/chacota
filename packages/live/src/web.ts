@@ -25,6 +25,10 @@ export interface HostScreenProps {
   /** Short progress text shown next to the title in the header (e.g. "Question 2 of 10"), or null. */
   setSubtitle(text: string | null): void;
   hostAction(name: string, args?: unknown): Promise<unknown>;
+  /** Shows an image (S3 key) behind the whole presenter screen, under a dark veil; null removes it. */
+  setBackground(key: string | null): void;
+  /** Public URL of an S3 key, to show the activity's own images. */
+  mediaUrl(key: string): string;
 }
 
 export interface PlayScreenProps {
@@ -46,4 +50,6 @@ export interface ActivityWeb {
   Host: ComponentType<HostScreenProps>;
   Play?: ComponentType<PlayScreenProps>;
   ResultsDetails?: ComponentType<{ details: unknown }>;
+  /** Short summary under the title in the lobby (e.g. "12 questions · about 8 minutes"). */
+  LobbySummary?: ComponentType<{ snapshot: Record<string, unknown> }>;
 }

@@ -11,6 +11,8 @@ export type TiluchiPhase = 'lobby' | 'question' | 'reveal' | 'leaderboard';
 export interface TiluchiState {
   tiluchiId: string;
   questions: Question[];
+  /** Background of the whole quiz, for questions without their own. */
+  backgroundKey?: string;
   phase: TiluchiPhase;
   /** -1 until the first question. */
   questionIndex: number;
@@ -31,7 +33,9 @@ export interface Answer {
 export interface PublicQuestion {
   type: QuestionType;
   prompt: string;
-  imageUrl?: string;
+  imageKey?: string;
+  /** The question's background, or else the quiz's. */
+  backgroundKey?: string;
   timeLimitSec: number;
   choices: { id: string; text: string }[];
 }

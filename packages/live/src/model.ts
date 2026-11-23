@@ -11,6 +11,8 @@ export interface Session<TState = unknown> {
   hostUserId: string;
   orgName: string;
   primaryColor?: string;
+  /** The org's logo when the session started (S3 key). */
+  logoKey?: string;
   status: SessionStatus;
   /** Incremented on every transition; guards against racing presenters. */
   version: number;

@@ -97,6 +97,7 @@ export class LiveService {
     orgId: string;
     orgName: string;
     primaryColor?: string;
+    logoKey?: string;
     hostUserId: string;
     module: string;
     content: unknown;
@@ -114,6 +115,7 @@ export class LiveService {
         hostUserId: input.hostUserId,
         orgName: input.orgName,
         primaryColor: input.primaryColor,
+        logoKey: input.logoKey,
         status: 'lobby',
         version: 1,
         playerCount: 0,
@@ -358,6 +360,7 @@ export class LiveService {
         title: session.title,
         orgName: session.orgName,
         primaryColor: session.primaryColor,
+        logoKey: session.logoKey,
         status: session.status,
         module: session.module,
         playerCount: session.playerCount,

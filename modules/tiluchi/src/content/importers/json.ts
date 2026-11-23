@@ -8,7 +8,7 @@ export const CHACOTA_FORMAT_VERSION = 1;
 export const ChacotaDocument = z.object({
   format: z.literal(CHACOTA_FORMAT),
   version: z.literal(CHACOTA_FORMAT_VERSION),
-  tiluchi: Tiluchi.pick({ title: true, description: true }).extend({ questions: z.array(Question) }),
+  tiluchi: Tiluchi.pick({ title: true, description: true, backgroundKey: true }).extend({ questions: z.array(Question) }),
 });
 export type ChacotaDocument = z.infer<typeof ChacotaDocument>;
 
@@ -23,6 +23,6 @@ export function importChacotaJson(text: string): ImportResult {
   if (!parsed.success) {
     throw new ImportError('invalid_document', z.prettifyError(parsed.error));
   }
-  const { title, description, questions } = parsed.data.tiluchi;
-  return { tiluchi: { title, description, questions }, warnings: [] };
+  const { title, description, backgroundKey, questions } = parsed.data.tiluchi;
+  return { tiluchi: { title, description, backgroundKey, questions }, warnings: [] };
 }

@@ -1,6 +1,7 @@
 'use server';
 
-import { Tiluchi, type Question } from '@chacota/tiluchi/content';
+import { isOrgMediaKey } from '@chacota/core';
+import { dropForeignMedia, Tiluchi, tiluchiMediaKeys, type Question } from '@chacota/tiluchi/content';
 import { ImportError, importFile, type ImportWarning } from '@chacota/tiluchi/importers';
 import { ConflictError } from '@chacota/db';
 import { deleteTiluchi, saveTiluchi } from '@chacota/tiluchi/content';
@@ -16,6 +17,8 @@ export async function saveTiluchiAction(slug: string, input: { tiluchi: Tiluchi;
   const { org, user } = await requireOrgAccess(slug, 'activity.content');
   const parsed = Tiluchi.safeParse(input.tiluchi);
   if (!parsed.success) return { ok: false, error: 'invalid' };
+  // Images must be this org's own uploads.
+  if (!tiluchiMediaKeys(parsed.data).every((key) => isOrgMediaKey(key, org.id))) return { ok: false, error: 'invalid' };
   try {
     const saved = await saveTiluchi(getDb(), org.id, parsed.data, input.version, user.id);
     revalidatePath(`/[locale]/app/orgs/${slug}/tiluchi`, 'page');
@@ -34,12 +37,15 @@ const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
 
 /** Parses an uploaded file on the server (exceljs needs Node) and returns the questions to the editor. */
 export async function importQuestionsAction(slug: string, form: FormData): Promise<ImportResultState> {
-  await requireOrgAccess(slug, 'activity.content');
+  const { org } = await requireOrgAccess(slug, 'activity.content');
   const file = form.get('file');
   if (!(file instanceof File) || file.size === 0) return { ok: false, message: 'empty file' };
   if (file.size > MAX_IMPORT_BYTES) return { ok: false, message: 'file is larger than 5 MB' };
   try {
-    const { tiluchi, warnings } = await importFile(file.name, await file.arrayBuffer());
+    const imported = await importFile(file.name, await file.arrayBuffer());
+    // A JSON from another org may point at its images: leave those out and say so.
+    const { tiluchi, removed } = dropForeignMedia(imported.tiluchi, org.id);
+    const warnings: ImportWarning[] = removed > 0 ? [...imported.warnings, { code: 'media_removed', detail: String(removed) }] : imported.warnings;
     return { ok: true, questions: tiluchi.questions, warnings, title: tiluchi.title };
   } catch (error) {
     if (error instanceof ImportError) return { ok: false, message: error.message };

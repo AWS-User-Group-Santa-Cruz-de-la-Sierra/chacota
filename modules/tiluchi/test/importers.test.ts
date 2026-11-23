@@ -179,3 +179,13 @@ describe('importFile', () => {
     await expect(importFile('foto.png', enc('x'))).rejects.toThrow(ImportError);
   });
 });
+
+describe('Chacota JSON media keys', () => {
+  const q: Question = { id: 'q', type: 'true_false', prompt: 'P', timeLimitSec: 20, points: 'standard', correct: true };
+  it('round-trips image and background keys', () => {
+    const json = exportChacotaJson({ title: 'T', backgroundKey: 'orgs/o1/media/bg.webp', questions: [{ ...q, imageKey: 'orgs/o1/media/a.webp' }] });
+    const { tiluchi } = importChacotaJson(json);
+    expect(tiluchi.backgroundKey).toBe('orgs/o1/media/bg.webp');
+    expect(tiluchi.questions[0]).toMatchObject({ imageKey: 'orgs/o1/media/a.webp' });
+  });
+});

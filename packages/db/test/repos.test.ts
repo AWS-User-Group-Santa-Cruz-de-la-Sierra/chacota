@@ -79,6 +79,15 @@ describe('organizations', () => {
     await expect(updateOrg(db(), 'nope', { name: 'X' })).rejects.toThrow(NotFoundError);
   });
 
+  it('sets and removes the logo', async () => {
+    const org = await createOrg(db(), { slug: unique('logo'), name: 'Logo' }, unique('o'));
+    const key = `orgs/${org.id}/media/a.webp`;
+    expect((await updateOrg(db(), org.id, { logoKey: key })).logoKey).toBe(key);
+    const removed = await updateOrg(db(), org.id, { logoKey: null, name: 'Sin logo' });
+    expect(removed).not.toHaveProperty('logoKey');
+    expect(removed.name).toBe('Sin logo');
+  });
+
   it('stores which activities an org enabled', async () => {
     const org = await createOrg(db(), { slug: unique('a'), name: 'Acts' }, unique('o'));
     expect(org.activities).toBeUndefined();

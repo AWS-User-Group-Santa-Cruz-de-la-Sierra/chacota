@@ -44,6 +44,34 @@ describe('ChacotaStack', () => {
     });
   });
 
+  it('serves media through CloudFront with origin access control', () => {
+    const t = synth();
+    t.resourceCountIs('AWS::CloudFront::Distribution', 1);
+    t.resourceCountIs('AWS::CloudFront::OriginAccessControl', 1);
+    t.hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({
+        PriceClass: 'PriceClass_100',
+        DefaultCacheBehavior: Match.objectLike({ ViewerProtocolPolicy: 'redirect-to-https', AllowedMethods: ['GET', 'HEAD'] }),
+      }),
+    });
+    t.hasOutput('MediaUrl', {});
+  });
+
+  it('gives the web server a policy to upload org media only', () => {
+    const t = synth();
+    t.hasResourceProperties('AWS::IAM::ManagedPolicy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Action: 's3:PutObject',
+            Resource: { 'Fn::Join': ['', Match.arrayWith([Match.stringLikeRegexp('/orgs/\\*$')])] },
+          }),
+        ]),
+      },
+    });
+    t.hasOutput('WebServerPolicyArn', {});
+  });
+
   it('registers OAuth callbacks for production and local origins', () => {
     synth().hasResourceProperties('AWS::Cognito::UserPoolClient', {
       CallbackURLs: [

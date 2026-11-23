@@ -3,6 +3,7 @@
 import { slugify } from '@chacota/core';
 import { useTranslations } from 'next-intl';
 import { useActionState, useState } from 'react';
+import { ImagePicker } from '@/components/image-picker';
 import { SubmitButton } from '@/components/submit-button';
 import { Field, Notice } from '@/components/ui';
 import type { FormState } from '../actions';
@@ -13,6 +14,7 @@ interface Defaults {
   description?: string;
   primaryColor?: string;
   websiteUrl?: string;
+  logoKey?: string;
 }
 
 export function OrgForm({
@@ -20,17 +22,21 @@ export function OrgForm({
   defaults = {},
   mode,
   showPendingNotice = false,
+  mediaBaseUrl,
 }: {
   action: (state: FormState, form: FormData) => Promise<FormState>;
   defaults?: Defaults;
   mode: 'create' | 'edit';
   showPendingNotice?: boolean;
+  /** Edit mode only: enables the logo. */
+  mediaBaseUrl?: string;
 }) {
   const t = useTranslations();
   const [state, formAction] = useActionState(action, {});
   const [name, setName] = useState(defaults.name ?? '');
   const [slug, setSlug] = useState(defaults.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(mode === 'edit');
+  const [logoKey, setLogoKey] = useState(defaults.logoKey ?? '');
   const err = (field: string) => {
     const e = state.fieldErrors?.[field];
     if (!e) return undefined;
@@ -68,6 +74,21 @@ export function OrgForm({
         />
       )}
       <Field label={t('orgForm.description')} name="description" defaultValue={defaults.description} error={err('description')} />
+      {mode === 'edit' && mediaBaseUrl && (
+        <>
+          <input type="hidden" name="logoKey" value={logoKey} />
+          <ImagePicker
+            label={t('orgForm.logo')}
+            hint={err('logoKey') ?? t('orgForm.logoHint')}
+            value={logoKey || undefined}
+            slug={slug}
+            purpose="logo"
+            maxSide={1600}
+            mediaBaseUrl={mediaBaseUrl}
+            onChange={(key) => setLogoKey(key ?? '')}
+          />
+        </>
+      )}
       <div className="flex flex-wrap gap-5">
         <div className="w-40">
           <Field
@@ -82,6 +103,7 @@ export function OrgForm({
           <Field label={t('orgForm.websiteUrl')} name="websiteUrl" type="url" defaultValue={defaults.websiteUrl} error={err('websiteUrl')} />
         </div>
       </div>
+      <p className="-mt-3 text-sm text-niebla">{t('orgForm.primaryColorHint')}</p>
       {showPendingNotice && <Notice>{t('orgForm.pendingNotice')}</Notice>}
       <div>
         <SubmitButton pendingLabel={t('common.saving')}>{mode === 'create' ? t('common.create') : t('common.save')}</SubmitButton>

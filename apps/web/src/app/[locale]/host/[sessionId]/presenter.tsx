@@ -1,11 +1,13 @@
 'use client';
 
 import { channels, createEventHub, frameOnEvent, type LiveEvent, type PlatformEvent, type RealtimeConfig, type SessionStatus, type Standing } from '@chacota/live/client';
+import { mediaUrl, readableTextColor } from '@chacota/core';
 import { useServerClock } from '@chacota/live/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { activityWebs } from '@/activities/registry.client';
 import { useRealtime } from '@/components/game/use-realtime';
+import { BackLink } from '@/components/back-link';
 import { buttonClass } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
 import { advanceSessionAction, endSessionAction, hostActionAction } from '../actions';
@@ -18,6 +20,10 @@ interface Props {
   orgName: string;
   orgSlug: string;
   primaryColor: string;
+  /** The org's logo (S3 key), if it has one. */
+  logoKey?: string;
+  /** Base URL that turns S3 keys into public URLs. */
+  mediaBaseUrl: string;
   joinUrl: string;
   joinHost: string;
   qrSvg: string;
@@ -42,6 +48,12 @@ export function Presenter(props: Props) {
   const [advanceLabel, setAdvanceLabel] = useState(t('next'));
   const [subtitle, setSubtitle] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [background, setBackground] = useState<string | null>(null);
+  const [brokenMedia, setBrokenMedia] = useState<ReadonlySet<string>>(new Set());
+  const toUrl = useCallback((key: string) => mediaUrl(props.mediaBaseUrl, key), [props.mediaBaseUrl]);
+  const markBroken = (key: string) => setBrokenMedia((s) => new Set(s).add(key));
+  const logo = props.logoKey && !brokenMedia.has(props.logoKey) ? toUrl(props.logoKey) : null;
+  const onOrgColor = readableTextColor(props.primaryColor);
 
   useEffect(() => clock.sync(props.initial.serverNow), []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -54,7 +66,10 @@ export function Presenter(props: Props) {
         setPlayers((p) => (p.includes(e.nickname) ? p : [...p, e.nickname]));
         return;
       }
-      if (e.type === 'ended') setPodium(e.podium);
+      if (e.type === 'ended') {
+        setPodium(e.podium);
+        setBackground(null);
+      }
       const step = frameOnEvent(statusNow.current, event.type);
       if (step.restart) hub.reset();
       if (step.status !== statusNow.current) {
@@ -99,64 +114,134 @@ export function Presenter(props: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [advance, status]);
 
-  return (
-    <div className="flex min-h-dvh flex-col gap-6 bg-noche px-6 py-5 lg:px-10">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <activity.Icon size={44} color={props.primaryColor} />
-          <div className="flex flex-col">
-            <span className="font-semibold">{props.orgName}</span>
-            <span className="text-sm text-niebla">
-              {props.title}
-              {status === 'running' && subtitle ? ` · ${subtitle}` : ''}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
-          {status === 'running' && (
-            <span className="rounded-full bg-noche-2 px-4 py-2 text-sm text-niebla">
-              {props.joinHost} · PIN <span className="font-display text-lg font-extrabold tracking-widest text-sol">{props.pin}</span>
-            </span>
-          )}
-          <button
-            type="button"
-            className={buttonClass('ghost')}
-            onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
-          >
-            {t('fullscreen')}
-          </button>
-        </div>
-      </header>
+  const showBackground = background && !brokenMedia.has(background);
+  const fullscreenButton = (
+    <button
+      type="button"
+      className={buttonClass('ghost')}
+      onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
+    >
+      {t('fullscreen')}
+    </button>
+  );
+  const orgLogo = (className: string) =>
+    logo ? (
+      // eslint-disable-next-line @next/next/no-img-element -- media comes from S3/CloudFront
+      <img src={logo} alt={props.orgName} className={className} onError={() => markBroken(props.logoKey!)} />
+    ) : null;
 
-      <main className="flex flex-1 flex-col justify-center gap-8">
-        {status === 'lobby' && (
-          <div className="grid items-center gap-10 lg:grid-cols-[1fr_auto]">
-            <div className="flex flex-col gap-6">
-              <p className="text-2xl text-niebla">
-                {t('joinAt')} <span className="font-bold text-blanco">{props.joinHost}</span> {t('withPin')}
-              </p>
-              <p className="font-display text-[7rem] font-extrabold leading-none tracking-[0.12em] text-sol lg:text-[10rem]">
-                {props.pin.slice(0, 3)} {props.pin.slice(3)}
-              </p>
-              <p className="text-xl font-semibold">{t('players', { count: players.length })}</p>
-              <ul className="flex flex-wrap gap-2" aria-live="polite">
-                {players.map((name) => (
-                  <li key={name} className="rounded-full bg-noche-2 px-4 py-2 text-lg font-semibold">
-                    {name}
-                  </li>
-                ))}
-              </ul>
+  // Lobby: the org's panel on the left (its color, logo, "presents", the activity and the title),
+  // how to join on the right. Same layout as the "Lobby" mockup.
+  if (status === 'lobby') {
+    return (
+      <div className="flex min-h-dvh flex-col bg-noche lg:flex-row">
+        <section
+          className="flex flex-col justify-between gap-10 p-8 lg:w-[42%] lg:shrink-0 lg:p-12"
+          style={{ background: props.primaryColor, color: onOrgColor }}
+        >
+          <div className="flex flex-col gap-4">
+            {orgLogo('h-48 w-full max-w-full object-contain object-left lg:h-72') ?? (
+              <span className="font-display text-5xl font-extrabold leading-tight">{props.orgName}</span>
+            )}
+            <span className="font-display text-3xl font-bold leading-tight lg:text-4xl">{t('presents', { org: props.orgName })}</span>
+          </div>
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <activity.Icon size={96} color={props.primaryColor} />
+              <span className="font-display text-[2.75rem] font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
             </div>
+            <h1 className="font-display text-5xl font-extrabold leading-none tracking-tight lg:text-7xl">{props.title}</h1>
+            {activity.LobbySummary && (
+              <p className="text-2xl font-semibold opacity-90">
+                <activity.LobbySummary snapshot={props.initial.snapshot} />
+              </p>
+            )}
+          </div>
+        </section>
+
+        <main className="flex flex-1 flex-col gap-8 p-8 lg:p-12">
+          <div className="flex flex-wrap items-center gap-8">
             <div
-              className="w-64 rounded-3xl bg-blanco p-4 lg:w-80"
+              className="w-48 shrink-0 rounded-3xl bg-blanco p-3 lg:w-56"
               role="img"
               aria-label={props.joinUrl}
               dangerouslySetInnerHTML={{ __html: props.qrSvg }}
             />
+            <div className="flex flex-col gap-3">
+              <p className="text-xl text-niebla">
+                {t('joinAt')} <span className="font-bold text-blanco">{props.joinHost}</span> {t('withPin')}
+              </p>
+              <p className="font-display text-[5rem] font-extrabold leading-none tracking-[0.08em] text-sol xl:text-[7rem]">
+                {props.pin.slice(0, 3)} {props.pin.slice(3)}
+              </p>
+            </div>
           </div>
-        )}
 
+          <p className="flex items-baseline gap-3">
+            <span className="font-display text-5xl font-extrabold tabular-nums">{players.length}</span>
+            <span className="text-xl text-niebla">{t('playersReady', { count: players.length })}</span>
+          </p>
+          <ul className="flex flex-1 flex-wrap content-start gap-2" aria-live="polite">
+            {players.map((name) => (
+              <li key={name} className="rounded-full bg-noche-2 px-4 py-2 text-lg font-semibold">
+                {name}
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
+            <div className="mr-auto flex flex-wrap items-center gap-4">
+              {/* Leaving the lobby is harmless: nobody is playing yet and the session expires on its own. */}
+              <BackLink href={`/app/orgs/${props.orgSlug}/${props.module}`}>{t('backToActivity', { name: ta('card.name') })}</BackLink>
+              <span className="text-sm text-niebla">{t('keyboardHint')}</span>
+            </div>
+            {fullscreenButton}
+            <button
+              type="button"
+              className={buttonClass('primary', 'min-h-14 bg-sol px-10 text-xl text-noche hover:bg-sol/90')}
+              onClick={advance}
+              disabled={pending}
+            >
+              {t('start')}
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex min-h-dvh flex-col gap-6 bg-noche px-6 pt-7 pb-5 lg:px-10">
+      {showBackground && (
+        <div className="absolute inset-0" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element -- media comes from S3/CloudFront */}
+          <img src={toUrl(background)} alt="" className="h-full w-full object-cover" onError={() => markBroken(background)} />
+          <div className="absolute inset-0" style={{ background: 'rgba(26, 14, 46, 0.72)' }} />
+        </div>
+      )}
+      <div className="absolute inset-x-0 top-0 h-2" style={{ background: props.primaryColor }} aria-hidden="true" />
+
+      {/* Header as in the "Pregunta" mockups: org and progress on the left, activity and PIN on the right. */}
+      <header className="relative flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {orgLogo('h-24 max-w-96 object-contain') ?? <span className="font-display text-xl font-bold">{props.orgName}</span>}
+          <span className="text-niebla">{status === 'running' && subtitle ? subtitle : props.title}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
+          <activity.Icon size={44} color={props.primaryColor} />
+          <span className="font-display text-[1.375rem] font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
+          {status === 'running' && (
+            <span className="ml-3 rounded-full bg-noche-2 px-4 py-2 text-sm text-niebla">
+              {props.joinHost} · PIN <span className="font-display text-lg font-extrabold tracking-widest text-sol">{props.pin}</span>
+            </span>
+          )}
+          {fullscreenButton}
+        </div>
+      </header>
+
+      <main className="relative flex flex-1 flex-col justify-center gap-8">
         {status === 'running' && (
           <activity.Host
             sessionId={props.sessionId}
@@ -168,6 +253,8 @@ export function Presenter(props: Props) {
             setAdvanceLabel={setAdvanceLabel}
             setSubtitle={setSubtitle}
             hostAction={hostAction}
+            setBackground={setBackground}
+            mediaUrl={toUrl}
           />
         )}
 
@@ -195,7 +282,7 @@ export function Presenter(props: Props) {
         )}
       </main>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3">
+      <footer className="relative flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-niebla">{status !== 'ended' ? t('keyboardHint') : t('finished')}</span>
         <div className="flex gap-2">
           {status === 'running' && (
@@ -218,7 +305,7 @@ export function Presenter(props: Props) {
             </>
           ) : (
             <button type="button" className={buttonClass('primary', 'min-h-14 px-8 text-lg')} onClick={advance} disabled={pending}>
-              {status === 'lobby' ? t('start') : advanceLabel}
+              {advanceLabel}
             </button>
           )}
         </div>

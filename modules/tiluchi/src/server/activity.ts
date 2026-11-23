@@ -78,7 +78,7 @@ async function startQuestion(live: LiveService, session: TiluchiSession): Promis
     type: 'tiluchi.question',
     index,
     total: session.state.questions.length,
-    question: publicQuestion(session.state.questions[index]!),
+    question: publicQuestion(session.state.questions[index]!, session.state.backgroundKey),
     startedAt,
     serverNow: live.now(),
   });
@@ -118,7 +118,13 @@ export const tiluchiActivity: ActivityServer<Tiluchi, TiluchiState> = {
     if (!playable.success) throw new LiveError('not_playable');
     return {
       title: content.title,
-      state: { tiluchiId: content.id, questions: playable.data.questions, phase: 'lobby', questionIndex: -1 },
+      state: {
+        tiluchiId: content.id,
+        questions: playable.data.questions,
+        backgroundKey: playable.data.backgroundKey,
+        phase: 'lobby',
+        questionIndex: -1,
+      },
     };
   },
 
@@ -145,10 +151,10 @@ export const tiluchiActivity: ActivityServer<Tiluchi, TiluchiState> = {
       index,
       total: questions.length,
       startedAt: questionStartedAt,
-      question: question && phase === 'question' ? publicQuestion(question) : undefined,
+      question: question && phase === 'question' ? publicQuestion(question, session.state.backgroundKey) : undefined,
       answered: answer ? { value: answer.value } : undefined,
       // Only the presenter gets every question, to redraw after a reload.
-      questions: playerId ? undefined : questions.map(publicQuestion),
+      questions: playerId ? undefined : questions.map((q) => publicQuestion(q, session.state.backgroundKey)),
     };
     return { ...snapshot };
   },
