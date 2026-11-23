@@ -230,7 +230,7 @@ export class LiveService {
     }
     const updated = await this.transition(session, { status: 'ended', endedAt: new Date(this.now()).toISOString() });
     const players = await this.saveResults(updated);
-    await this.publish(id, { type: 'ended', podium: topStandings(players, 3), ranks: rankPlayers(players) });
+    await this.publish(id, { type: 'ended', podium: topStandings(players, 5), ranks: rankPlayers(players) });
     return updated;
   }
 

@@ -168,7 +168,7 @@ async function orchestrator(input: { players: number; questions: number }) {
     revealStart.push(Date.now());
     await host.advance(game.id); // reveal
     await sleep(3000);
-    await host.advance(game.id); // leaderboard
+    if (q + 1 < input.questions) await host.advance(game.id); // leaderboard (the last question goes to the podium)
   }
   await host.end(game.id);
 

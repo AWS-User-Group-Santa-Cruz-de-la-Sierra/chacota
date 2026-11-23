@@ -47,7 +47,12 @@ export interface RankEntry {
 export type PlatformEvent =
   | { type: 'player_joined'; nickname: string; playerCount: number }
   | { type: 'started'; serverNow: number }
-  | { type: 'ended'; podium: Standing[]; ranks: Record<string, RankEntry> };
+  | {
+      type: 'ended';
+      /** Top 5: the three podium places, then two honorable mentions. */
+      podium: Standing[];
+      ranks: Record<string, RankEntry>;
+    };
 
 /** Activity events are namespaced: "<activity>.<event>". */
 export type ModuleEvent = { type: `${string}.${string}`; [key: string]: unknown };

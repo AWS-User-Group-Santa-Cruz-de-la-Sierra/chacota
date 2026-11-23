@@ -2,7 +2,7 @@ import { GetCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { LiveError, pad, SHARDS, sessionKeys, shardOf, topStandings, type ActivityServer, type LiveService, type Player, type Session } from '@chacota/live';
 import { PlayableTiluchi, type Tiluchi } from '../content';
 import { tiluchiManifest } from '../manifest';
-import { correctValues, countAnswers, publicQuestion, questionResults, rankWithAnswers, RESULT_COLUMNS, resultExtras } from './engine';
+import { correctValues, countAnswers, publicQuestion, questionResults, rankWithAnswers, RESULT_COLUMNS, resultExtras, standingsBefore } from './engine';
 import { QUESTION_LEAD_MS, type Answer, type TiluchiEvent, type TiluchiResultsDetails, type TiluchiSnapshot, type TiluchiState } from './model';
 import { tiluchiRoutes } from './routes';
 
@@ -105,8 +105,14 @@ async function reveal(live: LiveService, session: TiluchiSession): Promise<Tiluc
 
 async function showLeaderboard(live: LiveService, session: TiluchiSession): Promise<TiluchiSession> {
   const updated = await live.transition(session, { state: { ...session.state, phase: 'leaderboard' as const } });
-  const players = await live.listPlayers(session.id);
-  await publish(live, session.id, { type: 'tiluchi.leaderboard', index: session.state.questionIndex, top: topStandings(players) });
+  const index = session.state.questionIndex;
+  const [players, answers] = await Promise.all([live.listPlayers(session.id), listAnswers(live, session.id, index)]);
+  await publish(live, session.id, {
+    type: 'tiluchi.leaderboard',
+    index,
+    top: topStandings(players),
+    before: standingsBefore(players, answers),
+  });
   return updated;
 }
 
@@ -138,7 +144,10 @@ export const tiluchiActivity: ActivityServer<Tiluchi, TiluchiState> = {
       case 'question':
         return reveal(live, session);
       case 'reveal':
-        return showLeaderboard(live, session);
+        // After the last question the podium is the ranking.
+        return session.state.questionIndex + 1 < session.state.questions.length
+          ? showLeaderboard(live, session)
+          : live.end<TiluchiState>(session.id);
     }
   },
 

@@ -71,7 +71,13 @@ export type TiluchiEvent =
       top: Standing[];
       ranks: Record<string, RankEntry>;
     }
-  | { type: 'tiluchi.leaderboard'; index: number; top: Standing[] };
+  | {
+      type: 'tiluchi.leaderboard';
+      index: number;
+      top: Standing[];
+      /** The top as it was before this question, so the screen can animate the change. */
+      before: Standing[];
+    };
 
 /** Snapshot a reconnecting client gets in `snapshot.module`. */
 export interface TiluchiSnapshot {

@@ -1,4 +1,4 @@
-import { sortPlayers, type Player, type ResultColumn, type ResultEntry } from '@chacota/live';
+import { sortPlayers, topStandings, type Player, type ResultColumn, type ResultEntry, type Standing } from '@chacota/live';
 import type { Question } from '../content';
 import type { Answer, PublicQuestion, QuestionResult, RankEntry } from './model';
 
@@ -59,6 +59,15 @@ export function rankWithAnswers(players: Player[], answers: Answer[] = []): Reco
     };
   });
   return ranks;
+}
+
+/** Top n as it was before the last question: each score minus what that question gave. */
+export function standingsBefore(players: Player[], answers: Answer[], n = 5): Standing[] {
+  const gained = new Map(answers.map((a) => [a.playerId, a.points]));
+  return topStandings(
+    players.map((p) => ({ ...p, score: p.score - (gained.get(p.id) ?? 0) })),
+    n,
+  );
 }
 
 export const RESULT_COLUMNS: ResultColumn[] = [

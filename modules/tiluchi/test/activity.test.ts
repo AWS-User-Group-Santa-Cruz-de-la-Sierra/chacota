@@ -57,6 +57,10 @@ describe('Tiluchi activity', () => {
 
     await live.advance(session.id); // leaderboard
     expect((publisher.last('tiluchi.leaderboard')!.top as unknown[])[0]).toEqual({ nickname: 'Ana', score: 1000 });
+    // Before the first question everyone had 0 (both joined at the same instant, so any order).
+    expect(publisher.last('tiluchi.leaderboard')!.before).toEqual(
+      expect.arrayContaining([{ nickname: 'Ana', score: 0 }, { nickname: 'Beto', score: 0 }]),
+    );
 
     // Question 2 (double points): Ana keeps her streak
     await live.advance(session.id);
@@ -66,9 +70,11 @@ describe('Tiluchi activity', () => {
     // 750 base × 2 + 100 streak bonus
     expect((publisher.last('tiluchi.reveal')!.ranks as Record<string, unknown>)[ana.player.id]).toMatchObject({ points: 1600, score: 2600 });
 
-    await live.advance(session.id); // leaderboard
-    const ended = await live.advance(session.id); // no more questions → end
+    // After the last question's answer the game goes straight to the podium, without a ranking.
+    const leaderboards = publisher.events.filter((e) => e.event.type === 'tiluchi.leaderboard').length;
+    const ended = await live.advance(session.id);
     expect(ended.status).toBe('ended');
+    expect(publisher.events.filter((e) => e.event.type === 'tiluchi.leaderboard')).toHaveLength(leaderboards);
     expect(publisher.last('ended')?.podium.map((p) => p.nickname)).toEqual(['Ana', 'Beto']);
 
     const results = await live.getResults(ended);
