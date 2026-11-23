@@ -6,9 +6,9 @@ import {
   importCsv,
   importFile,
   importXlsx,
-} from '../src/importers/index';
-import { exportChacotaJson, exportCsv, exportXlsx } from '../src/exporters/index';
-import type { Question } from '../src/schema';
+} from '../src/content/importers/index';
+import { exportChacotaJson, exportCsv, exportXlsx } from '../src/content/exporters/index';
+import type { Question } from '../src/content/schema';
 
 const HEADER = 'Question,Answer 1,Answer 2,Answer 3,Answer 4,Time limit (sec),Correct answer(s)';
 

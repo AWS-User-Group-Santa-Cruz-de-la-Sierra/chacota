@@ -1,5 +1,5 @@
 import 'server-only';
-import type { TableRow } from '@chacota/core/exporters';
+import type { TableRow } from '@chacota/core/tables';
 import type { GameResults } from '@chacota/game';
 import { notFound } from 'next/navigation';
 import { requireOrgAccess } from './auth';

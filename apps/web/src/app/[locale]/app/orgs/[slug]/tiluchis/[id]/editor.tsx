@@ -1,21 +1,8 @@
 'use client';
 
-import {
-  changeType,
-  isQuestionValid,
-  LIMITS,
-  move,
-  newChoice,
-  newQuestion,
-  TIME_LIMITS,
-  withFreshIds,
-  type Language,
-  type PointsMode,
-  type Question,
-  type QuestionType,
-  type Tiluchi,
-} from '@chacota/core';
-import type { ImportWarning } from '@chacota/core/importers';
+import { type Language } from '@chacota/core';
+import { changeType, isQuestionValid, LIMITS, move, newChoice, newQuestion, TIME_LIMITS, withFreshIds, type PointsMode, type Question, type QuestionType, type Tiluchi } from '@chacota/tiluchi/content';
+import type { ImportWarning } from '@chacota/tiluchi/importers';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { AnswerIcon, ANSWER_STYLES } from '@/components/answer-icons';

@@ -1,4 +1,4 @@
-import { newId } from '../ids';
+import { newId } from '@chacota/core';
 import { DEFAULT_TIME_LIMIT, LIMITS, TIME_LIMITS, type Choice, type Question } from '../schema';
 import { ImportError, type ImportResult, type ImportWarning } from './types';
 

@@ -12,7 +12,8 @@
     "@aws-sdk/client-cognito-identity-provider": "^3.1175.0",
     "@chacota/core": "workspace:*",
     "@chacota/db": "workspace:*",
-    "playwright-core": "^1.56.1"
+    "playwright-core": "^1.56.1",
+    "@chacota/tiluchi": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

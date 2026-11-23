@@ -5,7 +5,7 @@ import {
   type Choice,
   type QuestionType,
 } from './schema';
-import { newId } from './ids';
+import { newId } from '@chacota/core';
 
 export function newChoice(text = ''): Choice {
   return { id: newId(), text, correct: false };

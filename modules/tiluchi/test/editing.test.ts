@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { changeType, isQuestionValid, move, newQuestion, withFreshIds } from '../src/editing';
+import { changeType, isQuestionValid, move, newQuestion, withFreshIds } from '../src/content/editing';
 
 describe('newQuestion', () => {
   it('creates a quiz with four answers and the first one correct', () => {

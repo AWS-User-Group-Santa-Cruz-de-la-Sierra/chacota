@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import { describe, expect, it } from 'vitest';
-import { tableToCsv, tableToXlsx } from '../src/exporters';
+import { tableToCsv, tableToXlsx } from '../src/tables';
 
 describe('table exports', () => {
   it('writes CSV that Excel opens safely', () => {

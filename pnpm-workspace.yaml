@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - modules/*
   - services/*
   - infra
   - e2e

@@ -33,7 +33,7 @@ export async function requireGameHost(gameId: string): Promise<{ user: SessionUs
   if (!game) notFound();
   const membership = await getMembership(getDb(), game.orgId, user.id);
   const role = membership?.role ?? (user.isSuperadmin ? 'owner' : undefined);
-  if (!can(role, 'game.host')) forbidden();
+  if (!can(role, 'activity.host')) forbidden();
   return { user, game };
 }
 

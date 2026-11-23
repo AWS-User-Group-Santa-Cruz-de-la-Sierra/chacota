@@ -1,4 +1,4 @@
-import type { AnswerValue, Question, QuestionType } from '@chacota/core';
+import type { AnswerValue, Question, QuestionType } from '@chacota/tiluchi/content';
 
 export type GameStatus = 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'ended';
 

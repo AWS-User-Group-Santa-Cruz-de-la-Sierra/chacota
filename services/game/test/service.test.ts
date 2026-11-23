@@ -1,4 +1,4 @@
-import type { Tiluchi } from '@chacota/core';
+import type { Tiluchi } from '@chacota/tiluchi/content';
 import { DeleteTableCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { createDb, createTable } from '@chacota/db';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';

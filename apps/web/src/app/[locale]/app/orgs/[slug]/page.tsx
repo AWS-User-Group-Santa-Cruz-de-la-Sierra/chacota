@@ -1,5 +1,5 @@
 import { can } from '@chacota/core';
-import { listTiluchis } from '@chacota/db';
+import { listTiluchis } from '@chacota/tiluchi/content';
 import { getFormatter, getTranslations } from 'next-intl/server';
 import { Card } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
@@ -17,7 +17,7 @@ export default async function OrgHome({ params }: { params: Promise<{ slug: stri
 
   return (
     <div className="flex flex-col gap-6">
-      {can(role, 'tiluchi.edit') && (
+      {can(role, 'activity.content') && (
         <Card>
           <NewTiluchiForm action={createTiluchiAction.bind(null, slug)} />
         </Card>

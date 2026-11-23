@@ -1,4 +1,4 @@
-import { tableToCsv, tableToXlsx } from '@chacota/core/exporters';
+import { tableToCsv, tableToXlsx } from '@chacota/core/tables';
 import { getTranslations } from 'next-intl/server';
 import type { NextRequest } from 'next/server';
 import { requireOrgResults, resultsFilename, standingsTable } from '@/lib/results';

@@ -17,7 +17,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="flex flex-col gap-6">
-      {unfinished.length > 0 && can(role, 'game.host') && (
+      {unfinished.length > 0 && can(role, 'activity.host') && (
         <Card className="flex flex-col gap-3 border-sol/40">
           <h2 className="font-display text-xl font-bold">{t('unfinished')}</h2>
           <p className="text-sm text-niebla">{t('unfinishedHint')}</p>

@@ -1,24 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import type { Question } from '@chacota/core';
 import {
   acceptInvite,
   ConflictError,
   createInvite,
   createOrg,
-  createTiluchi,
-  deleteTiluchi,
   getInvite,
   getMembership,
   getOrgBySlug,
-  getTiluchi,
   getUser,
   listMembers,
   listOrgsByStatus,
   listOrgsForUser,
-  listTiluchis,
   NotFoundError,
   removeMember,
-  saveTiluchi,
   setMemberRole,
   setOrgStatus,
   updateOrg,
@@ -114,40 +108,5 @@ describe('members and invites', () => {
     await setMemberRole(db(), org.id, second, 'owner');
     await removeMember(db(), org.id, owner);
     expect(await getMembership(db(), org.id, owner)).toBeUndefined();
-  });
-});
-
-describe('tiluchis', () => {
-  const question: Question = {
-    id: 'q1',
-    type: 'true_false',
-    prompt: 'Lambda cobra por milisegundo',
-    timeLimitSec: 10,
-    points: 'standard',
-    correct: true,
-  };
-
-  it('creates, lists, saves with optimistic locking, and deletes', async () => {
-    const orgId = unique('org');
-    const t = await createTiluchi(db(), orgId, { title: 'Trivia', language: 'es' }, 'u1');
-    expect(t.version).toBe(1);
-
-    const saved = await saveTiluchi(db(), orgId, { ...t, questions: [question] }, 1, 'u2');
-    expect(saved).toMatchObject({ version: 2, updatedBy: 'u2', createdBy: 'u1' });
-    await expect(saveTiluchi(db(), orgId, { ...t, title: 'Viejo' }, 1, 'u3')).rejects.toThrow(ConflictError);
-
-    expect(await listTiluchis(db(), orgId)).toEqual([
-      expect.objectContaining({ id: t.id, title: 'Trivia', questionCount: 1 }),
-    ]);
-
-    await deleteTiluchi(db(), orgId, t.id);
-    expect(await getTiluchi(db(), orgId, t.id)).toBeUndefined();
-  });
-
-  it('rejects invalid questions', async () => {
-    const orgId = unique('org');
-    const t = await createTiluchi(db(), orgId, { title: 'T', language: 'es' }, 'u1');
-    const bad = { ...question, prompt: '' };
-    await expect(saveTiluchi(db(), orgId, { ...t, questions: [bad] }, 1, 'u1')).rejects.toThrow();
   });
 });

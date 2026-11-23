@@ -1,4 +1,4 @@
-import { isAnswerCorrect, type Question } from '@chacota/core';
+import { isAnswerCorrect, type Question } from '@chacota/tiluchi/content';
 import { playerCode, type Answer, type Game, type GameResults, type Player, type PublicQuestion, type RankEntry, type Standing } from './model';
 
 const TF_CHOICES = [

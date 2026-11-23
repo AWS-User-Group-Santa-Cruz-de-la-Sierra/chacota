@@ -1,4 +1,5 @@
-import { createDb, createOrg, createTiluchi, getOrgBySlug } from '@chacota/db';
+import { createDb, createOrg, getOrgBySlug } from '@chacota/db';
+import { createTiluchi } from '@chacota/tiluchi/content';
 import { webEnv } from './env';
 
 export const ORG_SLUG = 'e2e-ug';

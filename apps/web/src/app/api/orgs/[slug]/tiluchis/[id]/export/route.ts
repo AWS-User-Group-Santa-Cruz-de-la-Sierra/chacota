@@ -1,5 +1,5 @@
-import { exportChacotaJson, exportCsv, exportXlsx } from '@chacota/core/exporters';
-import { getTiluchi } from '@chacota/db';
+import { exportChacotaJson, exportCsv, exportXlsx } from '@chacota/tiluchi/exporters';
+import { getTiluchi } from '@chacota/tiluchi/content';
 import { notFound } from 'next/navigation';
 import type { NextRequest } from 'next/server';
 import { requireOrgAccess } from '@/lib/auth';

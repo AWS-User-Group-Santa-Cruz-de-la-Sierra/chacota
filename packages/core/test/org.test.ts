@@ -3,8 +3,8 @@ import { can, canAssignRole, OrgInput, ProfileInput, slugify } from '../src/org'
 
 describe('permissions', () => {
   it('editors edit and host but do not manage the org', () => {
-    expect(can('editor', 'tiluchi.edit')).toBe(true);
-    expect(can('editor', 'game.host')).toBe(true);
+    expect(can('editor', 'activity.content')).toBe(true);
+    expect(can('editor', 'activity.host')).toBe(true);
     expect(can('editor', 'org.update')).toBe(false);
     expect(can('editor', 'members.manage')).toBe(false);
   });

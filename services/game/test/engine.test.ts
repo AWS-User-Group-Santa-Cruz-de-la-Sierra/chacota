@@ -1,4 +1,4 @@
-import type { Question } from '@chacota/core';
+import type { Question } from '@chacota/tiluchi/content';
 import { describe, expect, it } from 'vitest';
 import { correctValues, countAnswers, publicQuestion, rankPlayers, topStandings } from '../src/engine';
 import { playerCode, type Answer, type Player } from '../src/model';

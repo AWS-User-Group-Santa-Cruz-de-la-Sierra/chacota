@@ -1,22 +1,8 @@
 'use server';
 
 import { canAssignRole, Language, OrgInput, ProfileInput, Role } from '@chacota/core';
-import {
-  acceptInvite,
-  ConflictError,
-  createInvite,
-  createOrg,
-  createTiluchi,
-  getMembership,
-  getOrg,
-  listMembers,
-  NotFoundError,
-  removeMember,
-  setMemberRole,
-  setOrgStatus,
-  updateOrg,
-  updateProfile,
-} from '@chacota/db';
+import { acceptInvite, ConflictError, createInvite, createOrg, getMembership, getOrg, listMembers, NotFoundError, removeMember, setMemberRole, setOrgStatus, updateOrg, updateProfile } from '@chacota/db';
+import { createTiluchi } from '@chacota/tiluchi/content';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { z } from 'zod';
@@ -76,7 +62,7 @@ export async function updateOrgAction(slug: string, _: FormState, form: FormData
 }
 
 export async function createTiluchiAction(slug: string, _: FormState, form: FormData): Promise<FormState> {
-  const { org, user } = await requireOrgAccess(slug, 'tiluchi.edit');
+  const { org, user } = await requireOrgAccess(slug, 'activity.content');
   const parsed = z
     .object({ title: z.string().trim().min(1).max(120), language: Language })
     .safeParse({ title: optional(form.get('title')), language: form.get('language') });

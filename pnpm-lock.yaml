@@ -22,6 +22,9 @@ importers:
       '@chacota/game':
         specifier: workspace:*
         version: link:../../services/game
+      '@chacota/tiluchi':
+        specifier: workspace:*
+        version: link:../../modules/tiluchi
       aws-amplify:
         specifier: ^6.22.2
         version: 6.22.2
@@ -86,6 +89,9 @@ importers:
       '@chacota/db':
         specifier: workspace:*
         version: link:../packages/db
+      '@chacota/tiluchi':
+        specifier: workspace:*
+        version: link:../modules/tiluchi
       playwright-core:
         specifier: ^1.56.1
         version: 1.65.1
@@ -121,6 +127,43 @@ importers:
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^5.1.1
+        version: 5.1.1(@types/node@26.6.6)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
+  modules/tiluchi:
+    dependencies:
+      '@aws-sdk/lib-dynamodb':
+        specifier: ^3.1175.0
+        version: 3.1175.0(@aws-sdk/client-dynamodb@3.1175.0)
+      '@chacota/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@chacota/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      exceljs:
+        specifier: ^4.4.0
+        version: 4.4.0
+      papaparse:
+        specifier: ^5.7.1
+        version: 5.7.1
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@aws-sdk/client-dynamodb':
+        specifier: ^3.1175.0
+        version: 3.1175.0
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+      '@types/papaparse':
+        specifier: ^5.5.2
+        version: 5.5.2
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -204,6 +247,9 @@ importers:
       '@chacota/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@chacota/tiluchi':
+        specifier: workspace:*
+        version: link:../../modules/tiluchi
       '@hono/node-server':
         specifier: ^2.1.11
         version: 2.1.11(hono@4.13.20)

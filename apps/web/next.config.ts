@@ -5,7 +5,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   experimental: { authInterrupts: true },
-  transpilePackages: ['@chacota/core', '@chacota/db', '@chacota/game'],
+  transpilePackages: ['@chacota/core', '@chacota/db', '@chacota/game', '@chacota/tiluchi'],
   turbopack: {
     rules: {
       '*.css': {

@@ -6,8 +6,7 @@
   "license": "Apache-2.0",
   "exports": {
     ".": "./src/index.ts",
-    "./importers": "./src/importers/index.ts",
-    "./exporters": "./src/exporters/index.ts"
+    "./tables": "./src/tables.ts"
   },
   "scripts": {
     "test": "vitest run",

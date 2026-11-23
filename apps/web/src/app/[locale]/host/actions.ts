@@ -1,7 +1,7 @@
 'use server';
 
 import { GameError } from '@chacota/game';
-import { getTiluchi } from '@chacota/db';
+import { getTiluchi } from '@chacota/tiluchi/content';
 import { getLocale } from 'next-intl/server';
 import { redirect } from '@/i18n/navigation';
 import { requireOrgAccess } from '@/lib/auth';
@@ -11,7 +11,7 @@ import { getGameService, requireGameHost } from '@/lib/game';
 export type StartGameResult = { error: 'not_playable' | 'org_not_active' } | undefined;
 
 export async function startGameAction(slug: string, tiluchiId: string): Promise<StartGameResult> {
-  const { org, user } = await requireOrgAccess(slug, 'game.host');
+  const { org, user } = await requireOrgAccess(slug, 'activity.host');
   if (org.status !== 'active') return { error: 'org_not_active' };
   const tiluchi = await getTiluchi(getDb(), org.id, tiluchiId);
   if (!tiluchi) return { error: 'not_playable' };

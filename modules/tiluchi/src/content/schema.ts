@@ -14,8 +14,8 @@ export const LIMITS = {
   maxQuestions: 100,
 } as const;
 
-export const Language = z.enum(['es', 'en']);
-export type Language = z.infer<typeof Language>;
+import { Language } from '@chacota/core';
+export { Language };
 
 export const PointsMode = z.enum(['standard', 'double', 'none']);
 export type PointsMode = z.infer<typeof PointsMode>;

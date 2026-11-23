@@ -41,20 +41,20 @@ export type OrgAction =
   | 'org.delete'
   | 'members.manage'
   | 'members.manageAdmins'
-  | 'tiluchi.edit'
-  | 'game.host';
+  | 'activity.content'
+  | 'activity.host';
 
 const ROLE_ACTIONS: Record<Role, ReadonlySet<OrgAction>> = {
-  editor: new Set(['org.view', 'tiluchi.edit', 'game.host']),
-  admin: new Set(['org.view', 'org.update', 'members.manage', 'tiluchi.edit', 'game.host']),
+  editor: new Set(['org.view', 'activity.content', 'activity.host']),
+  admin: new Set(['org.view', 'org.update', 'members.manage', 'activity.content', 'activity.host']),
   owner: new Set([
     'org.view',
     'org.update',
     'org.delete',
     'members.manage',
     'members.manageAdmins',
-    'tiluchi.edit',
-    'game.host',
+    'activity.content',
+    'activity.host',
   ]),
 };
 

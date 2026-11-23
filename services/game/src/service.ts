@@ -1,6 +1,7 @@
 import { randomInt } from 'node:crypto';
 import { GetCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { computePoints, isAnswerCorrect, newId, PlayableTiluchi, type Tiluchi } from '@chacota/core';
+import { newId } from '@chacota/core';
+import { computePoints, isAnswerCorrect, PlayableTiluchi, type Tiluchi } from '@chacota/tiluchi/content';
 import { isConditionalCheckFailure, type Db } from '@chacota/db';
 import { buildResults, countAnswers, correctValues, publicQuestion, rankPlayers, topStandings, validAnswerValues } from './engine';
 import { ANSWER_GRACE_MS, QUESTION_LEAD_MS, channels, NICKNAME_MAX, type Answer, type Game, type GameEvent, type GameResults, type GameResultsSummary, type GameStatus, type Player } from './model';

@@ -4,7 +4,6 @@ export const keys = {
   slug: (slug: string) => ({ pk: `SLUG#${slug}`, sk: 'SLUG' }),
   member: (orgId: string, userId: string) => ({ pk: `ORG#${orgId}`, sk: `MEMBER#${userId}` }),
   invite: (token: string) => ({ pk: `INVITE#${token}`, sk: 'INVITE' }),
-  tiluchi: (orgId: string, tiluchiId: string) => ({ pk: `ORG#${orgId}`, sk: `TILUCHI#${tiluchiId}` }),
 };
 
 export const nowIso = () => new Date().toISOString();

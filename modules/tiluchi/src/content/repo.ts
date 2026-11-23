@@ -1,8 +1,11 @@
 import { DeleteCommand, GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { newId, Tiluchi, type Language, type Question } from '@chacota/core';
-import type { Db } from './client';
-import { ConflictError, isConditionalCheckFailure, NotFoundError } from './errors';
-import { keys, nowIso, strip } from './keys';
+import { newId } from '@chacota/core';
+import { ConflictError, isConditionalCheckFailure, NotFoundError, nowIso, strip, type Db } from '@chacota/db';
+import { Tiluchi, type Language, type Question } from './schema';
+
+const keys = {
+  tiluchi: (orgId: string, tiluchiId: string) => ({ pk: `ORG#${orgId}`, sk: `TILUCHI#${tiluchiId}` }),
+};
 
 export interface StoredTiluchi extends Tiluchi {
   orgId: string;
