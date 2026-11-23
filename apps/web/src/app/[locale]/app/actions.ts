@@ -1,6 +1,6 @@
 'use server';
 
-import { canAssignRole, Language, OrgInput, ProfileInput, Role } from '@chacota/core';
+import { canAssignRole, isOrgMediaKey, Language, OrgInput, ProfileInput, Role } from '@chacota/core';
 import { acceptInvite, ConflictError, createInvite, createOrg, getMembership, getOrg, listMembers, NotFoundError, removeMember, setMemberRole, setOrgStatus, updateOrg, updateProfile } from '@chacota/db';
 import { createTiluchi } from '@chacota/tiluchi/content';
 import { revalidatePath } from 'next/cache';
@@ -56,7 +56,11 @@ export async function updateOrgAction(slug: string, _: FormState, form: FormData
     websiteUrl: optional(form.get('websiteUrl')),
   });
   if (!parsed.success) return { error: 'invalid', fieldErrors: fieldErrors(parsed.error) };
-  await updateOrg(getDb(), org.id, parsed.data);
+  // Absent: the logo stays. Empty: it is removed. Otherwise it must be one of this org's keys.
+  const logo = form.get('logoKey');
+  const logoKey = typeof logo !== 'string' ? undefined : logo === '' ? null : logo;
+  if (logoKey && !isOrgMediaKey(logoKey, org.id)) return { error: 'invalid', fieldErrors: { logoKey: 'invalid' } };
+  await updateOrg(getDb(), org.id, { ...parsed.data, logoKey });
   revalidatePath('/[locale]/app', 'layout');
   return { ok: true };
 }

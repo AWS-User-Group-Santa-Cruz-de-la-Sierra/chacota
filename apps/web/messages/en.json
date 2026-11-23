@@ -52,7 +52,10 @@
     "websiteUrl": "Website",
     "pendingNotice": "A Chacota admin will review your organization before you can play live.",
     "slugTaken": "That address is already taken.",
-    "invalid": "Check the highlighted fields."
+    "invalid": "Check the highlighted fields.",
+    "logo": "Logo",
+    "logoHint": "Shown on the projected screen. A PNG with a transparent background works best.",
+    "primaryColorHint": "The color fills the lobby and a stripe on the projected screen."
   },
   "org": {
     "tiluchis": "Tiluchis",

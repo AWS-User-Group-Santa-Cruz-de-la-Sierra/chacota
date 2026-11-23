@@ -91,19 +91,21 @@ export async function getOrgBySlug(db: Db, slug: string): Promise<Org | undefine
 export async function updateOrg(
   db: Db,
   orgId: string,
-  changes: Partial<Pick<Org, 'name' | 'description' | 'primaryColor' | 'websiteUrl' | 'logoKey'>>,
+  changes: Partial<Pick<Org, 'name' | 'description' | 'primaryColor' | 'websiteUrl'>> & { logoKey?: string | null },
 ): Promise<Org> {
+  // undefined leaves a field as it is; null removes it.
   const entries = Object.entries(changes).filter(([, v]) => v !== undefined);
   const names = Object.fromEntries(entries.map(([k], i) => [`#f${i}`, k]));
-  const values = Object.fromEntries(entries.map(([, v], i) => [`:v${i}`, v]));
-  const sets = entries.map((_, i) => `#f${i} = :v${i}`);
+  const values = Object.fromEntries(entries.flatMap(([, v], i) => (v === null ? [] : [[`:v${i}`, v]])));
+  const sets = entries.flatMap(([, v], i) => (v === null ? [] : [`#f${i} = :v${i}`]));
+  const removes = entries.flatMap(([, v], i) => (v === null ? [`#f${i}`] : []));
   try {
     const { Attributes } = await db.doc.send(
       new UpdateCommand({
         TableName: db.tableName,
         Key: keys.org(orgId),
         ConditionExpression: 'attribute_exists(pk)',
-        UpdateExpression: `SET ${[...sets, 'updatedAt = :now'].join(', ')}`,
+        UpdateExpression: `SET ${[...sets, 'updatedAt = :now'].join(', ')}${removes.length ? ` REMOVE ${removes.join(', ')}` : ''}`,
         ExpressionAttributeNames: Object.keys(names).length ? names : undefined,
         ExpressionAttributeValues: { ...values, ':now': nowIso() },
         ReturnValues: 'ALL_NEW',

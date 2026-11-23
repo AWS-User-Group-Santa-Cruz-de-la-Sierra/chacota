@@ -52,7 +52,10 @@
     "websiteUrl": "Sitio web",
     "pendingNotice": "Un administrador de Chacota revisará tu organización antes de que puedas jugar en vivo.",
     "slugTaken": "Esa dirección ya está en uso.",
-    "invalid": "Revisá los campos marcados."
+    "invalid": "Revisá los campos marcados.",
+    "logo": "Logo",
+    "logoHint": "Se muestra en la pantalla proyectada. Mejor un PNG con fondo transparente.",
+    "primaryColorHint": "El color pinta el lobby y una franja de la pantalla proyectada."
   },
   "org": {
     "tiluchis": "Tiluchis",
