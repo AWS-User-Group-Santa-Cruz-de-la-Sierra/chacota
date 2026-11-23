@@ -32,6 +32,7 @@ export default async function HostPage({ params }: { params: Promise<{ sessionId
       qrSvg={qrSvg}
       initial={{
         status: session.status,
+        version: snapshot.session.version,
         serverNow: snapshot.serverNow,
         players: players.sort((a, b) => a.joinedAt - b.joinedAt).map((p) => p.nickname),
         snapshot: snapshot.module,

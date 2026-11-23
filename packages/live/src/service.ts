@@ -170,10 +170,15 @@ export class LiveService {
     return Item.sessionId as string;
   }
 
-  /** Moves the session forward: the lobby starts it, then the activity decides. */
-  async advance<TState = unknown>(id: string): Promise<Session<TState>> {
+  /**
+   * Moves the session forward: the lobby starts it, then the activity decides.
+   * `expectedVersion` is the version the presenter's screen shows: a second press (double click,
+   * clicker, auto-reveal racing a click) carries an old version and is refused instead of skipping a step.
+   */
+  async advance<TState = unknown>(id: string, expectedVersion?: number): Promise<Session<TState>> {
     const session = await this.requireSession(id);
     if (session.status === 'ended') throw new LiveError('session_ended');
+    if (expectedVersion !== undefined && expectedVersion !== session.version) throw new LiveError('invalid_transition');
     const activity = this.requireActivity(session.module);
     let current = session;
     if (session.status === 'lobby') {
@@ -356,6 +361,7 @@ export class LiveService {
         status: session.status,
         module: session.module,
         playerCount: session.playerCount,
+        version: session.version,
       },
       player: player && { id: player.id, nickname: player.nickname, score: player.score },
       module: activity && session.status !== 'ended' ? await activity.snapshot(this, session, playerId) : {},

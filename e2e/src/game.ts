@@ -151,7 +151,14 @@ try {
   await host.getByRole('button', { name: 'Ver ranking' }).waitFor({ timeout: 8000 }); // auto reveal: everyone answered
   await host.getByRole('button', { name: 'Ver ranking' }).click();
   await host.getByRole('button', { name: 'Siguiente pregunta' }).click();
-  await host.getByRole('button', { name: 'Mostrar respuesta' }).click();
+  await host.getByRole('button', { name: 'Mostrar respuesta' }).waitFor();
+  // A clicker's double press must not skip the answer screen.
+  await host.keyboard.press('Space');
+  await host.keyboard.press('Space');
+  await host.getByRole('button', { name: 'Ver ranking' }).waitFor({ timeout: 8000 });
+  await host.waitForTimeout(1500);
+  if (!(await host.getByRole('button', { name: 'Ver ranking' }).isVisible())) fail('A double press skipped the answer screen');
+  step('a double press shows the answer instead of skipping it');
   await host.getByRole('button', { name: 'Ver ranking' }).click();
   await host.getByRole('button', { name: 'Ver podio' }).click();
   await host.getByText('¡Felicidades!').waitFor({ timeout: 8000 });

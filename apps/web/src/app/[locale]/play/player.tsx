@@ -1,12 +1,13 @@
 'use client';
 
-import { channels, createEventHub, NICKNAME_MAX, playerCode, type LiveEvent, type PlatformEvent, type RealtimeConfig } from '@chacota/live/client';
+import { channels, createEventHub, frameOnEvent, NICKNAME_MAX, playerCode, type LiveEvent, type PlatformEvent, type RealtimeConfig } from '@chacota/live/client';
 import { useServerClock } from '@chacota/live/react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { activityWebs } from '@/activities/registry.client';
 import { useRealtime } from '@/components/game/use-realtime';
 import { Logo } from '@/components/logo';
+import { shouldForgetSession } from '@/lib/player-session';
 import { buttonClass } from '@/components/ui';
 
 interface Session {
@@ -60,7 +61,13 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
   const clock = useServerClock();
   const [hub] = useState(createEventHub);
   const [session, setSession] = useState<Session | null>(null);
-  const [screen, setScreen] = useState<Screen>({ kind: 'join' });
+  const [screen, setScreenState] = useState<Screen>({ kind: 'join' });
+  // The realtime listener reads the current screen without resubscribing.
+  const screenNow = useRef<Screen>(screen);
+  const setScreen = useCallback((next: Screen) => {
+    screenNow.current = next;
+    setScreenState(next);
+  }, []);
   const [score, setScore] = useState(0);
 
   const resync = useCallback(
@@ -68,9 +75,11 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       const res = await fetch(`${apiUrl}/state`, { headers: { authorization: `Bearer ${s.token}` } }).catch(() => null);
       if (!res) return;
       if (!res.ok) {
-        saveSession(null);
-        setSession(null);
-        setScreen({ kind: 'join' });
+        if (shouldForgetSession(res.status)) {
+          saveSession(null);
+          setSession(null);
+          setScreen({ kind: 'join' });
+        }
         return;
       }
       const snap = (await res.json()) as Snapshot;
@@ -81,7 +90,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       else if (snap.session.status === 'ended') setScreen({ kind: 'ended' });
       else setScreen({ kind: 'running', snapshot: snap.module, key: Date.now() });
     },
-    [apiUrl, clock, hub],
+    [apiUrl, clock, hub, setScreen],
   );
 
   // Resume a previous session (same PIN, or no PIN in the link).
@@ -101,24 +110,21 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       const serverNow = (event as { serverNow?: unknown }).serverNow;
       if (typeof serverNow === 'number') clock.sync(serverNow);
       const e = event as PlatformEvent;
-      switch (e.type) {
-        case 'started':
-          hub.reset();
-          setScreen({ kind: 'running', snapshot: {}, key: Date.now() });
-          return;
-        case 'ended': {
-          const mine = e.ranks[session.playerId];
-          if (mine) setScore(mine.score);
-          setScreen({ kind: 'ended', rank: mine?.rank });
-          return;
-        }
-        case 'player_joined':
-          return;
-        default:
-          hub.emit(event);
+      if (e.type === 'ended') {
+        const mine = e.ranks[session.playerId];
+        if (mine) setScore(mine.score);
+        setScreen({ kind: 'ended', rank: mine?.rank });
+        return;
       }
+      const current = screenNow.current.kind;
+      const step = frameOnEvent(current === 'running' ? 'running' : current === 'ended' ? 'ended' : 'lobby', event.type);
+      if (step.restart) {
+        hub.reset();
+        setScreen({ kind: 'running', snapshot: {}, key: Date.now() });
+      }
+      if (step.deliver) hub.emit(event);
     },
-    [session, clock, hub],
+    [session, clock, hub, setScreen],
   );
   const { connected } = useRealtime(realtime, session ? [channels.public(session.sessionId)] : [], onEvent, () => session && resync(session));
 

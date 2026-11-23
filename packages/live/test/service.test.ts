@@ -88,6 +88,17 @@ describe('LiveService', () => {
     expect(results.find((r) => r.status === 'rejected')).toMatchObject({ reason: new LiveError('invalid_transition') });
   });
 
+  it('ignores an advance based on a screen that is already out of date', async () => {
+    const session = await newSession();
+    await live.join(session.pin, 'Uno');
+    const started = await live.advance(session.id, session.version); // round 1
+    // A double click: the second press still carries the version the screen showed.
+    await expect(live.advance(session.id, session.version)).rejects.toThrow(new LiveError('invalid_transition'));
+    expect((await live.getSession<{ round: number }>(session.id))!.state.round).toBe(1);
+    await live.advance(session.id, started.version); // round 2
+    expect((await live.snapshot(session.id)).session.version).toBe((await live.getSession(session.id))!.version);
+  });
+
   it('refuses unknown activities and unplayable content', async () => {
     await expect(
       live.createSession({ orgId: 'o', orgName: 'O', hostUserId: 'h', module: 'nope', content: {} }),

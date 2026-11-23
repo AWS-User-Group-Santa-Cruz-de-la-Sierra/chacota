@@ -1,9 +1,9 @@
 'use client';
 
-import { channels, createEventHub, type LiveEvent, type PlatformEvent, type RealtimeConfig, type SessionStatus, type Standing } from '@chacota/live/client';
+import { channels, createEventHub, frameOnEvent, type LiveEvent, type PlatformEvent, type RealtimeConfig, type SessionStatus, type Standing } from '@chacota/live/client';
 import { useServerClock } from '@chacota/live/react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { activityWebs } from '@/activities/registry.client';
 import { useRealtime } from '@/components/game/use-realtime';
 import { buttonClass } from '@/components/ui';
@@ -21,7 +21,7 @@ interface Props {
   joinUrl: string;
   joinHost: string;
   qrSvg: string;
-  initial: { status: SessionStatus; serverNow: number; players: string[]; snapshot: Record<string, unknown> };
+  initial: { status: SessionStatus; version: number; serverNow: number; players: string[]; snapshot: Record<string, unknown> };
   realtime: RealtimeConfig;
 }
 
@@ -35,6 +35,8 @@ export function Presenter(props: Props) {
   const clock = useServerClock();
   const [hub] = useState(createEventHub);
   const [status, setStatus] = useState<SessionStatus>(props.initial.status);
+  // Read by the realtime listener, which must not resubscribe on every change.
+  const statusNow = useRef(props.initial.status);
   const [players, setPlayers] = useState<string[]>(props.initial.players);
   const [podium, setPodium] = useState<Standing[]>([]);
   const [advanceLabel, setAdvanceLabel] = useState(t('next'));
@@ -48,21 +50,18 @@ export function Presenter(props: Props) {
       const serverNow = (event as { serverNow?: unknown }).serverNow;
       if (typeof serverNow === 'number') clock.sync(serverNow);
       const e = event as PlatformEvent;
-      switch (e.type) {
-        case 'player_joined':
-          setPlayers((p) => (p.includes(e.nickname) ? p : [...p, e.nickname]));
-          return;
-        case 'started':
-          hub.reset();
-          setStatus('running');
-          return;
-        case 'ended':
-          setPodium(e.podium);
-          setStatus('ended');
-          return;
-        default:
-          hub.emit(event);
+      if (e.type === 'player_joined') {
+        setPlayers((p) => (p.includes(e.nickname) ? p : [...p, e.nickname]));
+        return;
       }
+      if (e.type === 'ended') setPodium(e.podium);
+      const step = frameOnEvent(statusNow.current, event.type);
+      if (step.restart) hub.reset();
+      if (step.status !== statusNow.current) {
+        statusNow.current = step.status;
+        setStatus(step.status);
+      }
+      if (step.deliver) hub.emit(event);
     },
     [clock, hub],
   );
@@ -70,9 +69,19 @@ export function Presenter(props: Props) {
     window.location.reload(),
   );
 
+  // The version this screen shows. A second press before the first one returns carries the same
+  // version and is refused by the server, so a double click never skips a step.
+  const version = useRef(props.initial.version);
+  const advancing = useRef(false);
   const advance = useCallback(() => {
+    if (advancing.current) return;
+    advancing.current = true;
     startTransition(async () => {
-      await advanceSessionAction(props.sessionId);
+      try {
+        version.current = (await advanceSessionAction(props.sessionId, version.current)).version;
+      } finally {
+        advancing.current = false;
+      }
     });
   }, [props.sessionId]);
   const hostAction = useCallback((name: string, args?: unknown) => hostActionAction(props.sessionId, name, args), [props.sessionId]);

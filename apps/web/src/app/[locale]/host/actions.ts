@@ -37,16 +37,19 @@ export async function startTiluchiAction(slug: string, tiluchiId: string): Promi
   redirect({ href: `/host/${sessionId}`, locale: await getLocale() });
 }
 
-/** Next step of the session. Returns the new status, or the current one if another click won the race. */
-export async function advanceSessionAction(sessionId: string): Promise<{ status: string }> {
+/**
+ * Next step of the session, if the presenter's screen still shows `expectedVersion`. Returns the
+ * new status and version, or the current ones when another press (or presenter) got there first.
+ */
+export async function advanceSessionAction(sessionId: string, expectedVersion?: number): Promise<{ status: string; version: number }> {
   await requireSessionHost(sessionId);
   try {
-    const session = await getLive().advance(sessionId);
-    return { status: session.status };
+    const session = await getLive().advance(sessionId, expectedVersion);
+    return { status: session.status, version: session.version };
   } catch (error) {
     if (error instanceof LiveError && (error.code === 'invalid_transition' || error.code === 'session_ended')) {
       const session = await getLive().getSession(sessionId);
-      return { status: session!.status };
+      return { status: session!.status, version: session!.version };
     }
     throw error;
   }
@@ -54,7 +57,13 @@ export async function advanceSessionAction(sessionId: string): Promise<{ status:
 
 export async function endSessionAction(sessionId: string) {
   await requireSessionHost(sessionId);
-  await getLive().end(sessionId);
+  try {
+    await getLive().end(sessionId);
+  } catch (error) {
+    // An auto-reveal moved the session at the same moment: end from the new state.
+    if (!(error instanceof LiveError && error.code === 'invalid_transition')) throw error;
+    await getLive().end(sessionId);
+  }
 }
 
 /** Activity-specific presenter action (e.g. Tiluchi's answer count). */

@@ -3,7 +3,15 @@
 import { Link, usePathname } from '@/i18n/navigation';
 
 /** Activities · History · Organization, with the current section highlighted. */
-export function OrgNav({ base, labels }: { base: string; labels: { activities: string; history: string; organization: string } }) {
+export function OrgNav({
+  base,
+  organizationHref,
+  labels,
+}: {
+  base: string;
+  organizationHref: string;
+  labels: { activities: string; history: string; organization: string };
+}) {
   const pathname = usePathname();
   const section = pathname.startsWith(`${base}/historial`) ? 'history' : pathname.startsWith(`${base}/admin`) ? 'organization' : 'activities';
   const item = (key: typeof section, href: string, children: React.ReactNode) => (
@@ -23,7 +31,7 @@ export function OrgNav({ base, labels }: { base: string; labels: { activities: s
       {item('history', `${base}/historial`, labels.history)}
       {item(
         'organization',
-        `${base}/admin`,
+        organizationHref,
         <>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <circle cx="12" cy="12" r="3" />

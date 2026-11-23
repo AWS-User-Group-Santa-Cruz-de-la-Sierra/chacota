@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { Badge, Notice } from '@/components/ui';
 import { requireOrgAccess } from '@/lib/auth';
+import { organizationHref } from '@/lib/org-links';
 import { OrgNav } from './org-nav';
 
 export default async function OrgLayout({ children, params }: { children: ReactNode; params: Promise<{ slug: string }> }) {
@@ -21,6 +22,7 @@ export default async function OrgLayout({ children, params }: { children: ReactN
         </div>
         <OrgNav
           base={`/app/orgs/${slug}`}
+          organizationHref={organizationHref(`/app/orgs/${slug}`, role)}
           labels={{ activities: t('org.activities'), history: t('org.history'), organization: t('org.organization') }}
         />
       </div>
