@@ -33,7 +33,8 @@ export function readConfig(node: Node): ChacotaConfig {
     googleOAuthSecretName: get('googleOAuthSecretName'),
     budgetEmail: get('budgetEmail'),
     monthlyBudgetUsd: Number(get('monthlyBudgetUsd') ?? 20),
-    extraCallbackOrigins: typeof origins === 'string' ? origins.split(',') : origins,
+    // An empty value (-c chacota:extraCallbackOrigins=) means no extra origins.
+    extraCallbackOrigins: (typeof origins === 'string' ? origins.split(',') : origins).filter(Boolean),
     loadTest: String(get('loadTest') ?? 'false') === 'true',
   };
 }
