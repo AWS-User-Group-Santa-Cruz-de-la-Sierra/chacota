@@ -147,8 +147,8 @@ export function Presenter(props: Props) {
           </div>
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-4">
-              <activity.Icon size={160} color={props.primaryColor} />
-              <span className="font-display text-5xl font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
+              <activity.Icon size={96} color={props.primaryColor} />
+              <span className="font-display text-[2.75rem] font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
             </div>
             <h1 className="font-display text-5xl font-extrabold leading-none tracking-tight lg:text-7xl">{props.title}</h1>
             {activity.LobbySummary && (
@@ -230,8 +230,8 @@ export function Presenter(props: Props) {
         </div>
         <div className="flex items-center gap-3">
           {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
-          <activity.Icon size={72} color={props.primaryColor} />
-          <span className="font-display text-3xl font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
+          <activity.Icon size={44} color={props.primaryColor} />
+          <span className="font-display text-[1.375rem] font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
           {status === 'running' && (
             <span className="ml-3 rounded-full bg-noche-2 px-4 py-2 text-sm text-niebla">
               {props.joinHost} · PIN <span className="font-display text-lg font-extrabold tracking-widest text-sol">{props.pin}</span>
