@@ -278,7 +278,7 @@ function JoinForm({ initialPin, onJoin }: { initialPin: string; onJoin: (pin: st
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const errorKey = (code: string) =>
-    (['session_not_found', 'session_ended', 'nickname_taken', 'invalid_nickname', 'network'] as const).includes(code as never)
+    (['session_not_found', 'session_ended', 'nickname_taken', 'session_full', 'invalid_nickname', 'network'] as const).includes(code as never)
       ? `errors.${code}`
       : 'errors.generic';
 

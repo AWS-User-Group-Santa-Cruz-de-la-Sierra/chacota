@@ -34,6 +34,14 @@ describe('participant API', () => {
     expect(await missing.json()).toEqual({ error: 'session_not_found' });
   });
 
+  it('answers 409 session_full when the game is full', async () => {
+    const session = await live.createSession({ orgId: 'o', orgName: 'UG', hostUserId: 'h', module: 'echo', content: { rounds: 1, maxPlayers: 1 } });
+    await post('/join', { pin: session.pin, nickname: 'Ana' });
+    const full = await post('/join', { pin: session.pin, nickname: 'Beto' });
+    expect(full.status).toBe(409);
+    expect(await full.json()).toEqual({ error: 'session_full' });
+  });
+
   it('joins, mounts each activity under /m/<id> and serves the snapshot', async () => {
     const session = await live.createSession({ orgId: 'o', orgName: 'O', hostUserId: 'h', module: 'echo', content: { rounds: 1 } });
     const joined = await post('/join', { pin: session.pin, nickname: 'Ana' });

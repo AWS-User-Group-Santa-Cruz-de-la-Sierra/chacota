@@ -212,7 +212,8 @@
       "network": "We could not connect. Check your internet.",
       "generic": "Something went wrong. Try again.",
       "session_not_found": "We could not find a game with that PIN.",
-      "session_ended": "That game is over."
+      "session_ended": "That game is over.",
+      "session_full": "This game is full."
     },
     "youreIn": "You are in!",
     "lookAtScreen": "Look at the screen: the game starts soon.",

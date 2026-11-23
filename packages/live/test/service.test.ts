@@ -15,6 +15,40 @@ beforeEach(() => {
 const newSession = (orgId = 'org1', rounds = 2) =>
   live.createSession({ orgId, orgName: 'AWS UG', hostUserId: 'host', module: 'echo', content: { rounds } });
 
+describe('player cap', () => {
+  const capped = (maxPlayers?: number) =>
+    live.createSession({ orgId: 'org1', orgName: 'UG', hostUserId: 'h', module: 'echo', content: { rounds: 1, maxPlayers } });
+
+  it('refuses players past maxPlayers', async () => {
+    const s = await capped(2);
+    await live.join(s.pin, 'A');
+    await live.join(s.pin, 'B');
+    await expect(live.join(s.pin, 'C')).rejects.toThrow(new LiveError('session_full'));
+    expect((await live.getSession(s.id))!.playerCount).toBe(2);
+  });
+
+  it('never lets more than maxPlayers in', async () => {
+    const s = await capped(3);
+    const results = await Promise.allSettled(['A', 'B', 'C', 'D', 'E', 'F'].map((n) => live.join(s.pin, n)));
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(3);
+    expect((await live.getSession(s.id))!.playerCount).toBe(3);
+  });
+
+  it('a taken nickname does not use up a place', async () => {
+    const s = await capped(2);
+    await live.join(s.pin, 'A');
+    await expect(live.join(s.pin, 'a')).rejects.toThrow(new LiveError('nickname_taken'));
+    await live.join(s.pin, 'B');
+    expect((await live.getSession(s.id))!.playerCount).toBe(2);
+  });
+
+  it('has no cap when the activity sets none', async () => {
+    const s = await capped();
+    await Promise.all(['A', 'B', 'C', 'D', 'E'].map((n) => live.join(s.pin, n)));
+    expect((await live.getSession(s.id))!.playerCount).toBe(5);
+  });
+});
+
 describe('LiveService', () => {
   it('announces the top 5 when it ends: the podium plus two mentions', async () => {
     const session = await newSession('org1', 1);

@@ -212,7 +212,8 @@
       "network": "No pudimos conectarnos. Revisá tu internet.",
       "generic": "Algo salió mal. Probá de nuevo.",
       "session_not_found": "No encontramos un juego con ese PIN.",
-      "session_ended": "Ese juego ya terminó."
+      "session_ended": "Ese juego ya terminó.",
+      "session_full": "Este juego ya está lleno."
     },
     "youreIn": "¡Estás dentro!",
     "lookAtScreen": "Mirá la pantalla: el juego empieza pronto.",

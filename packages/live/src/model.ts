@@ -17,6 +17,8 @@ export interface Session<TState = unknown> {
   /** Incremented on every transition; guards against racing presenters. */
   version: number;
   playerCount: number;
+  /** Set by the activity; joining past it fails with session_full. */
+  maxPlayers?: number;
   createdAt: string;
   endedAt?: string;
   /** Reserved for rooms that chain activities under one PIN. Always undefined for now. */

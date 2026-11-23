@@ -74,6 +74,7 @@ Reglas:
 - **Estado:** guardá el estado en `session.state` con `live.transition(session, { state })`. La transición falla con `invalid_transition` si otro presentador avanzó primero, así que no hace falta otro bloqueo.
 - **Eventos:** llevan el prefijo de tu id, por ejemplo `{ type: 'ruleta.spin', ... }`. Los eventos `player_joined`, `started` y `ended` son de la plataforma.
 - **Puntaje:** el puntaje de cada jugador va en `player.score`. `live.addScore` suma puntos; para algo más complejo podés usar una transacción, como hace Tiluchi al responder. Los datos propios de cada jugador van en `player.data`.
+- **Tope de jugadores:** si `prepare` devuelve `maxPlayers`, la plataforma no deja entrar a nadie más cuando se llena (`session_full`, "Este juego ya está lleno"). Sin `maxPlayers` no hay tope.
 - **Terminar:** llamá a `live.end(session.id)`. La plataforma guarda los resultados, publica `ended` y muestra el podio.
 - **Tiempos:** se miden con el reloj del servidor (`live.now()`), nunca con el del celular.
 
