@@ -90,7 +90,11 @@ Las fases que dependen del tiempo (fin de la elección, de la cuenta regresiva y
 
 ### Puntaje y resultados
 
-- Cada ronda reparte puntos por puesto: el 1° más, bajando hasta el último. Los que no llegaron se ordenan por metros. El total va a `player.score` (`live.addScore`), así el podio y el historial de la plataforma funcionan como en Tiluchi.
+- Puntos de cada ronda, decididos por el maintainer:
+  - El 1° en cruzar la meta se lleva **1000**.
+  - Los que cruzan después se llevan **300 + 700 × (1 − Δ / T)**. Δ son los segundos detrás del 1° y T los segundos entre la llegada del 1° y el corte de la ronda. Quedan entre 1000 y 300.
+  - Los que no llegan se llevan **300 × metros / largo de la pista**, entre 0 y 300. Así cruzar la meta siempre vale más que no llegar, y nadie se va con las manos vacías por una mala ronda.
+  - El orden de la ronda: los que llegaron, por tiempo, y después los demás, por metros. El total va a `player.score` (`live.addScore`), así el podio y el historial de la plataforma funcionan como en Tiluchi.
 - Columnas extra en el historial: tiempo de la mejor ronda, metros totales, caídas y animalito. El detalle guarda las opciones con que se jugó y las posiciones por ronda.
 
 ### Pantalla grande (`Host`)
