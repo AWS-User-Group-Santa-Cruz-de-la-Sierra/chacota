@@ -4,6 +4,8 @@ import { Badge, buttonClass, Card, PageTitle } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
 import { requireUser } from '@/lib/auth';
 import { getDb } from '@/lib/db';
+import { OrgAvatar } from '@/components/org-avatar';
+import { env } from '@/lib/env';
 
 export default async function Dashboard() {
   const user = await requireUser();
@@ -36,11 +38,7 @@ export default async function Dashboard() {
                 className="flex h-full flex-col gap-3 rounded-2xl border border-noche-3 bg-noche-2/60 p-5 transition-colors hover:border-morado-claro"
               >
                 <span className="flex items-center gap-3">
-                  <span
-                    className="h-10 w-10 shrink-0 rounded-xl"
-                    style={{ background: org.primaryColor ?? '#6B2FD6' }}
-                    aria-hidden="true"
-                  />
+                  <OrgAvatar name={org.name} logoKey={org.logoKey} primaryColor={org.primaryColor} mediaBaseUrl={env.media.publicUrl} />
                   <span className="font-display text-xl font-bold leading-tight">{org.name}</span>
                 </span>
                 <span className="flex flex-wrap gap-2">
