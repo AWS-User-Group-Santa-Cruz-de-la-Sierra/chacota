@@ -1,7 +1,7 @@
 {
   "card": {
     "name": "Tiluchi",
-    "description": "Put your community to the test: live questions, answers against the clock and a podium for the best."
+    "description": "Live questions, against the clock, for the podium."
   },
   "host": {
     "questionOf": "Question {n} of {total}",
