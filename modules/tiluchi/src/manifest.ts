@@ -5,6 +5,7 @@ export const tiluchiManifest: ActivityManifest = {
   contractVersion: 1,
   status: 'stable',
   usesPhones: true,
-  // The hornero's wing, darkened so white text reads on it (≥ 4.5:1).
-  color: '#B84F1B',
+  // Deep teal: the complement of the hornero's orange, so the logo stands out on the hub card,
+  // and white text reads on it (7.5:1).
+  color: '#0B5D6B',
 };
