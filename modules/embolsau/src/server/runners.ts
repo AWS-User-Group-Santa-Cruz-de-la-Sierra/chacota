@@ -61,6 +61,13 @@ export async function pick(live: LiveService, token: string, animal: Animal): Pr
   return { animal };
 }
 
+/** The race is on from the start time, even if the presenter's tick hasn't flipped the countdown yet. */
+export function isRaceOn(session: Session<EmbolsauState>, now: number): boolean {
+  const { phase, raceStartedAt } = session.state;
+  if (session.status !== 'running' || raceStartedAt === null) return false;
+  return phase === 'racing' || phase === 'closing' || (phase === 'countdown' && now >= raceStartedAt);
+}
+
 /** When the round stops accepting taps: the end of the closing window, or the round's time limit. */
 export function roundCutoff(state: EmbolsauState): number {
   const limit = state.raceStartedAt! + ROUND_MAX_MS[state.config.track];
@@ -108,16 +115,14 @@ export async function push(
   const now = live.now();
   const { session, player } = await load(live, token);
   const state = session.state;
-  if (session.status !== 'running' || (state.phase !== 'racing' && state.phase !== 'closing') || state.raceStartedAt === null) {
-    throw new EmbolsauError('not_racing');
-  }
-  if (player.joinedAt > state.raceStartedAt) throw new EmbolsauError('not_in_round');
+  if (!isRaceOn(session, now)) throw new EmbolsauError('not_racing');
+  if (player.joinedAt > state.raceStartedAt!) throw new EmbolsauError('not_in_round');
 
   const [existing, place] = await Promise.all([getRunner(live, session, player.id), getPlace(live, session, player.id)]);
   if (existing && input.seq <= existing.seq) return toResult(existing, now, place);
 
   const base: StoredRunner = existing ?? {
-    ...startRunner(state.raceStartedAt),
+    ...startRunner(state.raceStartedAt!),
     playerId: player.id,
     nickname: player.nickname,
     animal: isAnimal(player.data?.animal) ? player.data.animal : ANIMALS[0],
