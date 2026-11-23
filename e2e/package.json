@@ -1,0 +1,22 @@
+{
+  "name": "@chacota/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "start": "tsx src/game.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1175.0",
+    "@chacota/core": "workspace:*",
+    "@chacota/db": "workspace:*",
+    "playwright-core": "^1.56.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

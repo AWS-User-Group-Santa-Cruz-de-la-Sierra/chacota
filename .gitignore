@@ -11,3 +11,6 @@ coverage/
 .DS_Store
 .claude/settings.local.json
 cdk-outputs*.json
+
+.superpowers/
+e2e/out/
