@@ -98,6 +98,7 @@ export const ruletaWeb: ActivityWeb = {
   Host: RuletaHost,              // presentador mientras corre
   Play: RuletaPlay,              // celular mientras corre; omitilo si no usa celulares
   ResultsDetails: RuletaDetails, // detalle en el historial, opcional
+  LobbySummary: RuletaResumen,   // texto bajo el título en el lobby ("12 preguntas · unos 8 minutos"), opcional
 };
 ```
 

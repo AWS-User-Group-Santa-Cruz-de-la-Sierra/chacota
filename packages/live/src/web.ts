@@ -50,4 +50,6 @@ export interface ActivityWeb {
   Host: ComponentType<HostScreenProps>;
   Play?: ComponentType<PlayScreenProps>;
   ResultsDetails?: ComponentType<{ details: unknown }>;
+  /** Short summary under the title in the lobby (e.g. "12 questions · about 8 minutes"). */
+  LobbySummary?: ComponentType<{ snapshot: Record<string, unknown> }>;
 }

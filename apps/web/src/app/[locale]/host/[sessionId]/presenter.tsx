@@ -139,17 +139,22 @@ export function Presenter(props: Props) {
           style={{ background: props.primaryColor, color: onOrgColor }}
         >
           <div className="flex flex-col gap-4">
-            {orgLogo('h-24 max-w-64 object-contain object-left') ?? (
+            {orgLogo('h-36 max-w-[26rem] object-contain object-left') ?? (
               <span className="font-display text-5xl font-extrabold leading-tight">{props.orgName}</span>
             )}
             <span className="text-xl font-semibold">{t('presents', { org: props.orgName })}</span>
           </div>
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-4">
-              <activity.Icon size={96} color={props.primaryColor} />
+              <activity.Icon size={120} color={props.primaryColor} />
               <span className="font-display text-5xl font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
             </div>
             <h1 className="font-display text-5xl font-extrabold leading-none tracking-tight lg:text-7xl">{props.title}</h1>
+            {activity.LobbySummary && (
+              <p className="text-2xl font-semibold opacity-90">
+                <activity.LobbySummary snapshot={props.initial.snapshot} />
+              </p>
+            )}
           </div>
         </section>
 
@@ -215,13 +220,13 @@ export function Presenter(props: Props) {
       {/* Header as in the "Pregunta" mockups: org and progress on the left, activity and PIN on the right. */}
       <header className="relative flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          {orgLogo('h-10 max-w-40 object-contain') ?? <span className="font-semibold">{props.orgName}</span>}
+          {orgLogo('h-14 max-w-60 object-contain') ?? <span className="font-display text-xl font-bold">{props.orgName}</span>}
           <span className="text-niebla">{status === 'running' && subtitle ? subtitle : props.title}</span>
         </div>
         <div className="flex items-center gap-3">
           {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
-          <activity.Icon size={44} color={props.primaryColor} />
-          <span className="font-display text-2xl font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
+          <activity.Icon size={56} color={props.primaryColor} />
+          <span className="font-display text-3xl font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
           {status === 'running' && (
             <span className="ml-3 rounded-full bg-noche-2 px-4 py-2 text-sm text-niebla">
               {props.joinHost} · PIN <span className="font-display text-lg font-extrabold tracking-widest text-sol">{props.pin}</span>

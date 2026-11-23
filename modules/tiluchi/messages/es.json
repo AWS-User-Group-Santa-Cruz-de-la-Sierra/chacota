@@ -11,7 +11,8 @@
     "showAnswer": "Mostrar respuesta",
     "showRanking": "Ver ranking",
     "nextQuestion": "Siguiente pregunta",
-    "showPodium": "Ver podio"
+    "showPodium": "Ver podio",
+    "lobbySummary": "{count, plural, one {# pregunta} other {# preguntas}} · {minutes, plural, one {unos # minuto} other {unos # minutos}}"
   },
   "play": {
     "getReady": "¡Preparate!",
