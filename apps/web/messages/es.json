@@ -180,12 +180,12 @@
     "end": "Terminar",
     "podium": "¡Felicidades!",
     "finished": "Fin del juego",
-    "backToOrg": "Volver a la organización",
     "fullscreen": "Pantalla completa",
     "keyboardHint": "Espacio o → para avanzar",
     "confirmEnd": "¿Terminar el juego ahora?",
     "results": "Ver resultados",
-    "activityDisabled": "Esta actividad está desactivada en la organización."
+    "activityDisabled": "Esta actividad está desactivada en la organización.",
+    "backToActivity": "Volver a {name}"
   },
   "play": {
     "title": "Unirse",

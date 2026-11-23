@@ -180,12 +180,12 @@
     "end": "End",
     "podium": "Congratulations!",
     "finished": "Game over",
-    "backToOrg": "Back to the organization",
     "fullscreen": "Full screen",
     "keyboardHint": "Space or → to advance",
     "confirmEnd": "End the game now?",
     "results": "See results",
-    "activityDisabled": "This activity is disabled for the organization."
+    "activityDisabled": "This activity is disabled for the organization.",
+    "backToActivity": "Back to {name}"
   },
   "play": {
     "title": "Join",

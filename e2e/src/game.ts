@@ -31,6 +31,10 @@ try {
   await host.goto(`${BASE}/app/orgs/${orgSlug}/tiluchis/${tiluchiId}`);
   if (!host.url().endsWith(`/app/orgs/${orgSlug}/tiluchi/${tiluchiId}`)) fail(`Old URL did not redirect: ${host.url()}`);
   step('old tiluchi URL redirects to the Tiluchi area');
+  await host.getByRole('link', { name: /Volver a tiluchis/ }).click();
+  await host.waitForURL(new RegExp(`/app/orgs/${orgSlug}/tiluchi$`));
+  step('editor back link returns to the Tiluchi list');
+  await host.goto(`${BASE}/app/orgs/${orgSlug}/tiluchi/${tiluchiId}`);
   await host.getByRole('button', { name: /Presentar/ }).click();
   await host.waitForURL(/\/host\//, { timeout: 15000 });
   const pinText = (await host.locator('p.font-display').filter({ hasText: /^\d{3} \d{3}$/ }).first().textContent()) ?? '';
@@ -105,6 +109,9 @@ try {
   const code = ((await ana.locator('span.font-mono').textContent()) ?? '').trim();
   if (!/^[A-Z2-9]{4}$/.test(code)) fail(`Bad player code ${code}`);
   step(`phone shows verification code ${code}`);
+  const back = await host.getByRole('link', { name: 'Volver a Tiluchi' }).getAttribute('href');
+  if (!back?.endsWith(`/app/orgs/${orgSlug}/tiluchi`)) fail(`Presenter back link goes to ${back}`);
+  step('presenter back link returns to the Tiluchi area');
   await host.getByRole('link', { name: 'Ver resultados' }).click();
   await host.getByRole('heading', { name: 'Ganadores' }).waitFor({ timeout: 15000 });
   const firstRow = (await host.locator('tbody tr').first().textContent()) ?? '';

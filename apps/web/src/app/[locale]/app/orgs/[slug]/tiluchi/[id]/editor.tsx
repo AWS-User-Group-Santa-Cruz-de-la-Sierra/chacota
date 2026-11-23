@@ -117,7 +117,7 @@ export function TiluchiEditor({
     <div className="flex flex-col gap-6">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={`/app/orgs/${slug}`} className={buttonClass('ghost')}>
+        <Link href={`/app/orgs/${slug}/tiluchi`} className={buttonClass('ghost')}>
           ← {t('back')}
         </Link>
         <div className="flex flex-wrap items-center gap-2">

@@ -29,6 +29,8 @@ interface Props {
 export function Presenter(props: Props) {
   const t = useTranslations('host');
   const tp = useTranslations('play');
+  // Each activity's texts live under its id (e.g. tiluchi.card.name).
+  const ta = useTranslations(props.module as 'tiluchi');
   const activity = activityWebs[props.module]!;
   const clock = useServerClock();
   const [hub] = useState(createEventHub);
@@ -193,8 +195,8 @@ export function Presenter(props: Props) {
           )}
           {status === 'ended' ? (
             <>
-              <Link href={`/app/orgs/${props.orgSlug}`} className={buttonClass('ghost')}>
-                {t('backToOrg')}
+              <Link href={`/app/orgs/${props.orgSlug}/${props.module}`} className={buttonClass('ghost')}>
+                {t('backToActivity', { name: ta('card.name') })}
               </Link>
               <Link href={`/app/orgs/${props.orgSlug}/historial/${props.sessionId}`} className={buttonClass('primary')}>
                 {t('results')}

@@ -18,7 +18,7 @@ export async function saveTiluchiAction(slug: string, input: { tiluchi: Tiluchi;
   if (!parsed.success) return { ok: false, error: 'invalid' };
   try {
     const saved = await saveTiluchi(getDb(), org.id, parsed.data, input.version, user.id);
-    revalidatePath(`/[locale]/app/orgs/${slug}`, 'page');
+    revalidatePath(`/[locale]/app/orgs/${slug}/tiluchi`, 'page');
     return { ok: true, version: saved.version };
   } catch (error) {
     if (error instanceof ConflictError) return { ok: false, error: 'conflict' };
@@ -50,5 +50,5 @@ export async function importQuestionsAction(slug: string, form: FormData): Promi
 export async function deleteTiluchiAction(slug: string, tiluchiId: string): Promise<void> {
   const { org } = await requireOrgAccess(slug, 'activity.content');
   await deleteTiluchi(getDb(), org.id, tiluchiId);
-  redirect({ href: `/app/orgs/${slug}`, locale: await getLocale() });
+  redirect({ href: `/app/orgs/${slug}/tiluchi`, locale: await getLocale() });
 }
