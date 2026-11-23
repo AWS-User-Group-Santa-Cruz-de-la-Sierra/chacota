@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 /* Activity screens live in modules/, outside this app: let Tailwind see their classes. */
-@source '../../../../modules/*/src';
+@source '../../../../modules';
 
 /* Chacota · "Noche cruceña": morado de comunidad, verde cruceño y tajibo en flor. */
 @theme {

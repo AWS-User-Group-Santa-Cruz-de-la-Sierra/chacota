@@ -1,5 +1,5 @@
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server';
-import { Link } from '@/i18n/navigation';
+import { BackLink } from '@/components/back-link';
 import { activityWebs } from '@/activities/registry.client';
 import { requireOrgResults } from '@/lib/results';
 import { standingsTable } from '@/lib/results-table';
@@ -17,9 +17,7 @@ export default async function SessionResultsPage({ params }: { params: Promise<{
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <Link href={`/app/orgs/${slug}/historial`} className="text-sm text-niebla hover:text-blanco">
-          ← {t('back')}
-        </Link>
+        <BackLink href={`/app/orgs/${slug}/historial`}>{t('back')}</BackLink>
         <h2 className="font-display text-3xl font-extrabold">{results.title}</h2>
         <p className="text-niebla">
           {t('meta', {

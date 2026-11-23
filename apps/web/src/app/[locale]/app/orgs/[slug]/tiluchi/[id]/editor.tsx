@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { AnswerIcon, ANSWER_STYLES } from '@chacota/tiluchi/web';
 import { buttonClass, Notice } from '@/components/ui';
-import { Link } from '@/i18n/navigation';
+import { BackLink } from '@/components/back-link';
 import { startTiluchiAction } from '@/app/[locale]/host/actions';
 import { deleteTiluchiAction, importQuestionsAction, saveTiluchiAction } from './actions';
 
@@ -117,9 +117,7 @@ export function TiluchiEditor({
     <div className="flex flex-col gap-6">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={`/app/orgs/${slug}/tiluchi`} className={buttonClass('ghost')}>
-          ← {t('back')}
-        </Link>
+        <BackLink href={`/app/orgs/${slug}/tiluchi`}>{t('back')}</BackLink>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm text-niebla" role="status" aria-live="polite">
             {statusText}

@@ -38,6 +38,7 @@ export function Presenter(props: Props) {
   const [players, setPlayers] = useState<string[]>(props.initial.players);
   const [podium, setPodium] = useState<Standing[]>([]);
   const [advanceLabel, setAdvanceLabel] = useState(t('next'));
+  const [subtitle, setSubtitle] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => clock.sync(props.initial.serverNow), []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -96,7 +97,10 @@ export function Presenter(props: Props) {
           <activity.Icon size={44} color={props.primaryColor} />
           <div className="flex flex-col">
             <span className="font-semibold">{props.orgName}</span>
-            <span className="text-sm text-niebla">{props.title}</span>
+            <span className="text-sm text-niebla">
+              {props.title}
+              {status === 'running' && subtitle ? ` · ${subtitle}` : ''}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -153,6 +157,7 @@ export function Presenter(props: Props) {
             subscribe={hub.subscribe}
             advance={advance}
             setAdvanceLabel={setAdvanceLabel}
+            setSubtitle={setSubtitle}
             hostAction={hostAction}
           />
         )}

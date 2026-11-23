@@ -22,6 +22,8 @@ export interface HostScreenProps {
   advance(): void;
   /** Label of the presenter's main button for the current step. */
   setAdvanceLabel(label: string): void;
+  /** Short progress text shown next to the title in the header (e.g. "Question 2 of 10"), or null. */
+  setSubtitle(text: string | null): void;
   hostAction(name: string, args?: unknown): Promise<unknown>;
 }
 

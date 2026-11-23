@@ -28,7 +28,7 @@ function fromSnapshot(s: TiluchiSnapshot): Screen {
 }
 
 /** Presenter screen while a Tiluchi runs: question with timer, reveal and ranking. */
-export function TiluchiHost({ snapshot, clock, playerCount, subscribe, advance, setAdvanceLabel, hostAction }: HostScreenProps) {
+export function TiluchiHost({ snapshot, clock, playerCount, subscribe, advance, setAdvanceLabel, setSubtitle, hostAction }: HostScreenProps) {
   const t = useTranslations('tiluchi.host');
   const tp = useTranslations('tiluchi.play');
   const labels = { true: tp('trueLabel'), false: tp('falseLabel') };
@@ -68,6 +68,8 @@ export function TiluchiHost({ snapshot, clock, playerCount, subscribe, advance, 
           ? t('showPodium')
           : t('nextQuestion');
   useEffect(() => setAdvanceLabel(label), [label, setAdvanceLabel]);
+  const subtitle = screen.kind === 'question' || screen.kind === 'reveal' ? t('questionOf', { n: screen.index + 1, total }) : null;
+  useEffect(() => setSubtitle(subtitle), [subtitle, setSubtitle]);
 
   // While a question is open: poll the answer count, reveal when time is up or everyone answered.
   const question = screen.kind === 'question' ? questions[screen.index] : undefined;
@@ -97,10 +99,6 @@ export function TiluchiHost({ snapshot, clock, playerCount, subscribe, advance, 
 
   return (
     <>
-      {(screen.kind === 'question' || screen.kind === 'reveal') && (
-        <p className="text-center text-lg text-niebla">{t('questionOf', { n: screen.index + 1, total })}</p>
-      )}
-
       {screen.kind === 'waiting' && <p className="text-center font-display text-4xl font-bold text-sol">{t('getReady')}</p>}
 
       {screen.kind === 'question' && question && (

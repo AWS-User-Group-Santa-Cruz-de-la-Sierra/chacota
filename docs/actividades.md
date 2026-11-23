@@ -101,7 +101,7 @@ export const ruletaWeb: ActivityWeb = {
 };
 ```
 
-- **`Host`** recibe `subscribe` (los eventos de tu actividad, incluidos los que llegaron antes de montarse), `advance`, `setAdvanceLabel` (el texto del botón principal), `hostAction` y `clock`. El lobby, el podio, el botón "Terminar" y la pantalla completa son de la plataforma.
+- **`Host`** recibe `subscribe` (los eventos de tu actividad, incluidos los que llegaron antes de montarse), `advance`, `setAdvanceLabel` (el texto del botón principal), `setSubtitle` (el progreso que se muestra junto al título, por ejemplo "Pregunta 2 de 10"), `hostAction` y `clock`. El lobby, el podio, el botón "Terminar" y la pantalla completa son de la plataforma.
 - **`Play`** recibe `token` y `apiUrl` para llamar a tus rutas (`${apiUrl}/m/<id>/...`), `subscribe`, `clock` y `setScore`. Unirse, el lobby, la reconexión y la pantalla final con el código son de la plataforma.
 - **Estilos:** usá las clases de Tailwind y los colores de la marca (`bg-noche`, `bg-morado`, `bg-verde`, `bg-tajibo`, `bg-sol`, `text-niebla`). Tailwind lee `modules/*/src`, así que tus clases funcionan.
 - **Accesibilidad:** los botones son `<button>` y las respuestas no dependen solo del color.
