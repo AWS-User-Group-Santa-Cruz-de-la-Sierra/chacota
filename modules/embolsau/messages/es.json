@@ -2,5 +2,39 @@
   "card": {
     "name": "Embolsau",
     "description": "Carrera de embolsados: empujá a tu animalito sin caerte."
+  },
+  "form": {
+    "title": "Nueva carrera",
+    "meter": "Medidor de velocidad",
+    "meterOn": "Visible: se ve cuándo te podés caer",
+    "meterOff": "A ciegas: hay que adivinar el ritmo",
+    "track": "Largo de la pista",
+    "tracks": {
+      "short": "Corta (unos 20 s)",
+      "normal": "Normal (unos 30 s)",
+      "long": "Larga (unos 45 s)"
+    },
+    "rounds": "Carreras",
+    "roundsValue": "{n, plural, one {# carrera} other {# carreras con puntaje acumulado}}",
+    "maxPlayers": "Tope de jugadores",
+    "maxPlayersHint": "Hasta 100.",
+    "start": "Empezar carrera",
+    "starting": "Preparando…",
+    "hostOnly": "Solo quienes pueden presentar arman carreras."
+  },
+  "animals": {
+    "jochi": "Jochi",
+    "tatu": "Tatú",
+    "nandu": "Ñandú",
+    "capibara": "Capibara"
+  },
+  "host": {
+    "phase": {
+      "picking": "Elegí tu animalito",
+      "countdown": "¡Preparados!",
+      "racing": "¡A correr!",
+      "closing": "¡Últimos segundos!",
+      "roundResults": "Resultados de la carrera"
+    }
   }
 }

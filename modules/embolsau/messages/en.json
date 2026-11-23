@@ -2,5 +2,39 @@
   "card": {
     "name": "Embolsau",
     "description": "Sack race: push your critter without tripping."
+  },
+  "form": {
+    "title": "New race",
+    "meter": "Speed meter",
+    "meterOn": "Visible: you can see when you might trip",
+    "meterOff": "Blind: guess the pace",
+    "track": "Track length",
+    "tracks": {
+      "short": "Short (about 20 s)",
+      "normal": "Normal (about 30 s)",
+      "long": "Long (about 45 s)"
+    },
+    "rounds": "Races",
+    "roundsValue": "{n, plural, one {# race} other {# races, scores add up}}",
+    "maxPlayers": "Player limit",
+    "maxPlayersHint": "Up to 100.",
+    "start": "Start race",
+    "starting": "Getting ready…",
+    "hostOnly": "Only people who can present set up races."
+  },
+  "animals": {
+    "jochi": "Jochi",
+    "tatu": "Tatú",
+    "nandu": "Ñandú",
+    "capibara": "Capibara"
+  },
+  "host": {
+    "phase": {
+      "picking": "Pick your critter",
+      "countdown": "Get ready!",
+      "racing": "Run!",
+      "closing": "Last seconds!",
+      "roundResults": "Race results"
+    }
   }
 }

@@ -198,7 +198,8 @@
     "activityDisabled": "Esta actividad está desactivada en la organización.",
     "backToActivity": "Volver a {name}",
     "presents": "{org} presenta",
-    "playersReady": "{count, plural, =0 {esperando jugadores…} one {jugador listo} other {jugadores listos}}"
+    "playersReady": "{count, plural, =0 {esperando jugadores…} one {jugador listo} other {jugadores listos}}",
+    "invalidOptions": "Las opciones de la carrera no son válidas."
   },
   "play": {
     "title": "Unirse",

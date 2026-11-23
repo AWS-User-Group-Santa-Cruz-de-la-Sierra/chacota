@@ -22,6 +22,9 @@ importers:
       '@chacota/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@chacota/embolsau':
+        specifier: workspace:*
+        version: link:../../modules/embolsau
       '@chacota/live':
         specifier: workspace:*
         version: link:../../packages/live
@@ -363,6 +366,9 @@ importers:
       '@chacota/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@chacota/embolsau':
+        specifier: workspace:*
+        version: link:../../modules/embolsau
       '@chacota/live':
         specifier: workspace:*
         version: link:../../packages/live
