@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { AnswerIcon, ANSWER_STYLES } from '@chacota/tiluchi/web';
+import { AnswerIcon, ANSWER_STYLES, TiluchiIcon } from '@chacota/tiluchi/web';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { Logo } from '@/components/logo';
 import { buttonClass, Card } from '@/components/ui';
@@ -61,8 +61,13 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
 
       <section className="grid gap-4 pb-8 md:grid-cols-2">
         <Card>
-          <h2 className="font-display text-2xl font-bold">{t('landing.tiluchi')}</h2>
-          <p className="mt-2 text-niebla">{t('landing.tiluchiBody')}</p>
+          <div className="flex items-center gap-4">
+            <TiluchiIcon size={72} />
+            <div>
+              <h2 className="font-display text-2xl font-bold">{t('landing.tiluchi')}</h2>
+              <p className="mt-1 text-niebla">{t('landing.tiluchiBody')}</p>
+            </div>
+          </div>
         </Card>
         <Card>
           <h2 className="font-display text-2xl font-bold">{t('landing.forLeads')}</h2>
