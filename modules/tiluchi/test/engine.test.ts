@@ -1,7 +1,7 @@
 import type { Question } from '@chacota/tiluchi/content';
 import { describe, expect, it } from 'vitest';
 import { topStandings, type Player } from '@chacota/live';
-import { correctValues, countAnswers, publicQuestion, rankWithAnswers } from '../src/server/engine';
+import { correctValues, countAnswers, publicQuestion, rankWithAnswers, standingsBefore } from '../src/server/engine';
 import type { Answer } from '../src/server/model';
 
 const quiz: Question = {
@@ -55,5 +55,22 @@ describe('rankPlayers', () => {
 
   it('breaks ties by join order in the standings', () => {
     expect(topStandings([player('late', 100, 9), player('early', 100, 1)]).map((s) => s.nickname)).toEqual(['early', 'late']);
+  });
+});
+
+describe('standingsBefore', () => {
+  it('ranks players by their score before the last question', () => {
+    // y overtook x with this question; z only had what it has now.
+    const players = [player('x', 900, 1), player('y', 1500, 2), player('z', 300, 3)];
+    expect(standingsBefore(players, [answer('y', 'a', 800, true), answer('x', 'b', 0, false)])).toEqual([
+      { nickname: 'x', score: 900 },
+      { nickname: 'y', score: 700 },
+      { nickname: 'z', score: 300 },
+    ]);
+  });
+
+  it('keeps the top n', () => {
+    const players = Array.from({ length: 7 }, (_, i) => player(`p${i}`, i * 100, i));
+    expect(standingsBefore(players, [], 5)).toHaveLength(5);
   });
 });

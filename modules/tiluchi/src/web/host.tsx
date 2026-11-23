@@ -7,12 +7,13 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { QUESTION_LEAD_MS, type TiluchiEvent, type TiluchiSnapshot } from '../server/model';
 import { AnswerTiles } from './answer-grid';
+import { Leaderboard } from './leaderboard';
 
 type Screen =
   | { kind: 'waiting' }
   | { kind: 'question'; index: number; startedAt: number }
   | { kind: 'reveal'; index: number; correct: string[]; counts: Record<string, number>; answered: number }
-  | { kind: 'leaderboard'; index: number; top: Standing[] };
+  | { kind: 'leaderboard'; index: number; top: Standing[]; before: Standing[] };
 
 function fromSnapshot(s: TiluchiSnapshot): Screen {
   switch (s.phase) {
@@ -21,7 +22,7 @@ function fromSnapshot(s: TiluchiSnapshot): Screen {
     case 'reveal':
       return { kind: 'reveal', index: s.index, correct: [], counts: {}, answered: 0 };
     case 'leaderboard':
-      return { kind: 'leaderboard', index: s.index, top: [] };
+      return { kind: 'leaderboard', index: s.index, top: [], before: [] };
     default:
       return { kind: 'waiting' };
   }
@@ -70,20 +71,21 @@ export function TiluchiHost({
             setScreen({ kind: 'reveal', index: e.index, correct: e.correct, counts: e.counts, answered: e.answered });
             break;
           case 'tiluchi.leaderboard':
-            setScreen({ kind: 'leaderboard', index: e.index, top: e.top });
+            setScreen({ kind: 'leaderboard', index: e.index, top: e.top, before: e.before });
             break;
         }
       }),
     [subscribe],
   );
 
+  const isLast = screen.kind !== 'waiting' && screen.index + 1 >= total;
   const label =
     screen.kind === 'question'
       ? t('showAnswer')
-      : screen.kind === 'reveal'
-        ? t('showRanking')
-        : screen.kind === 'leaderboard' && screen.index + 1 >= total
-          ? t('showPodium')
+      : isLast && (screen.kind === 'reveal' || screen.kind === 'leaderboard')
+        ? t('showPodium')
+        : screen.kind === 'reveal'
+          ? t('showRanking')
           : t('nextQuestion');
   useEffect(() => setAdvanceLabel(label), [label, setAdvanceLabel]);
   const subtitle = screen.kind === 'question' || screen.kind === 'reveal' ? t('questionOf', { n: screen.index + 1, total }) : null;
@@ -187,18 +189,7 @@ export function TiluchiHost({
       )}
 
       {screen.kind === 'leaderboard' && (
-        <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
-          <h1 className="text-center font-display text-5xl font-extrabold">{t('ranking')}</h1>
-          <ol className="flex flex-col gap-3">
-            {screen.top.map((s, i) => (
-              <li key={s.nickname} className="flex items-center gap-4 rounded-2xl bg-noche-2 px-6 py-4 text-2xl font-bold">
-                <span className="w-10 font-display text-niebla">{i + 1}</span>
-                <span className="flex-1">{s.nickname}</span>
-                <span className="font-display tabular-nums">{s.score}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+        <Leaderboard key={screen.index} title={t('ranking')} top={screen.top} before={screen.before} />
       )}
     </>
   );

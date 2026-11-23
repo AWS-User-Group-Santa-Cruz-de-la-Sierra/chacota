@@ -89,9 +89,9 @@ try {
   await host.getByRole('button', { name: 'Siguiente pregunta' }).click();
   for (const p of players) await p.getByRole('button', { name: 'Verdadero' }).waitFor({ timeout: 10000 });
   for (const p of players) await p.getByRole('button', { name: 'Verdadero' }).click();
-  await host.getByRole('button', { name: 'Ver ranking' }).waitFor({ timeout: 8000 });
+  // Last question: after the answer it goes straight to the podium.
+  await host.getByRole('button', { name: 'Ver podio' }).waitFor({ timeout: 8000 });
   step('presenter auto-reveals when everyone answered');
-  await host.getByRole('button', { name: 'Ver ranking' }).click();
   await host.getByRole('button', { name: 'Ver podio' }).click();
   await host.getByText('¡Felicidades!').waitFor({ timeout: 5000 });
   for (const p of players) await p.getByText('¡Gracias por jugar!').waitFor({ timeout: 5000 });
@@ -155,11 +155,11 @@ try {
   // A clicker's double press must not skip the answer screen.
   await host.keyboard.press('Space');
   await host.keyboard.press('Space');
-  await host.getByRole('button', { name: 'Ver ranking' }).waitFor({ timeout: 8000 });
+  // Last question: from the answer the next step is the podium.
+  await host.getByRole('button', { name: 'Ver podio' }).waitFor({ timeout: 8000 });
   await host.waitForTimeout(1500);
-  if (!(await host.getByRole('button', { name: 'Ver ranking' }).isVisible())) fail('A double press skipped the answer screen');
+  if (!(await host.getByRole('button', { name: 'Ver podio' }).isVisible())) fail('A double press skipped the answer screen');
   step('a double press shows the answer instead of skipping it');
-  await host.getByRole('button', { name: 'Ver ranking' }).click();
   await host.getByRole('button', { name: 'Ver podio' }).click();
   await host.getByText('¡Felicidades!').waitFor({ timeout: 8000 });
   step('a running session finishes after its activity is disabled');

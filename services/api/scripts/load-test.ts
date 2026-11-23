@@ -136,7 +136,7 @@ for (let q = 0; q < Q; q++) {
   const revealDelay = gotReveal.map((p) => p.received.get(`reveal${q}`)! - s);
   console.log(`question ${q + 1}: stored ${counted} answers · reveal delivered to ${gotReveal.length}/${players.length}`);
   fanout.set(`reveal${q}`, revealDelay);
-  await host.advance(game.id); // leaderboard
+  if (q + 1 < Q) await host.advance(game.id); // leaderboard (the last question goes to the podium)
 }
 await host.end(game.id);
 

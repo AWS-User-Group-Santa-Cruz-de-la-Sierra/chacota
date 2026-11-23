@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { activityWebs } from '@/activities/registry.client';
 import { useRealtime } from '@/components/game/use-realtime';
 import { BackLink } from '@/components/back-link';
+import { Podium } from '@/components/game/podium';
 import { buttonClass } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
 import { advanceSessionAction, endSessionAction, hostActionAction } from '../actions';
@@ -258,28 +259,7 @@ export function Presenter(props: Props) {
           />
         )}
 
-        {status === 'ended' && (
-          <div className="flex flex-col items-center gap-8">
-            <h1 className="font-display text-6xl font-extrabold">{t('podium')}</h1>
-            <ol className="flex items-end justify-center gap-4">
-              {[1, 0, 2].map((pos) => {
-                const s = podium[pos];
-                if (!s) return null;
-                const height = ['h-64', 'h-48', 'h-36'][pos];
-                const bg = ['bg-sol text-noche', 'bg-morado', 'bg-tajibo'][pos];
-                return (
-                  <li key={pos} className="flex w-40 flex-col items-center gap-2 lg:w-56">
-                    <span className="text-center text-2xl font-bold">{s.nickname}</span>
-                    <span className="font-display text-xl tabular-nums text-niebla">{s.score}</span>
-                    <span className={`flex w-full items-start justify-center rounded-t-2xl pt-4 font-display text-5xl font-extrabold ${height} ${bg}`}>
-                      {pos + 1}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
-        )}
+        {status === 'ended' && <Podium title={t('podium')} mentionsLabel={t('mentions')} podium={podium} />}
       </main>
 
       <footer className="relative flex flex-wrap items-center justify-between gap-3">

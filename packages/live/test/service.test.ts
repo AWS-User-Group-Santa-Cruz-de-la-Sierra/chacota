@@ -16,6 +16,17 @@ const newSession = (orgId = 'org1', rounds = 2) =>
   live.createSession({ orgId, orgName: 'AWS UG', hostUserId: 'host', module: 'echo', content: { rounds } });
 
 describe('LiveService', () => {
+  it('announces the top 5 when it ends: the podium plus two mentions', async () => {
+    const session = await newSession('org1', 1);
+    const players = await Promise.all(['A', 'B', 'C', 'D', 'E', 'F'].map((n) => live.join(session.pin, n)));
+    await live.advance(session.id);
+    await Promise.all(players.map((p, i) => live.addScore(session.id, p.player.id, 60 - i * 10)));
+    await live.advance(session.id);
+    expect(publisher.last('ended')!.podium.map((s) => s.nickname)).toEqual(['A', 'B', 'C', 'D', 'E']);
+    // History keeps the three podium places.
+    expect((await live.listResults('org1'))[0]!.podium).toHaveLength(3);
+  });
+
   it('copies the org logo to the session', async () => {
     const s = await live.createSession({ orgId: 'org1', orgName: 'AWS UG', logoKey: 'orgs/org1/media/l.webp', hostUserId: 'host', module: 'echo', content: { rounds: 1 } });
     expect((await live.snapshot(s.id)).session.logoKey).toBe('orgs/org1/media/l.webp');
