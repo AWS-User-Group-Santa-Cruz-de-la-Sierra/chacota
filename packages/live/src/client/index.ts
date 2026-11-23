@@ -108,3 +108,4 @@ export function connectRealtime(config: RealtimeConfig): RealtimeConnection {
 
 export type { LiveEvent, ModuleEvent, PlatformEvent, RankEntry, ResultColumn, ResultEntry, SessionStatus, Standing } from '../model';
 export { channels, NICKNAME_MAX, playerCode } from '../model';
+export { createEventHub, type EventHub } from './hub';

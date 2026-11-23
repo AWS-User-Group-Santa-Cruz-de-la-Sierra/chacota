@@ -9,7 +9,7 @@ const TYPES = {
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 } as const;
 
-export async function GET(request: NextRequest, ctx: RouteContext<'/api/orgs/[slug]/results/[sessionId]/export'>) {
+export async function GET(request: NextRequest, ctx: RouteContext<'/api/orgs/[slug]/historial/[sessionId]/export'>) {
   const { slug, sessionId } = await ctx.params;
   const { results } = await requireOrgResults(slug, sessionId);
 

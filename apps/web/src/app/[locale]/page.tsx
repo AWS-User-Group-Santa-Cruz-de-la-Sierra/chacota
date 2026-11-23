@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { AnswerIcon, ANSWER_STYLES } from '@/components/answer-icons';
+import { AnswerIcon, ANSWER_STYLES } from '@chacota/tiluchi/web';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { Logo } from '@/components/logo';
 import { buttonClass, Card } from '@/components/ui';

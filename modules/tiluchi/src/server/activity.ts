@@ -147,6 +147,8 @@ export const tiluchiActivity: ActivityServer<Tiluchi, TiluchiState> = {
       startedAt: questionStartedAt,
       question: question && phase === 'question' ? publicQuestion(question) : undefined,
       answered: answer ? { value: answer.value } : undefined,
+      // Only the presenter gets every question, to redraw after a reload.
+      questions: playerId ? undefined : questions.map(publicQuestion),
     };
     return { ...snapshot };
   },

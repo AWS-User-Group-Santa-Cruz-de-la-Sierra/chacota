@@ -7,5 +7,5 @@ import { getLive, requireSessionHost } from '@/lib/live';
 export async function finishSessionAction(sessionId: string) {
   await requireSessionHost(sessionId);
   await getLive().end(sessionId);
-  revalidatePath('/[locale]/app/orgs/[slug]/results', 'page');
+  revalidatePath('/[locale]/app/orgs/[slug]/historial', 'page');
 }

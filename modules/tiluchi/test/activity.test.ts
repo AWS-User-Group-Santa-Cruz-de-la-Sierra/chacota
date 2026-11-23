@@ -114,6 +114,11 @@ describe('Tiluchi activity', () => {
     const snapshot = await live.snapshot(session.id, p.player.id);
     expect(snapshot.module).toMatchObject({ phase: 'question', index: 0, total: 2, answered: { value: 'b' } });
     expect(JSON.stringify(snapshot)).not.toContain('correct');
+
+    // The presenter gets every question (without answers) to redraw after a reload.
+    const host = await live.snapshot(session.id);
+    expect((host.module as { questions: unknown[] }).questions).toHaveLength(2);
+    expect(JSON.stringify(host)).not.toContain('correct');
   });
 
   it('rejects forged tokens and tiluchis without questions', async () => {

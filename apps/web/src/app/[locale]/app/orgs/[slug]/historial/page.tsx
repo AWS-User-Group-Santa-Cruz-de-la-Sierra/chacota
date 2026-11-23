@@ -47,7 +47,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ slug: 
           {results.map((r) => (
             <li key={r.sessionId}>
               <Link
-                href={`/app/orgs/${slug}/results/${r.sessionId}`}
+                href={`/app/orgs/${slug}/historial/${r.sessionId}`}
                 className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-noche-3 bg-noche-2/60 p-5 transition-colors hover:border-morado-claro"
               >
                 <span className="flex flex-col gap-1">

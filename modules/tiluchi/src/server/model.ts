@@ -77,4 +77,6 @@ export interface TiluchiSnapshot {
   startedAt?: number;
   question?: PublicQuestion;
   answered?: { value: string };
+  /** Presenter only. */
+  questions?: PublicQuestion[];
 }

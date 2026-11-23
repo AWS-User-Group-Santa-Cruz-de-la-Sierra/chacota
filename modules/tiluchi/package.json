@@ -10,7 +10,10 @@
     "./importers": "./src/content/importers/index.ts",
     "./exporters": "./src/content/exporters/index.ts",
     "./server": "./src/server/index.ts",
-    "./model": "./src/server/model.ts"
+    "./model": "./src/server/model.ts",
+    "./web": "./src/web/index.ts",
+    "./messages/es.json": "./messages/es.json",
+    "./messages/en.json": "./messages/en.json"
   },
   "scripts": {
     "test": "vitest run",
@@ -31,6 +34,13 @@
     "@types/node": "^26.6.6",
     "@types/papaparse": "^5.5.2",
     "typescript": "^7.0.2",
-    "vitest": "^5.1.1"
+    "vitest": "^5.1.1",
+    "react": "19.3.0",
+    "next-intl": "^4.15.3",
+    "@types/react": "^19"
+  },
+  "peerDependencies": {
+    "react": "^19",
+    "next-intl": "^4"
   }
 }

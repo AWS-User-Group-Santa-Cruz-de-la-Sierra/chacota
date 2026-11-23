@@ -1,18 +1,18 @@
 'use client';
 
-import { channels, NICKNAME_MAX, playerCode, type LiveEvent, type PlatformEvent, type RealtimeConfig } from '@chacota/live/client';
-import type { PublicQuestion, RankEntry, TiluchiEvent, TiluchiSnapshot } from '@chacota/tiluchi/model';
+import { channels, createEventHub, NICKNAME_MAX, playerCode, type LiveEvent, type PlatformEvent, type RealtimeConfig } from '@chacota/live/client';
+import { useServerClock } from '@chacota/live/react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
-import { AnswerIcon, ANSWER_STYLES } from '@/components/answer-icons';
-import { choiceLabel } from '@/components/game/answer-grid';
-import { useCountdown, useRealtime, useServerClock } from '@/components/game/use-realtime';
+import { activityWebs } from '@/activities/registry.client';
+import { useRealtime } from '@/components/game/use-realtime';
 import { Logo } from '@/components/logo';
 import { buttonClass } from '@/components/ui';
 
 interface Session {
   token: string;
   sessionId: string;
+  module: string;
   playerId: string;
   nickname: string;
   pin: string;
@@ -21,10 +21,16 @@ interface Session {
 type Screen =
   | { kind: 'join' }
   | { kind: 'lobby' }
-  | { kind: 'question'; index: number; question: PublicQuestion; startedAt: number; answered?: string; timeUp?: boolean }
-  | { kind: 'reveal'; index: number; correct: string[]; mine?: RankEntry; myAnswer?: string; poll: boolean }
-  | { kind: 'leaderboard'; rank?: number; score?: number }
-  | { kind: 'ended'; rank?: number; score?: number };
+  /** `key` remounts the activity screen whenever it starts from a new snapshot. */
+  | { kind: 'running'; snapshot: Record<string, unknown>; key: number }
+  | { kind: 'ended'; rank?: number };
+
+interface Snapshot {
+  session: { status: 'lobby' | 'running' | 'ended'; module: string };
+  player?: { score: number };
+  module: Record<string, unknown>;
+  serverNow: number;
+}
 
 const STORAGE_KEY = 'chacota:session';
 
@@ -32,8 +38,8 @@ function loadSession(): Session | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const session = raw ? (JSON.parse(raw) as Partial<Session>) : null;
-    // Sessions saved before sessions had this field cannot be resumed.
-    return session?.sessionId ? (session as Session) : null;
+    // Sessions saved before sessions had these fields cannot be resumed.
+    return session?.sessionId && session.module ? (session as Session) : null;
   } catch {
     return null;
   }
@@ -48,15 +54,14 @@ function saveSession(session: Session | null) {
   }
 }
 
+/** Phone frame for any activity: join, lobby, the activity while it runs, then rank and code. */
 export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; realtime: RealtimeConfig; initialPin: string }) {
   const t = useTranslations('play');
-  const labels = { true: t('trueLabel'), false: t('falseLabel') };
   const clock = useServerClock();
+  const [hub] = useState(createEventHub);
   const [session, setSession] = useState<Session | null>(null);
   const [screen, setScreen] = useState<Screen>({ kind: 'join' });
   const [score, setScore] = useState(0);
-  const [rank, setRank] = useState<number | undefined>();
-  const [myAnswers, setMyAnswers] = useState<Record<number, string>>({});
 
   const resync = useCallback(
     async (s: Session) => {
@@ -68,22 +73,15 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
         setScreen({ kind: 'join' });
         return;
       }
-      const snap = (await res.json()) as {
-        session: { status: 'lobby' | 'running' | 'ended' };
-        player?: { score: number };
-        module: Partial<TiluchiSnapshot>;
-        serverNow: number;
-      };
+      const snap = (await res.json()) as Snapshot;
       clock.sync(snap.serverNow);
       if (snap.player) setScore(snap.player.score);
-      const m = snap.module;
-      if (snap.session.status === 'ended') setScreen({ kind: 'ended' });
-      else if (snap.session.status === 'lobby' || m.phase === 'lobby') setScreen({ kind: 'lobby' });
-      else if (m.phase === 'question' && m.question && m.startedAt && m.index !== undefined)
-        setScreen({ kind: 'question', index: m.index, question: m.question, startedAt: m.startedAt, answered: m.answered?.value });
-      else setScreen({ kind: 'leaderboard' });
+      hub.reset();
+      if (snap.session.status === 'lobby') setScreen({ kind: 'lobby' });
+      else if (snap.session.status === 'ended') setScreen({ kind: 'ended' });
+      else setScreen({ kind: 'running', snapshot: snap.module, key: Date.now() });
     },
-    [apiUrl, clock],
+    [apiUrl, clock, hub],
   );
 
   // Resume a previous session (same PIN, or no PIN in the link).
@@ -100,39 +98,27 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
   const onEvent = useCallback(
     (event: LiveEvent) => {
       if (!session) return;
-      const e = event as TiluchiEvent | PlatformEvent;
+      const serverNow = (event as { serverNow?: unknown }).serverNow;
+      if (typeof serverNow === 'number') clock.sync(serverNow);
+      const e = event as PlatformEvent;
       switch (e.type) {
-        case 'tiluchi.question':
-          clock.sync(e.serverNow);
-          setScreen({ kind: 'question', index: e.index, question: e.question, startedAt: e.startedAt });
-          break;
-        case 'tiluchi.reveal': {
-          const mine = e.ranks[session.playerId];
-          if (mine) {
-            setScore(mine.score);
-            setRank(mine.rank);
-          }
-          setScreen({
-            kind: 'reveal',
-            index: e.index,
-            correct: e.correct,
-            mine,
-            myAnswer: myAnswers[e.index],
-            poll: e.correct.length === 0,
-          });
-          break;
-        }
-        case 'tiluchi.leaderboard':
-          setScreen({ kind: 'leaderboard', rank, score });
-          break;
+        case 'started':
+          hub.reset();
+          setScreen({ kind: 'running', snapshot: {}, key: Date.now() });
+          return;
         case 'ended': {
           const mine = e.ranks[session.playerId];
-          setScreen({ kind: 'ended', rank: mine?.rank, score: mine?.score });
-          break;
+          if (mine) setScore(mine.score);
+          setScreen({ kind: 'ended', rank: mine?.rank });
+          return;
         }
+        case 'player_joined':
+          return;
+        default:
+          hub.emit(event);
       }
     },
-    [session, clock, myAnswers, rank, score],
+    [session, clock, hub],
   );
   const { connected } = useRealtime(realtime, session ? [channels.public(session.sessionId)] : [], onEvent, () => session && resync(session));
 
@@ -145,29 +131,19 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
     if (!res) return 'network';
     const body = (await res.json().catch(() => ({}))) as { error?: string } & Partial<Session>;
     if (!res.ok) return body.error ?? 'generic';
-    const s: Session = { token: body.token!, sessionId: body.sessionId!, playerId: body.playerId!, nickname: body.nickname!, pin };
+    const s: Session = {
+      token: body.token!,
+      sessionId: body.sessionId!,
+      module: body.module!,
+      playerId: body.playerId!,
+      nickname: body.nickname!,
+      pin,
+    };
     saveSession(s);
     setSession(s);
     setScore(0);
-    setRank(undefined);
-    setMyAnswers({});
     await resync(s);
     return null;
-  }
-
-  async function answer(index: number, value: string) {
-    if (!session || screen.kind !== 'question' || screen.answered) return;
-    setScreen({ ...screen, answered: value });
-    setMyAnswers((m) => ({ ...m, [index]: value }));
-    const res = await fetch(`${apiUrl}/m/tiluchi/answer`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${session.token}` },
-      body: JSON.stringify({ questionIndex: index, value }),
-    }).catch(() => null);
-    if (res && !res.ok) {
-      const { error } = (await res.json().catch(() => ({}))) as { error?: string };
-      if (error === 'not_accepting_answers') setScreen((s) => (s.kind === 'question' ? { ...s, timeUp: true } : s));
-    }
   }
 
   function leave() {
@@ -175,6 +151,8 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
     setSession(null);
     setScreen({ kind: 'join' });
   }
+
+  const Play = session ? activityWebs[session.module]?.Play : undefined;
 
   return (
     <div className="flex min-h-dvh flex-col bg-noche px-4 pb-6 pt-4">
@@ -202,15 +180,22 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
           </Centered>
         )}
 
-        {screen.kind === 'question' && (
-          <QuestionScreen screen={screen} now={clock.now} labels={labels} onAnswer={(v) => answer(screen.index, v)} />
+        {screen.kind === 'running' && session && Play && (
+          <Play
+            key={screen.key}
+            sessionId={session.sessionId}
+            playerId={session.playerId}
+            token={session.token}
+            apiUrl={apiUrl}
+            snapshot={screen.snapshot}
+            clock={clock}
+            subscribe={hub.subscribe}
+            setScore={setScore}
+          />
         )}
 
-        {screen.kind === 'reveal' && <RevealScreen screen={screen} />}
-
-        {screen.kind === 'leaderboard' && (
+        {screen.kind === 'running' && !Play && (
           <Centered>
-            {screen.rank && <p className="font-display text-4xl font-extrabold">{t('rank', { rank: screen.rank })}</p>}
             <p className="text-lg text-niebla">{t('lookAtScreen')}</p>
           </Centered>
         )}
@@ -299,89 +284,5 @@ function JoinForm({ initialPin, onJoin }: { initialPin: string; onJoin: (pin: st
         {busy ? t('joining') : t('join')}
       </button>
     </form>
-  );
-}
-
-function QuestionScreen({
-  screen,
-  now,
-  labels,
-  onAnswer,
-}: {
-  screen: Extract<Screen, { kind: 'question' }>;
-  now: () => number;
-  labels: { true: string; false: string };
-  onAnswer: (value: string) => void;
-}) {
-  const t = useTranslations('play');
-  const deadline = screen.startedAt + screen.question.timeLimitSec * 1000;
-  const leadOrNull = useCountdown(screen.startedAt, now);
-  const leftOrNull = useCountdown(deadline, now);
-
-  if (leadOrNull === null || leftOrNull === null) return <Centered>{null}</Centered>;
-  const lead = leadOrNull;
-  const left = leftOrNull;
-  if (screen.answered) {
-    return (
-      <Centered>
-        <p className="font-display text-4xl font-extrabold">{t('sent')}</p>
-        <p className="text-lg text-niebla">{t('waitOthers')}</p>
-      </Centered>
-    );
-  }
-  if (screen.timeUp || (lead === 0 && left === 0)) {
-    return (
-      <Centered>
-        <p className="font-display text-4xl font-extrabold">{t('timeUp')}</p>
-      </Centered>
-    );
-  }
-  return (
-    <div className="flex flex-1 flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <p className="font-display text-2xl font-extrabold leading-tight">{screen.question.prompt}</p>
-        <span className="shrink-0 rounded-full bg-noche-2 px-3 py-1 font-display text-xl font-bold tabular-nums">
-          {Math.ceil((lead > 0 ? lead : left) / 1000)}
-        </span>
-      </div>
-      {lead > 0 ? (
-        <Centered>
-          <p className="font-display text-4xl font-extrabold text-sol">{t('getReady')}</p>
-        </Centered>
-      ) : (
-        <div className={`grid flex-1 gap-3 ${screen.question.choices.length > 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-          {screen.question.choices.map((c, i) => {
-            const style = ANSWER_STYLES[i % ANSWER_STYLES.length]!;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => onAnswer(c.id)}
-                className={`flex min-h-28 flex-col items-center justify-center gap-3 rounded-3xl p-3 text-lg font-bold active:scale-[0.98] ${style.bg} ${style.fg}`}
-              >
-                <AnswerIcon index={i} size={48} />
-                {choiceLabel(c, screen.question.type, labels)}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function RevealScreen({ screen }: { screen: Extract<Screen, { kind: 'reveal' }> }) {
-  const t = useTranslations('play');
-  const answered = screen.mine?.answered ?? screen.myAnswer !== undefined;
-  const correct = screen.mine?.correct ?? (screen.myAnswer !== undefined && screen.correct.includes(screen.myAnswer));
-  const tone = screen.poll ? 'bg-morado' : !answered ? 'bg-noche-2' : correct ? 'bg-verde' : 'bg-tajibo';
-  return (
-    <div className={`flex flex-1 flex-col items-center justify-center gap-3 rounded-3xl text-center ${tone}`}>
-      <p className="font-display text-5xl font-extrabold">
-        {screen.poll ? t('pollThanks') : !answered ? t('noAnswer') : correct ? t('correct') : t('incorrect')}
-      </p>
-      {!screen.poll && screen.mine && screen.mine.points > 0 && <p className="text-2xl font-bold">{t('points', { points: screen.mine.points })}</p>}
-      {screen.mine && <p className="text-lg">{t('rank', { rank: screen.mine.rank })}</p>}
-    </div>
   );
 }

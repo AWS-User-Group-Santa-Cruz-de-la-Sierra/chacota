@@ -5,7 +5,7 @@ import { changeType, isQuestionValid, LIMITS, move, newChoice, newQuestion, TIME
 import type { ImportWarning } from '@chacota/tiluchi/importers';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
-import { AnswerIcon, ANSWER_STYLES } from '@/components/answer-icons';
+import { AnswerIcon, ANSWER_STYLES } from '@chacota/tiluchi/web';
 import { buttonClass, Notice } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
 import { startTiluchiAction } from '../../../../../host/actions';

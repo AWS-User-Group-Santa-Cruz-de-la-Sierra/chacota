@@ -1,0 +1,39 @@
+{
+  "card": {
+    "name": "Tiluchi",
+    "description": "Live quizzes with a PIN and phones"
+  },
+  "host": {
+    "questionOf": "Question {n} of {total}",
+    "answers": "{count, plural, one {# answer} other {# answers}}",
+    "getReady": "Get ready!",
+    "ranking": "Ranking",
+    "showAnswer": "Show answer",
+    "showRanking": "Show ranking",
+    "nextQuestion": "Next question",
+    "showPodium": "Show podium"
+  },
+  "play": {
+    "getReady": "Get ready!",
+    "sent": "Answer sent!",
+    "waitOthers": "Waiting for the others…",
+    "timeUp": "Time is up!",
+    "correct": "Correct!",
+    "incorrect": "Incorrect",
+    "noAnswer": "You did not answer",
+    "pollThanks": "Thanks for voting!",
+    "points": "+{points} points",
+    "rank": "You are in place {rank}",
+    "trueLabel": "True",
+    "falseLabel": "False",
+    "lookAtScreen": "Look at the screen: the game starts soon."
+  },
+  "results": {
+    "title": "Questions",
+    "played": "{played} of {total} questions",
+    "endedEarly": "Ended early",
+    "question": "Question",
+    "answers": "Answers",
+    "correct": "Correct"
+  }
+}

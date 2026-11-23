@@ -1,5 +1,5 @@
-import type { PublicQuestion } from '@chacota/tiluchi/model';
-import { AnswerIcon, ANSWER_STYLES } from '../answer-icons';
+import type { PublicQuestion } from '../server/model';
+import { AnswerIcon, ANSWER_STYLES } from './answer-icons';
 
 export function choiceLabel(choice: { id: string; text: string }, type: PublicQuestion['type'], labels: { true: string; false: string }) {
   if (type !== 'true_false') return choice.text;
