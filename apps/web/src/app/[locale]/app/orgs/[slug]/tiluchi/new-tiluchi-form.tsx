@@ -4,7 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import { SubmitButton } from '@/components/submit-button';
 import { Field, Select } from '@/components/ui';
-import type { FormState } from '../../actions';
+import type { FormState } from '@/app/[locale]/app/actions';
 
 export function NewTiluchiForm({ action }: { action: (s: FormState, f: FormData) => Promise<FormState> }) {
   const t = useTranslations();

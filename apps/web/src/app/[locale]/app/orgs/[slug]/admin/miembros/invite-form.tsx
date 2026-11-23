@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 import { SubmitButton } from '@/components/submit-button';
 import { Select } from '@/components/ui';
-import type { FormState } from '../../../actions';
+import type { FormState } from '@/app/[locale]/app/actions';
 
 export function InviteForm({
   action,

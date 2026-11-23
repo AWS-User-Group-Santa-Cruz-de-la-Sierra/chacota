@@ -3,16 +3,20 @@
 import { LiveError } from '@chacota/live';
 import { getTiluchi } from '@chacota/tiluchi/content';
 import { getLocale } from 'next-intl/server';
+import { manifests } from '@/activities/registry.server';
 import { redirect } from '@/i18n/navigation';
+import { startSessionGuard } from '@/lib/activities';
 import { requireOrgAccess } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { getLive, requireSessionHost } from '@/lib/live';
 
-export type StartSessionResult = { error: 'not_playable' | 'org_not_active' } | undefined;
+export type StartSessionResult = { error: 'not_playable' | 'org_not_active' | 'activity_disabled' } | undefined;
 
 export async function startTiluchiAction(slug: string, tiluchiId: string): Promise<StartSessionResult> {
   const { org, user } = await requireOrgAccess(slug, 'activity.host');
   if (org.status !== 'active') return { error: 'org_not_active' };
+  const blocked = startSessionGuard(org, 'tiluchi', manifests);
+  if (blocked) return { error: blocked };
   const tiluchi = await getTiluchi(getDb(), org.id, tiluchiId);
   if (!tiluchi) return { error: 'not_playable' };
   let sessionId: string;

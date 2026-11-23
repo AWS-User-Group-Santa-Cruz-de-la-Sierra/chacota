@@ -1,4 +1,4 @@
-import { createDb, createOrg, getOrgBySlug } from '@chacota/db';
+import { createDb, createOrg, getOrgBySlug, setOrgActivities } from '@chacota/db';
 import { createTiluchi } from '@chacota/tiluchi/content';
 import { webEnv } from './env';
 
@@ -11,6 +11,8 @@ export async function seed(ownerUserId: string): Promise<{ orgSlug: string; tilu
   const org =
     (await getOrgBySlug(db, ORG_SLUG)) ??
     (await createOrg(db, { slug: ORG_SLUG, name: 'E2E User Group', primaryColor: '#0B8048' }, ownerUserId, 'active'));
+  // A previous run may have stopped with Tiluchi disabled.
+  await setOrgActivities(db, org.id, ['tiluchi']);
   const tiluchi = await createTiluchi(
     db,
     org.id,

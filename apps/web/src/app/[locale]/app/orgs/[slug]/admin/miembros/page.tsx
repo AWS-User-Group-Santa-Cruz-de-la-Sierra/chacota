@@ -5,7 +5,7 @@ import { SubmitButton } from '@/components/submit-button';
 import { Badge, Card } from '@/components/ui';
 import { requireOrgAccess } from '@/lib/auth';
 import { getDb } from '@/lib/db';
-import { changeRoleAction, createInviteAction, removeMemberAction } from '../../../actions';
+import { changeRoleAction, createInviteAction, removeMemberAction } from '@/app/[locale]/app/actions';
 import { InviteForm } from './invite-form';
 
 export default async function Members({ params }: { params: Promise<{ slug: string }> }) {

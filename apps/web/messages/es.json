@@ -65,7 +65,10 @@
     "questions": "{count, plural, =0 {Sin preguntas} one {# pregunta} other {# preguntas}}",
     "updated": "Actualizado {date}",
     "pendingBanner": "Esta organización está pendiente de aprobación. Ya podés preparar tus tiluchis.",
-    "results": "Resultados"
+    "results": "Resultados",
+    "activities": "Actividades",
+    "history": "Historial y premios",
+    "organization": "Organización"
   },
   "members": {
     "title": "Miembros",
@@ -181,7 +184,8 @@
     "fullscreen": "Pantalla completa",
     "keyboardHint": "Espacio o → para avanzar",
     "confirmEnd": "¿Terminar el juego ahora?",
-    "results": "Ver resultados"
+    "results": "Ver resultados",
+    "activityDisabled": "Esta actividad está desactivada en la organización."
   },
   "play": {
     "title": "Unirse",
@@ -235,5 +239,32 @@
       "score": "Puntaje"
     },
     "meta": "{date} · {players}"
+  },
+  "hub": {
+    "title": "Actividades",
+    "subtitle": "Elegí qué jugar hoy",
+    "more": "Más actividades",
+    "moreHint": "Activá las que suma la comunidad",
+    "recent": "Últimas sesiones",
+    "seeHistory": "Ver historial y premios",
+    "noRecent": "Todavía no hay sesiones terminadas.",
+    "none": "Esta organización no tiene actividades activas.",
+    "prizes": "Ver premios"
+  },
+  "activitiesAdmin": {
+    "title": "Actividades",
+    "hint": "Elegí qué actividades ofrece tu organización. Desactivar una oculta su tarjeta y no deja empezar sesiones nuevas; las sesiones en curso terminan normalmente y el historial se conserva.",
+    "save": "Guardar",
+    "saved": "Guardado",
+    "experimental": "Experimental",
+    "propose": "¿Querés proponer una actividad nueva? Leé la guía",
+    "proposeLink": "para crear actividades"
+  },
+  "orgAdmin": {
+    "general": "General y branding",
+    "members": "Miembros y roles",
+    "activities": "Actividades",
+    "back": "Volver a las actividades",
+    "title": "Administración"
   }
 }

@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { AnswerIcon, ANSWER_STYLES } from '@chacota/tiluchi/web';
 import { buttonClass, Notice } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
-import { startTiluchiAction } from '../../../../../host/actions';
+import { startTiluchiAction } from '@/app/[locale]/host/actions';
 import { deleteTiluchiAction, importQuestionsAction, saveTiluchiAction } from './actions';
 
 type Status = 'idle' | 'saving' | 'saved' | 'conflict' | 'invalid';
@@ -165,7 +165,10 @@ export function TiluchiEditor({
             onClick={() =>
               startPresenting(async () => {
                 const result = await startTiluchiAction(slug, tiluchi.id);
-                if (result?.error) setPresentError(result.error === 'org_not_active' ? th('orgNotActive') : th('notPlayable'));
+                if (result?.error)
+                  setPresentError(
+                    result.error === 'org_not_active' ? th('orgNotActive') : result.error === 'activity_disabled' ? th('activityDisabled') : th('notPlayable'),
+                  );
               })
             }
           >

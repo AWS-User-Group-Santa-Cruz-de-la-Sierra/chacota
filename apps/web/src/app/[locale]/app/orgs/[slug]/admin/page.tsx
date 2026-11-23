@@ -1,6 +1,6 @@
 import { requireOrgAccess } from '@/lib/auth';
-import { updateOrgAction } from '../../../actions';
-import { OrgForm } from '../../org-form';
+import { updateOrgAction } from '@/app/[locale]/app/actions';
+import { OrgForm } from '@/app/[locale]/app/orgs/org-form';
 
 export default async function Settings({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

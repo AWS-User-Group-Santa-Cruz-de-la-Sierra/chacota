@@ -27,7 +27,10 @@ try {
   await hostCtx.addCookies(login.cookies.map((c) => ({ ...c, domain: host_, path: '/' })));
   const host = await hostCtx.newPage();
   host.on('pageerror', (e) => console.log('host pageerror', e.message));
+  // Old URLs keep working.
   await host.goto(`${BASE}/app/orgs/${orgSlug}/tiluchis/${tiluchiId}`);
+  if (!host.url().endsWith(`/app/orgs/${orgSlug}/tiluchi/${tiluchiId}`)) fail(`Old URL did not redirect: ${host.url()}`);
+  step('old tiluchi URL redirects to the Tiluchi area');
   await host.getByRole('button', { name: /Presentar/ }).click();
   await host.waitForURL(/\/host\//, { timeout: 15000 });
   const pinText = (await host.locator('p.font-display').filter({ hasText: /^\d{3} \d{3}$/ }).first().textContent()) ?? '';
@@ -116,6 +119,55 @@ try {
   const text = await csv.text();
   if (!csv.ok() || !text.includes('Puesto') || !text.includes(code)) fail(`CSV export failed: ${csv.status()} ${text.slice(0, 200)}`);
   step('CSV export downloads with all players');
+
+  // Disabling Tiluchi mid-game: the running session finishes, new ones are blocked, history stays.
+  await host.goto(`${BASE}/app/orgs/${orgSlug}/tiluchi/${tiluchiId}`);
+  await host.getByRole('button', { name: /Presentar/ }).click();
+  await host.waitForURL(/\/host\//, { timeout: 15000 });
+  const pin2 = ((await host.locator('p.font-display').filter({ hasText: /^\d{3} \d{3}$/ }).first().textContent()) ?? '').replace(' ', '');
+  await ana.goto(`${BASE}/play?pin=${pin2}`);
+  await ana.getByPlaceholder('Tu apodo').fill('Ana');
+  await ana.getByRole('button', { name: 'Entrar' }).click();
+  await ana.getByText('¡Estás dentro!').waitFor({ timeout: 10000 });
+  await host.getByRole('button', { name: 'Empezar' }).click();
+  await ana.getByRole('button', { name: 'Lambda' }).waitFor({ timeout: 10000 });
+
+  const admin = await hostCtx.newPage();
+  await admin.goto(`${BASE}/app/orgs/${orgSlug}/admin/actividades`);
+  await admin.getByRole('checkbox').first().uncheck();
+  await admin.getByRole('button', { name: 'Guardar' }).click();
+  await admin.getByText('Guardado').waitFor({ timeout: 10000 });
+  await shot(admin, '8-admin-activities');
+
+  await ana.getByRole('button', { name: 'Lambda' }).click();
+  await ana.getByText('¡Respuesta enviada!').waitFor({ timeout: 5000 });
+  await host.getByRole('button', { name: 'Ver ranking' }).waitFor({ timeout: 8000 }); // auto reveal: everyone answered
+  await host.getByRole('button', { name: 'Ver ranking' }).click();
+  await host.getByRole('button', { name: 'Siguiente pregunta' }).click();
+  await host.getByRole('button', { name: 'Mostrar respuesta' }).click();
+  await host.getByRole('button', { name: 'Ver ranking' }).click();
+  await host.getByRole('button', { name: 'Ver podio' }).click();
+  await host.getByText('¡Felicidades!').waitFor({ timeout: 8000 });
+  step('a running session finishes after its activity is disabled');
+
+  await admin.goto(`${BASE}/app/orgs/${orgSlug}`);
+  await admin.getByRole('heading', { name: 'Actividades' }).waitFor();
+  if (await admin.getByRole('link', { name: /Tiluchi/ }).count()) fail('Tiluchi card still shown while disabled');
+  const area = await admin.goto(`${BASE}/app/orgs/${orgSlug}/tiluchi`);
+  if (area?.status() !== 404) fail(`Disabled Tiluchi area answered ${area?.status()}`);
+  await admin.goto(`${BASE}/app/orgs/${orgSlug}/historial`);
+  if ((await admin.locator('main ul li a').count()) < 2) fail('History lost sessions after disabling');
+  step('disabled activity disappears from the hub, its history stays');
+
+  await admin.goto(`${BASE}/app/orgs/${orgSlug}/admin/actividades`);
+  await admin.getByRole('checkbox').first().check();
+  await admin.getByRole('button', { name: 'Guardar' }).click();
+  await admin.getByText('Guardado').waitFor({ timeout: 10000 });
+  await admin.goto(`${BASE}/app/orgs/${orgSlug}`);
+  await admin.getByRole('link', { name: /Tiluchi/ }).first().waitFor();
+  await admin.setViewportSize({ width: 1280, height: 900 });
+  await shot(admin, '9-hub');
+  step('re-enabled Tiluchi is back on the hub');
   console.log('ALL PASSED');
 } finally {
   await browser.close();

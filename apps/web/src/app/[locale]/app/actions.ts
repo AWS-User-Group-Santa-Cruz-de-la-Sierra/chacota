@@ -68,7 +68,7 @@ export async function createTiluchiAction(slug: string, _: FormState, form: Form
     .safeParse({ title: optional(form.get('title')), language: form.get('language') });
   if (!parsed.success) return { error: 'invalid', fieldErrors: fieldErrors(parsed.error) };
   const tiluchi = await createTiluchi(getDb(), org.id, parsed.data, user.id);
-  return go(`/app/orgs/${slug}/tiluchis/${tiluchi.id}`);
+  return go(`/app/orgs/${slug}/tiluchi/${tiluchi.id}`);
 }
 
 export async function createInviteAction(slug: string, _: FormState, form: FormData): Promise<FormState> {
@@ -91,7 +91,7 @@ export async function changeRoleAction(slug: string, form: FormData): Promise<vo
     if (owners.length === 1) return;
   }
   await setMemberRole(getDb(), org.id, userId, target);
-  revalidatePath(`/[locale]/app/orgs/${slug}/members`, 'page');
+  revalidatePath(`/[locale]/app/orgs/${slug}/admin/miembros`, 'page');
 }
 
 export async function removeMemberAction(slug: string, form: FormData): Promise<void> {
@@ -104,7 +104,7 @@ export async function removeMemberAction(slug: string, form: FormData): Promise<
   } catch (error) {
     if (!(error instanceof ConflictError)) throw error;
   }
-  revalidatePath(`/[locale]/app/orgs/${slug}/members`, 'page');
+  revalidatePath(`/[locale]/app/orgs/${slug}/admin/miembros`, 'page');
 }
 
 export async function acceptInviteAction(token: string): Promise<void> {
