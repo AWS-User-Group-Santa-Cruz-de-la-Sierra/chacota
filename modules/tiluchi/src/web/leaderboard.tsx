@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 
 /** How long the previous order stays on screen before the rows move. */
 const HOLD_MS = 1200;
+/** How long the rows take to reach their places, leaving rows to drop out and scores to finish counting. */
+const SETTLE_MS = 1500;
 
 /** A score that counts up (or down) to its new value. */
 function Score({ value }: { value: number }) {
@@ -27,11 +29,13 @@ export function Leaderboard({ title, top, before }: { title: string; top: Standi
   // Without a previous order (e.g. after a reload) the current one shows right away.
   const [rows, setRows] = useState(before.length > 0 ? before : top);
   const moved = rows === top;
+  // Final order on screen and nothing still moving. Marked on the list for tests (data-settled).
+  const [settled, setSettled] = useState(before.length === 0);
   useEffect(() => {
-    if (rows === top) return;
-    const timer = setTimeout(() => setRows(top), HOLD_MS);
+    if (settled) return;
+    const timer = moved ? setTimeout(() => setSettled(true), SETTLE_MS) : setTimeout(() => setRows(top), HOLD_MS);
     return () => clearTimeout(timer);
-  }, [rows, top]);
+  }, [moved, settled, top]);
 
   const rankBefore = new Map(before.map((s, i) => [s.nickname, i]));
 
@@ -39,7 +43,7 @@ export function Leaderboard({ title, top, before }: { title: string; top: Standi
     <MotionConfig reducedMotion="user">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
         <h1 className="text-center font-display text-5xl font-extrabold">{title}</h1>
-        <ol className="relative flex flex-col gap-3">
+        <ol className="relative flex flex-col gap-3" data-settled={settled || undefined}>
           <AnimatePresence initial mode="popLayout">
             {rows.map((s, i) => {
               const was = rankBefore.get(s.nickname);

@@ -80,8 +80,9 @@ try {
   await shot(ana, '3-player-correct');
 
   await host.getByRole('button', { name: 'Ver ranking' }).click();
-  await host.getByRole('heading', { name: 'Ranking' }).waitFor();
-  const first = (await host.locator('ol li').first().textContent()) ?? '';
+  // The ranking opens in the order before the question and then moves: read it once it has settled.
+  await host.locator('ol[data-settled]').waitFor({ timeout: 8000 });
+  const first = (await host.locator('ol[data-settled] li').first().textContent()) ?? '';
   if (!first.includes('Ana')) fail(`Expected Ana first, got ${first}`);
   step('ranking shows Ana first');
 
