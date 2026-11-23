@@ -196,7 +196,8 @@
     "results": "Ver resultados",
     "activityDisabled": "Esta actividad está desactivada en la organización.",
     "backToActivity": "Volver a {name}",
-    "presents": "{org} presenta"
+    "presents": "{org} presenta",
+    "playersReady": "{count, plural, =0 {esperando jugadores…} one {jugador listo} other {jugadores listos}}"
   },
   "play": {
     "title": "Unirse",

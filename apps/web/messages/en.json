@@ -196,7 +196,8 @@
     "results": "See results",
     "activityDisabled": "This activity is disabled for the organization.",
     "backToActivity": "Back to {name}",
-    "presents": "{org} presents"
+    "presents": "{org} presents",
+    "playersReady": "{count, plural, =0 {waiting for players…} one {player ready} other {players ready}}"
   },
   "play": {
     "title": "Join",

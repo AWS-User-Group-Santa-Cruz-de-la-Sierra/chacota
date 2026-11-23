@@ -114,6 +114,93 @@ export function Presenter(props: Props) {
   }, [advance, status]);
 
   const showBackground = background && !brokenMedia.has(background);
+  const fullscreenButton = (
+    <button
+      type="button"
+      className={buttonClass('ghost')}
+      onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
+    >
+      {t('fullscreen')}
+    </button>
+  );
+  const orgLogo = (className: string) =>
+    logo ? (
+      // eslint-disable-next-line @next/next/no-img-element -- media comes from S3/CloudFront
+      <img src={logo} alt={props.orgName} className={className} onError={() => markBroken(props.logoKey!)} />
+    ) : null;
+
+  // Lobby: the org's panel on the left (its color, logo, "presents", the activity and the title),
+  // how to join on the right. Same layout as the "Lobby" mockup.
+  if (status === 'lobby') {
+    return (
+      <div className="flex min-h-dvh flex-col bg-noche lg:flex-row">
+        <section
+          className="flex flex-col justify-between gap-10 p-8 lg:w-[42%] lg:shrink-0 lg:p-12"
+          style={{ background: props.primaryColor, color: onOrgColor }}
+        >
+          <div className="flex flex-col gap-4">
+            {orgLogo('h-24 max-w-64 object-contain object-left') ?? (
+              <span className="font-display text-5xl font-extrabold leading-tight">{props.orgName}</span>
+            )}
+            <span className="text-xl font-semibold">{t('presents', { org: props.orgName })}</span>
+          </div>
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center gap-4">
+              <activity.Icon size={96} color={props.primaryColor} />
+              <span className="font-display text-5xl font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
+            </div>
+            <h1 className="font-display text-5xl font-extrabold leading-none tracking-tight lg:text-7xl">{props.title}</h1>
+          </div>
+        </section>
+
+        <main className="flex flex-1 flex-col gap-8 p-8 lg:p-12">
+          <div className="flex flex-wrap items-center gap-8">
+            <div
+              className="w-48 shrink-0 rounded-3xl bg-blanco p-3 lg:w-56"
+              role="img"
+              aria-label={props.joinUrl}
+              dangerouslySetInnerHTML={{ __html: props.qrSvg }}
+            />
+            <div className="flex flex-col gap-3">
+              <p className="text-xl text-niebla">
+                {t('joinAt')} <span className="font-bold text-blanco">{props.joinHost}</span> {t('withPin')}
+              </p>
+              <p className="font-display text-[5rem] font-extrabold leading-none tracking-[0.08em] text-sol xl:text-[7rem]">
+                {props.pin.slice(0, 3)} {props.pin.slice(3)}
+              </p>
+            </div>
+          </div>
+
+          <p className="flex items-baseline gap-3">
+            <span className="font-display text-5xl font-extrabold tabular-nums">{players.length}</span>
+            <span className="text-xl text-niebla">{t('playersReady', { count: players.length })}</span>
+          </p>
+          <ul className="flex flex-1 flex-wrap content-start gap-2" aria-live="polite">
+            {players.map((name) => (
+              <li key={name} className="rounded-full bg-noche-2 px-4 py-2 text-lg font-semibold">
+                {name}
+              </li>
+            ))}
+          </ul>
+
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
+            <span className="mr-auto text-sm text-niebla">{t('keyboardHint')}</span>
+            {fullscreenButton}
+            <button
+              type="button"
+              className={buttonClass('primary', 'min-h-14 bg-sol px-10 text-xl text-noche hover:bg-sol/90')}
+              onClick={advance}
+              disabled={pending}
+            >
+              {t('start')}
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex min-h-dvh flex-col gap-6 bg-noche px-6 pt-7 pb-5 lg:px-10">
       {showBackground && (
@@ -123,92 +210,28 @@ export function Presenter(props: Props) {
           <div className="absolute inset-0" style={{ background: 'rgba(26, 14, 46, 0.72)' }} />
         </div>
       )}
-      {status !== 'lobby' && <div className="absolute inset-x-0 top-0 h-2" style={{ background: props.primaryColor }} aria-hidden="true" />}
+      <div className="absolute inset-x-0 top-0 h-2" style={{ background: props.primaryColor }} aria-hidden="true" />
+
+      {/* Header as in the "Pregunta" mockups: org and progress on the left, activity and PIN on the right. */}
       <header className="relative flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {logo ? (
-            // eslint-disable-next-line @next/next/no-img-element -- media comes from S3/CloudFront
-            <img src={logo} alt={props.orgName} className="h-10 max-w-40 object-contain" onError={() => markBroken(props.logoKey!)} />
-          ) : (
-            <activity.Icon size={44} color={props.primaryColor} />
-          )}
-          <div className="flex flex-col">
-            <span className="font-semibold">{props.orgName}</span>
-            <span className="text-sm text-niebla">
-              {props.title}
-              {status === 'running' && subtitle ? ` · ${subtitle}` : ''}
-            </span>
-          </div>
+        <div className="flex items-center gap-4">
+          {orgLogo('h-10 max-w-40 object-contain') ?? <span className="font-semibold">{props.orgName}</span>}
+          <span className="text-niebla">{status === 'running' && subtitle ? subtitle : props.title}</span>
         </div>
         <div className="flex items-center gap-3">
           {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
-          {status !== 'lobby' && logo && <activity.Icon size={44} color={props.primaryColor} />}
+          <activity.Icon size={44} color={props.primaryColor} />
+          <span className="font-display text-2xl font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
           {status === 'running' && (
-            <span className="rounded-full bg-noche-2 px-4 py-2 text-sm text-niebla">
+            <span className="ml-3 rounded-full bg-noche-2 px-4 py-2 text-sm text-niebla">
               {props.joinHost} · PIN <span className="font-display text-lg font-extrabold tracking-widest text-sol">{props.pin}</span>
             </span>
           )}
-          <button
-            type="button"
-            className={buttonClass('ghost')}
-            onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
-          >
-            {t('fullscreen')}
-          </button>
+          {fullscreenButton}
         </div>
       </header>
 
       <main className="relative flex flex-1 flex-col justify-center gap-8">
-        {status === 'lobby' && (
-          <div className="grid items-stretch gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-            <section
-              className="flex flex-col justify-between gap-10 rounded-3xl p-8 lg:p-10"
-              style={{ background: props.primaryColor, color: onOrgColor }}
-            >
-              <div className="flex flex-col gap-4">
-                {logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- media comes from S3/CloudFront
-                  <img src={logo} alt={props.orgName} className="h-24 max-w-60 object-contain object-left" onError={() => markBroken(props.logoKey!)} />
-                ) : (
-                  <span className="font-display text-5xl font-extrabold leading-tight">{props.orgName}</span>
-                )}
-                <span className="text-xl font-semibold">{t('presents', { org: props.orgName })}</span>
-              </div>
-              <div className="flex flex-col gap-5">
-                <div className="flex items-center gap-4">
-                  <activity.Icon size={96} color={props.primaryColor} />
-                  <span className="font-display text-5xl font-extrabold tracking-tight">{ta('card.name')}</span>
-                </div>
-                <h1 className="font-display text-5xl font-extrabold leading-none tracking-tight lg:text-6xl">{props.title}</h1>
-              </div>
-            </section>
-            <div className="grid items-center gap-10 xl:grid-cols-[1fr_auto]">
-            <div className="flex flex-col gap-6">
-              <p className="text-2xl text-niebla">
-                {t('joinAt')} <span className="font-bold text-blanco">{props.joinHost}</span> {t('withPin')}
-              </p>
-              <p className="font-display text-[6rem] font-extrabold leading-none tracking-[0.12em] text-sol xl:text-[8rem]">
-                {props.pin.slice(0, 3)} {props.pin.slice(3)}
-              </p>
-              <p className="text-xl font-semibold">{t('players', { count: players.length })}</p>
-              <ul className="flex flex-wrap gap-2" aria-live="polite">
-                {players.map((name) => (
-                  <li key={name} className="rounded-full bg-noche-2 px-4 py-2 text-lg font-semibold">
-                    {name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div
-              className="w-64 rounded-3xl bg-blanco p-4 lg:w-80"
-              role="img"
-              aria-label={props.joinUrl}
-              dangerouslySetInnerHTML={{ __html: props.qrSvg }}
-            />
-            </div>
-          </div>
-        )}
-
         {status === 'running' && (
           <activity.Host
             sessionId={props.sessionId}
@@ -272,7 +295,7 @@ export function Presenter(props: Props) {
             </>
           ) : (
             <button type="button" className={buttonClass('primary', 'min-h-14 px-8 text-lg')} onClick={advance} disabled={pending}>
-              {status === 'lobby' ? t('start') : advanceLabel}
+              {advanceLabel}
             </button>
           )}
         </div>
