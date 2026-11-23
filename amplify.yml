@@ -10,7 +10,8 @@ applications:
           commands:
             - nvm install 22 && nvm use 22
             - corepack enable
-            - (cd ../.. && pnpm install --frozen-lockfile)
+            # Amplify's packager needs real folders in node_modules, not pnpm's symlinks.
+            - (cd ../.. && pnpm install --frozen-lockfile --config.node-linker=hoisted)
         build:
           commands:
             - env | grep -E '^(AMPLIFY_APP_ORIGIN|COGNITO_|CHACOTA_|GAME_API_URL|EVENTS_|MEDIA_)' > .env.production
@@ -22,4 +23,3 @@ applications:
       cache:
         paths:
           - .next/cache/**/*
-          - ../../node_modules/.pnpm/**/*
