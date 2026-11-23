@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { activityWebs } from '@/activities/registry.client';
 import { useRealtime } from '@/components/game/use-realtime';
 import { Logo } from '@/components/logo';
-import { shouldForgetSession } from '@/lib/player-session';
+import { readSessionCookie, resumeRetryDelay, sessionCookie, shouldForgetSession } from '@/lib/player-session';
 import { buttonClass } from '@/components/ui';
 
 interface Session {
@@ -21,6 +21,8 @@ interface Session {
 
 type Screen =
   | { kind: 'join' }
+  /** A saved session was found after a reload and /state has not answered yet. */
+  | { kind: 'resuming' }
   | { kind: 'lobby' }
   /** `key` remounts the activity screen whenever it starts from a new snapshot. */
   | { kind: 'running'; snapshot: Record<string, unknown>; key: number }
@@ -34,16 +36,22 @@ interface Snapshot {
 }
 
 const STORAGE_KEY = 'chacota:session';
+const STATE_TIMEOUT_MS = 8000;
 
-function loadSession(): Session | null {
+function fromStorage(): Partial<Session> | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    const session = raw ? (JSON.parse(raw) as Partial<Session>) : null;
-    // Sessions saved before sessions had these fields cannot be resumed.
-    return session?.sessionId && session.module ? (session as Session) : null;
+    return raw ? (JSON.parse(raw) as Partial<Session>) : null;
   } catch {
     return null;
   }
+}
+
+/** localStorage first, then the cookie copy (camera apps' viewers may not keep localStorage). */
+function loadSession(): Session | null {
+  const session = fromStorage() ?? (readSessionCookie(document.cookie) as Partial<Session> | null);
+  // Sessions saved before sessions had these fields cannot be resumed.
+  return session?.sessionId && session.module && session.token ? (session as Session) : null;
 }
 
 function saveSession(session: Session | null) {
@@ -51,7 +59,12 @@ function saveSession(session: Session | null) {
     if (session) localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
     else localStorage.removeItem(STORAGE_KEY);
   } catch {
-    // Private mode: the game still works, it just can't resume after a reload.
+    // Private mode or an in-app viewer: the cookie below still lets the player resume.
+  }
+  try {
+    document.cookie = sessionCookie(session, location.protocol === 'https:');
+  } catch {
+    // Cookies blocked too: the game still works, it just can't resume after a reload.
   }
 }
 
@@ -70,17 +83,21 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
   }, []);
   const [score, setScore] = useState(0);
 
+  /** Loads the current state. False when the API could not answer for now (network, 429, 5xx). */
   const resync = useCallback(
-    async (s: Session) => {
-      const res = await fetch(`${apiUrl}/state`, { headers: { authorization: `Bearer ${s.token}` } }).catch(() => null);
-      if (!res) return;
+    async (s: Session): Promise<boolean> => {
+      const res = await fetch(`${apiUrl}/state`, {
+        headers: { authorization: `Bearer ${s.token}` },
+        // A slow network can leave the request hanging: give up and let the caller retry.
+        signal: AbortSignal.timeout(STATE_TIMEOUT_MS),
+      }).catch(() => null);
+      if (!res) return false;
       if (!res.ok) {
-        if (shouldForgetSession(res.status)) {
-          saveSession(null);
-          setSession(null);
-          setScreen({ kind: 'join' });
-        }
-        return;
+        if (!shouldForgetSession(res.status)) return false;
+        saveSession(null);
+        setSession(null);
+        setScreen({ kind: 'join' });
+        return true;
       }
       const snap = (await res.json()) as Snapshot;
       clock.sync(snap.serverNow);
@@ -89,20 +106,34 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       if (snap.session.status === 'lobby') setScreen({ kind: 'lobby' });
       else if (snap.session.status === 'ended') setScreen({ kind: 'ended' });
       else setScreen({ kind: 'running', snapshot: snap.module, key: Date.now() });
+      return true;
     },
     [apiUrl, clock, hub, setScreen],
   );
 
   // Resume a previous session (same PIN, or no PIN in the link).
+  // Until /state answers the phone shows "reconnecting", not the join form: joining again from
+  // there would create a second player and lose the score.
   useEffect(() => {
     const stored = loadSession();
-    if (stored && (!initialPin || initialPin === stored.pin)) {
-      // localStorage only exists after hydration, so this sync has to happen in an effect.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSession(stored);
-      void resync(stored);
-    }
-  }, [initialPin, resync]);
+    if (!stored || (initialPin && initialPin !== stored.pin)) return;
+    // localStorage only exists after hydration, so this sync has to happen in an effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSession(stored);
+    setScreen({ kind: 'resuming' });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+    const attempt = async (n: number) => {
+      const done = await resync(stored);
+      // The player may have left, or realtime resynced in the meantime.
+      if (!done && !cancelled && screenNow.current.kind === 'resuming') timer = setTimeout(() => void attempt(n + 1), resumeRetryDelay(n));
+    };
+    void attempt(0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [initialPin, resync, setScreen]);
 
   const onEvent = useCallback(
     (event: LiveEvent) => {
@@ -178,6 +209,15 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
 
       <main className="flex flex-1 flex-col">
         {screen.kind === 'join' && <JoinForm initialPin={initialPin} onJoin={join} />}
+
+        {screen.kind === 'resuming' && (
+          <Centered>
+            <p className="text-lg text-niebla">{t('reconnecting')}</p>
+            <button type="button" className={buttonClass('secondary', 'mt-4')} onClick={leave}>
+              {t('leave')}
+            </button>
+          </Centered>
+        )}
 
         {screen.kind === 'lobby' && (
           <Centered>
