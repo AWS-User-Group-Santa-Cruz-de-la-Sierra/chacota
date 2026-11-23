@@ -145,9 +145,15 @@ importers:
       '@chacota/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@chacota/live':
+        specifier: workspace:*
+        version: link:../../packages/live
       exceljs:
         specifier: ^4.4.0
         version: 4.4.0
+      hono:
+        specifier: ^4.13.20
+        version: 4.13.20
       papaparse:
         specifier: ^5.7.1
         version: 5.7.1
