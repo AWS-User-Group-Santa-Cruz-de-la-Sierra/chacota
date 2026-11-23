@@ -1,5 +1,5 @@
 import { isAnswerCorrect, type Question } from '@chacota/core';
-import type { Answer, Player, PublicQuestion, RankEntry, Standing } from './model';
+import { playerCode, type Answer, type Game, type GameResults, type Player, type PublicQuestion, type RankEntry, type Standing } from './model';
 
 const TF_CHOICES = [
   { id: 'true', text: 'true' },
@@ -68,6 +68,53 @@ export function rankPlayers(players: Player[], answers: Answer[] = []): Record<s
     };
   });
   return ranks;
+}
+
+/** Full standings and per-question stats, computed once when the game ends. */
+export function buildResults(game: Game, players: Player[], answersByQuestion: Answer[][], endedAt: string): GameResults {
+  const ranks = rankPlayers(players);
+  const perPlayer = new Map<string, { correct: number; answered: number; correctMs: number }>();
+  for (const answers of answersByQuestion) {
+    for (const a of answers) {
+      const stats = perPlayer.get(a.playerId) ?? { correct: 0, answered: 0, correctMs: 0 };
+      stats.answered++;
+      if (a.correct) {
+        stats.correct++;
+        stats.correctMs += Math.max(0, a.elapsedMs);
+      }
+      perPlayer.set(a.playerId, stats);
+    }
+  }
+  const standings = sortPlayers(players).map((p) => {
+    const stats = perPlayer.get(p.id) ?? { correct: 0, answered: 0, correctMs: 0 };
+    return {
+      rank: ranks[p.id]!.rank,
+      nickname: p.nickname,
+      code: playerCode(p.id),
+      score: p.score,
+      correct: stats.correct,
+      answered: stats.answered,
+      avgCorrectMs: stats.correct ? Math.round(stats.correctMs / stats.correct) : undefined,
+    };
+  });
+  return {
+    gameId: game.id,
+    orgId: game.orgId,
+    tiluchiId: game.tiluchiId,
+    title: game.title,
+    hostUserId: game.hostUserId,
+    createdAt: game.createdAt,
+    endedAt,
+    playerCount: players.length,
+    questionCount: game.questions.length,
+    questionsPlayed: answersByQuestion.length,
+    podium: topStandings(players, 3),
+    standings,
+    questions: answersByQuestion.map((answers, i) => {
+      const q = game.questions[i]!;
+      return { prompt: q.prompt, type: q.type, answered: answers.length, correct: answers.filter((a) => a.correct).length };
+    }),
+  };
 }
 
 export { isAnswerCorrect };

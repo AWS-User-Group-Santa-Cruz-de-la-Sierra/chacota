@@ -24,6 +24,9 @@ export default async function OrgLayout({ children, params }: { children: ReactN
         <Link href={base} className={buttonClass('ghost')}>
           {t('org.tiluchis')}
         </Link>
+        <Link href={`${base}/results`} className={buttonClass('ghost')}>
+          {t('org.results')}
+        </Link>
         <Link href={`${base}/members`} className={buttonClass('ghost')}>
           {t('org.members')}
         </Link>

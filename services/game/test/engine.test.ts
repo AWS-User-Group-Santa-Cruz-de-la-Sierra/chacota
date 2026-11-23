@@ -1,7 +1,7 @@
 import type { Question } from '@chacota/core';
 import { describe, expect, it } from 'vitest';
 import { correctValues, countAnswers, publicQuestion, rankPlayers, topStandings } from '../src/engine';
-import type { Answer, Player } from '../src/model';
+import { playerCode, type Answer, type Player } from '../src/model';
 import { signPlayerToken, verifyPlayerToken } from '../src/token';
 
 const quiz: Question = {
@@ -68,5 +68,15 @@ describe('shardOf', () => {
     for (let i = 0; i < 10_000; i++) counts[shardOf(crypto.randomUUID())]++;
     expect(Math.min(...counts)).toBeGreaterThan(800);
     expect(shardOf('same-id')).toBe(shardOf('same-id'));
+  });
+});
+
+describe('playerCode', () => {
+  it('is short, stable and readable', () => {
+    const code = playerCode('2f1c7f0e-1234-4c3a-9a77-1e0b2f3c4d5e');
+    expect(code).toMatch(/^[A-HJ-NP-Z2-9]{4}$/);
+    expect(playerCode('2f1c7f0e-1234-4c3a-9a77-1e0b2f3c4d5e')).toBe(code);
+    const codes = new Set(Array.from({ length: 1000 }, () => playerCode(crypto.randomUUID())));
+    expect(codes.size).toBeGreaterThan(990);
   });
 });

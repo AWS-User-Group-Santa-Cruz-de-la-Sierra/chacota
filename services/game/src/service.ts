@@ -2,8 +2,8 @@ import { randomInt } from 'node:crypto';
 import { GetCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { computePoints, isAnswerCorrect, newId, PlayableTiluchi, type Tiluchi } from '@chacota/core';
 import { isConditionalCheckFailure, type Db } from '@chacota/db';
-import { countAnswers, correctValues, publicQuestion, rankPlayers, topStandings, validAnswerValues } from './engine';
-import { ANSWER_GRACE_MS, QUESTION_LEAD_MS, channels, NICKNAME_MAX, type Answer, type Game, type GameEvent, type GameStatus, type Player } from './model';
+import { buildResults, countAnswers, correctValues, publicQuestion, rankPlayers, topStandings, validAnswerValues } from './engine';
+import { ANSWER_GRACE_MS, QUESTION_LEAD_MS, channels, NICKNAME_MAX, type Answer, type Game, type GameEvent, type GameResults, type GameResultsSummary, type GameStatus, type Player } from './model';
 import type { Publisher } from './realtime';
 import { signPlayerToken, verifyPlayerToken } from './token';
 
@@ -59,7 +59,13 @@ const k = {
     pk: k.answersPk(gameId, index, shardOf(playerId)),
     sk: `ANSWER#${playerId}`,
   }),
+  // Results live under the organization and never expire.
+  result: (orgId: string, endedAt: string, gameId: string) => ({ pk: `ORG#${orgId}`, sk: `RESULT#${endedAt}#${gameId}` }),
+  resultRows: (orgId: string, gameId: string, chunk: number) => ({ pk: `ORG#${orgId}`, sk: `RESROWS#${gameId}#${pad(chunk)}` }),
 };
+
+/** Standings are stored in chunks so a big game never hits the 400KB item limit. */
+const ROWS_PER_CHUNK = 500;
 
 const HOUR = 3600;
 /** Live data (PIN, players, answers) expires; the game record stays as history. */
@@ -254,11 +260,114 @@ export class GameService {
 
   async end(gameId: string): Promise<Game> {
     const game = await this.requireGame(gameId);
-    if (game.status === 'ended') return game;
+    if (game.status === 'ended') {
+      // A previous attempt may have failed after the transition: make sure results exist.
+      if (!(await this.getResultsSummary(game))) await this.saveResults(game);
+      return game;
+    }
     const updated = await this.transition(game, 'ended', { endedAt: new Date(this.now()).toISOString() });
-    const players = await this.listPlayers(game.id);
+    const players = await this.saveResults(updated);
     await this.publish(game.id, { type: 'ended', podium: topStandings(players, 3), ranks: rankPlayers(players) });
     return updated;
+  }
+
+  /** Writes the permanent results of an ended game. Idempotent. Returns the players it read. */
+  private async saveResults(game: Game): Promise<Player[]> {
+    const played = game.status === 'lobby' ? 0 : game.questionIndex + 1;
+    const [players, ...answers] = await Promise.all([
+      this.listPlayers(game.id),
+      ...Array.from({ length: Math.max(0, played) }, (_, i) => this.listAnswers(game.id, i)),
+    ]);
+    // Nobody played: nothing worth keeping in the history.
+    if (players.length === 0) return [];
+    const { standings, ...summary } = buildResults(game, players as Player[], answers as Answer[][], game.endedAt!);
+    const chunks = Array.from({ length: Math.ceil(standings.length / ROWS_PER_CHUNK) }, (_, i) =>
+      standings.slice(i * ROWS_PER_CHUNK, (i + 1) * ROWS_PER_CHUNK),
+    );
+    try {
+      await this.db.doc.send(
+        new TransactWriteCommand({
+          TransactItems: [
+            {
+              Put: {
+                TableName: this.db.tableName,
+                Item: { ...k.result(game.orgId, game.endedAt!, game.id), ...summary, chunks: chunks.length },
+                ConditionExpression: 'attribute_not_exists(pk)',
+              },
+            },
+            ...chunks.map((rows, i) => ({
+              Put: { TableName: this.db.tableName, Item: { ...k.resultRows(game.orgId, game.id, i), rows } },
+            })),
+          ],
+        }),
+      );
+    } catch (error) {
+      if (!isConditionalCheckFailure(error)) throw error;
+    }
+    return players as Player[];
+  }
+
+  /** Most recent results of an organization first, without the standings. */
+  async listResults(orgId: string, limit = 100): Promise<GameResultsSummary[]> {
+    const { Items } = await this.db.doc.send(
+      new QueryCommand({
+        TableName: this.db.tableName,
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
+        ExpressionAttributeValues: { ':pk': `ORG#${orgId}`, ':prefix': 'RESULT#' },
+        ScanIndexForward: false,
+        Limit: limit,
+      }),
+    );
+    return (Items ?? []).map((i) => strip<GameResultsSummary & { chunks?: number }>(i)).map(({ chunks: _c, ...r }) => r);
+  }
+
+  private async getResultsSummary(game: Game): Promise<(Omit<GameResults, 'standings'> & { chunks: number }) | undefined> {
+    if (!game.endedAt) return undefined;
+    const { Item } = await this.db.doc.send(
+      new GetCommand({ TableName: this.db.tableName, Key: k.result(game.orgId, game.endedAt, game.id), ConsistentRead: true }),
+    );
+    return Item ? strip(Item) : undefined;
+  }
+
+  /** Full results of an ended game, or undefined if it never ended. */
+  async getResults(game: Game): Promise<GameResults | undefined> {
+    const summary = await this.getResultsSummary(game);
+    if (!summary) return undefined;
+    const { chunks, ...rest } = summary;
+    const { Items } = await this.db.doc.send(
+      new QueryCommand({
+        TableName: this.db.tableName,
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
+        ExpressionAttributeValues: { ':pk': `ORG#${game.orgId}`, ':prefix': `RESROWS#${game.id}#` },
+        ConsistentRead: true,
+      }),
+    );
+    const rows = (Items ?? []).sort((a, b) => String(a.sk).localeCompare(String(b.sk)));
+    if (rows.length !== chunks) throw new Error(`Results of game ${game.id} are incomplete`);
+    return { ...rest, standings: rows.flatMap((r) => r.rows as GameResults['standings']) };
+  }
+
+  /** Games of an organization that started but were never ended (results not saved yet). */
+  async listUnfinishedGames(orgId: string): Promise<Game[]> {
+    const { Items } = await this.db.doc.send(
+      new QueryCommand({
+        TableName: this.db.tableName,
+        IndexName: 'gsi1',
+        // Older games lost their players and answers to the TTL.
+        KeyConditionExpression: 'gsi1pk = :pk AND gsi1sk > :since',
+        FilterExpression: '#status <> :ended AND playerCount > :zero',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: {
+          ':pk': `ORGGAMES#${orgId}`,
+          ':since': new Date(this.now() - LIVE_TTL_SECONDS * 1000).toISOString(),
+          ':ended': 'ended',
+          ':zero': 0,
+        },
+        ScanIndexForward: false,
+        Limit: 50,
+      }),
+    );
+    return (Items ?? []).map((i) => strip<Game>(i));
   }
 
   async countAnswers(gameId: string, index: number): Promise<number> {

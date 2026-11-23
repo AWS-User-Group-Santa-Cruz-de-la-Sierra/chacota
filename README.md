@@ -15,6 +15,7 @@ Es open source (Apache-2.0) y cualquiera puede desplegarlo en su propia cuenta d
 | Editor + import/export | ✅ |
 | Motor de partida en tiempo real (AppSync Events) | ✅ |
 | Presentador + participante | ✅ |
+| Resultados permanentes para premios (top N, código de verificación, CSV/Excel) | ✅ |
 
 ## Desarrollo local
 
@@ -85,6 +86,17 @@ Resultado en `us-east-1` (noviembre 2026), con 1000 jugadores y 3 preguntas y si
 | Revelación con ranking → celulares | 0.6–0.9 s | 0.8–1.1 s |
 
 Desde Bolivia suma unos 150 ms de red. Para pruebas chicas desde tu máquina: `pnpm --filter @chacota/game exec tsx scripts/load-test.ts --players 300 --concurrency 20`.
+
+## Resultados y premios
+
+Al terminar cada partida se guardan los resultados completos en la organización (pestaña **Resultados**), y no expiran como los datos en vivo:
+
+- Ranking de todos los jugadores con puntaje, respuestas correctas y tiempo promedio de aciertos, que sirve para desempatar.
+- Cada jugador ve un **código de 4 letras** en su celular al terminar. Pedilo para verificar a los ganadores, porque los apodos los elige cada uno.
+- Selector de top 3/5/10 o cualquier número, con aviso si hay un empate justo en el corte.
+- Descarga en Excel o CSV, del ranking completo o solo de los ganadores.
+
+Si alguien se olvidó de terminar una partida, aparece en **Partidas sin terminar** con un botón para cerrarla y guardar sus resultados (dentro de las 48 horas).
 
 ## Importar preguntas
 

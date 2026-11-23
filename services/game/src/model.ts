@@ -85,6 +85,63 @@ export type GameEvent =
   | { type: 'leaderboard'; index: number; top: Standing[] }
   | { type: 'ended'; podium: Standing[]; ranks: Record<string, RankEntry> };
 
+/** One row of the permanent results: what organizers need to hand out prizes. */
+export interface ResultEntry {
+  rank: number;
+  nickname: string;
+  /** Short code shown on the player's phone at the end, to check who is who. */
+  code: string;
+  score: number;
+  correct: number;
+  answered: number;
+  /** Average time of the correct answers, a fair tie-breaker. */
+  avgCorrectMs?: number;
+}
+
+export interface QuestionResult {
+  prompt: string;
+  type: QuestionType;
+  answered: number;
+  correct: number;
+}
+
+/** Results kept after the live data expires. */
+export interface GameResultsSummary {
+  gameId: string;
+  orgId: string;
+  tiluchiId: string;
+  title: string;
+  hostUserId: string;
+  createdAt: string;
+  endedAt: string;
+  playerCount: number;
+  questionCount: number;
+  questionsPlayed: number;
+  podium: Standing[];
+}
+
+export interface GameResults extends GameResultsSummary {
+  standings: ResultEntry[];
+  questions: QuestionResult[];
+}
+
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/** Stable 4-character verification code for a player (no 0/O or 1/I to confuse). */
+export function playerCode(playerId: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < playerId.length; i++) {
+    hash ^= playerId.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  let code = '';
+  for (let i = 0; i < 4; i++) {
+    code += CODE_ALPHABET[(hash >>> 0) % CODE_ALPHABET.length];
+    hash = Math.imul(hash ^ (hash >>> 15), 0x2c1b3c6d);
+  }
+  return code;
+}
+
 export const channels = {
   /** Everyone in the game (players and presenter). */
   public: (gameId: string) => `/game/${gameId}`,

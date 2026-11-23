@@ -281,9 +281,14 @@ export function Presenter(props: Props) {
             </button>
           )}
           {screen.kind === 'ended' ? (
-            <Link href={`/app/orgs/${props.orgSlug}`} className={buttonClass('primary')}>
-              {t('backToOrg')}
-            </Link>
+            <>
+              <Link href={`/app/orgs/${props.orgSlug}`} className={buttonClass('ghost')}>
+                {t('backToOrg')}
+              </Link>
+              <Link href={`/app/orgs/${props.orgSlug}/results/${props.gameId}`} className={buttonClass('primary')}>
+                {t('results')}
+              </Link>
+            </>
           ) : (
             <button type="button" className={buttonClass('primary', 'min-h-14 px-8 text-lg')} onClick={advance} disabled={pending}>
               {screen.kind === 'lobby'

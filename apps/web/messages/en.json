@@ -64,7 +64,8 @@
     "noTiluchis": "This organization has no tiluchis yet.",
     "questions": "{count, plural, =0 {No questions} one {# question} other {# questions}}",
     "updated": "Updated {date}",
-    "pendingBanner": "This organization is pending approval. You can already prepare your tiluchis."
+    "pendingBanner": "This organization is pending approval. You can already prepare your tiluchis.",
+    "results": "Results"
   },
   "members": {
     "title": "Members",
@@ -187,7 +188,8 @@
     "backToOrg": "Back to the organization",
     "fullscreen": "Full screen",
     "keyboardHint": "Space or → to advance",
-    "confirmEnd": "End the game now?"
+    "confirmEnd": "End the game now?",
+    "results": "See results"
   },
   "play": {
     "title": "Join",
@@ -221,6 +223,46 @@
     "leave": "Leave",
     "reconnecting": "Reconnecting…",
     "trueLabel": "True",
-    "falseLabel": "False"
+    "falseLabel": "False",
+    "yourCode": "Your code",
+    "codeHint": "If you won, show this code to claim your prize."
+  },
+  "results": {
+    "title": "Results",
+    "empty": "No finished games yet. Results are saved when each game ends.",
+    "players": "{count, plural, one {# player} other {# players}}",
+    "questionsPlayed": "{played} of {total} questions",
+    "endedEarly": "Ended early",
+    "unfinished": "Unfinished games",
+    "unfinishedHint": "These games were never ended, so their results are not saved yet. Live data is deleted after 48 hours.",
+    "finishAndSave": "End and save",
+    "back": "All results",
+    "winners": "Winners",
+    "prizesFor": "Prizes for",
+    "top": "Top {n}",
+    "all": "All",
+    "tie": "There is a tie at position {rank} across the cutoff. You can break it with the average time of correct answers (lower is better).",
+    "copy": "Copy winners",
+    "copied": "Copied!",
+    "download": "Download",
+    "downloadTop": "Download top {n}",
+    "csv": "CSV",
+    "xlsx": "Excel",
+    "fullRanking": "Full ranking",
+    "questions": "Questions",
+    "codeHelp": "Each player sees their code on their phone when the game ends: ask for it to verify winners.",
+    "col": {
+      "rank": "Rank",
+      "nickname": "Nickname",
+      "code": "Code",
+      "score": "Score",
+      "correct": "Correct",
+      "answered": "Answered",
+      "avgTime": "Avg. correct time (s)",
+      "question": "Question",
+      "answeredCount": "Answers",
+      "correctCount": "Correct"
+    },
+    "meta": "{date} · {players} · {questions}"
   }
 }

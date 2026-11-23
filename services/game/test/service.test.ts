@@ -2,7 +2,7 @@ import type { Tiluchi } from '@chacota/core';
 import { DeleteTableCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { createDb, createTable } from '@chacota/db';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { GameError, GameService, MemoryPublisher, QUESTION_LEAD_MS } from '../src';
+import { GameError, GameService, MemoryPublisher, playerCode, QUESTION_LEAD_MS } from '../src';
 
 const endpoint = process.env.DYNAMODB_ENDPOINT ?? 'http://localhost:8000';
 const tableName = `chacota-game-test-${Date.now()}`;
@@ -82,6 +82,43 @@ describe('GameService', () => {
     expect(ended.status).toBe('ended');
     expect(publisher.last('ended')?.podium.map((p) => p.nickname)).toEqual(['Ana', 'Beto']);
 
+    // Results are kept for prizes, after the live data expires.
+    const results = await service.getResults(ended);
+    expect(results).toMatchObject({ gameId: game.id, title: 'Trivia', playerCount: 2, questionsPlayed: 2 });
+    expect(results!.standings).toEqual([
+      { rank: 1, nickname: 'Ana', code: playerCode(ana.player.id), score: 2600, correct: 2, answered: 2, avgCorrectMs: 2500 },
+      { rank: 2, nickname: 'Beto', code: playerCode(beto.player.id), score: 0, correct: 0, answered: 1 },
+    ]);
+    expect(results!.questions).toEqual([
+      { prompt: '¿Serverless?', type: 'quiz', answered: 2, correct: 1 },
+      { prompt: 'S3 guarda objetos', type: 'true_false', answered: 1, correct: 1 },
+    ]);
+    // Ending twice is harmless.
+    await service.end(game.id);
+    expect((await service.listResults('org1')).filter((r) => r.gameId === game.id)).toHaveLength(1);
+  });
+
+  it('keeps results of games ended early, newest first, and skips empty games', async () => {
+    const play = (orgId: string) => service.createGame({ orgId, orgName: 'O', tiluchi, hostUserId: 'h' });
+    const empty = await play('org-results');
+    await service.end(empty.id);
+
+    const first = await play('org-results');
+    await service.join(first.pin, 'Uno');
+    await service.advance(first.id);
+    expect(await service.listUnfinishedGames('org-results')).toMatchObject([{ id: first.id }]);
+    clock += 1000;
+    await service.end(first.id);
+
+    const second = await play('org-results');
+    await service.join(second.pin, 'Dos');
+    clock += 1000;
+    await service.end(second.id); // still in the lobby
+
+    const list = await service.listResults('org-results');
+    expect(list.map((r) => [r.gameId, r.questionsPlayed])).toEqual([[second.id, 0], [first.id, 1]]);
+    expect(list[0]).not.toHaveProperty('standings');
+    expect(await service.listUnfinishedGames('org-results')).toEqual([]);
   });
 
   it('rejects duplicate nicknames regardless of case', async () => {
@@ -134,4 +171,15 @@ describe('concurrency', () => {
     expect(results.filter((r) => r.status === 'rejected')).toEqual([]);
     expect((await service.getGame(game.id))?.playerCount).toBe(40);
   });
+
+  it('stores the results of big games in chunks', async () => {
+    const game = await newGame();
+    const n = 1100;
+    for (let i = 0; i < n; i += 100) {
+      await Promise.all(Array.from({ length: Math.min(100, n - i) }, (_, j) => service.join(game.pin, `jugador-${i + j}`)));
+    }
+    const results = await service.getResults(await service.end(game.id));
+    expect(results!.standings).toHaveLength(n);
+    expect(new Set(results!.standings.map((r) => r.nickname)).size).toBe(n);
+  }, 60_000);
 });

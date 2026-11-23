@@ -3,6 +3,7 @@
 import {
   channels,
   NICKNAME_MAX,
+  playerCode,
   type GameEvent,
   type GameSnapshot,
   type PublicQuestion,
@@ -218,6 +219,13 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
           <Centered>
             <p className="font-display text-4xl font-extrabold">{t('thanks')}</p>
             {screen.rank && <p className="text-2xl">{t('finalRank', { rank: screen.rank })}</p>}
+            {session && (
+              <div className="mt-4 flex flex-col items-center gap-1 rounded-2xl border border-noche-3 bg-noche-2 px-6 py-4">
+                <span className="text-sm text-niebla">{t('yourCode')}</span>
+                <span className="font-mono text-4xl font-bold tracking-[0.3em]">{playerCode(session.playerId)}</span>
+                <span className="max-w-64 text-sm text-niebla">{t('codeHint')}</span>
+              </div>
+            )}
             <button type="button" className={buttonClass('secondary', 'mt-4')} onClick={leave}>
               {t('leave')}
             </button>

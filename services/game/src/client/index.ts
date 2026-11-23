@@ -106,7 +106,7 @@ export function connectRealtime(config: RealtimeConfig): RealtimeConnection {
   };
 }
 
-export type { GameEvent, GameStatus, PublicQuestion, RankEntry, Standing } from '../model';
+export type { GameEvent, GameResults, GameStatus, PublicQuestion, RankEntry, ResultEntry, Standing } from '../model';
 export type { GameSnapshot } from '../service';
 export { QUESTION_LEAD_MS, NICKNAME_MAX } from '../model';
-export { channels } from '../model';
+export { channels, playerCode } from '../model';
