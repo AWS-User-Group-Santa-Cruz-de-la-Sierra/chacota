@@ -10,5 +10,21 @@ services:
     volumes:
       - dynamodb-data:/home/dynamodblocal/data
 
+  aws-emulator:
+    # Emulador oficial de AWS (S3 para logos e imágenes): https://github.com/aws/aws-emulator
+    # AWS no publica imagen; se construye desde el paquete oficial (dev/aws-emulator/Dockerfile).
+    # Guarda todo en memoria: después de reiniciarlo, corré `pnpm media:init` otra vez.
+    build: ./dev/aws-emulator
+    image: localhost/chacota-aws-emulator
+    command: ['-p', '9297', '--auth', 'off']
+    mem_limit: 2g
+    environment:
+      HOME: ${HOME}
+    ports:
+      - '127.0.0.1:9297:9297'
+    volumes:
+      # Ahí escribe ca.pem, el certificado de su HTTPS, que el SDK de Node lee.
+      - ${HOME}/.aws/emulator:${HOME}/.aws/emulator
+
 volumes:
   dynamodb-data:

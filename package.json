@@ -10,6 +10,7 @@
   "scripts": {
     "dev:services": "podman compose up -d || docker compose up -d",
     "db:init": "CHACOTA_TABLE=chacota-local pnpm --filter @chacota/db create-local-table",
+    "media:init": "pnpm --filter @chacota/db create-local-bucket",
     "dev": "pnpm --filter @chacota/web dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",

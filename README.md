@@ -41,9 +41,10 @@ pnpm install
 # 1. Login real con Cognito (una sola vez). Crea un User Pool "dev" con callbacks a localhost.
 cd infra && AWS_PROFILE=<tu-perfil> npx cdk deploy Chacota-dev -c chacota:stage=dev --outputs-file cdk-outputs.dev.json && cd ..
 
-# 2. DynamoDB Local (emulador oficial de AWS) y la tabla
+# 2. Emuladores oficiales de AWS: DynamoDB Local (tabla) y AWS Emulator (S3 para imágenes)
 pnpm dev:services
 pnpm db:init
+pnpm media:init   # repetilo si reiniciás el emulador: guarda todo en memoria
 
 # 3. Variables de entorno: copia apps/web/.env.example a apps/web/.env.local
 #    y completa COGNITO_* con los valores de infra/cdk-outputs.dev.json
