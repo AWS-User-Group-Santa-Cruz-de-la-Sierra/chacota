@@ -198,12 +198,12 @@
     "join": "Join",
     "joining": "Joining…",
     "errors": {
-      "game_not_found": "We could not find a game with that PIN.",
-      "game_ended": "That game is over.",
       "nickname_taken": "That nickname is taken, try another.",
       "invalid_nickname": "Nicknames must be 1 to 20 characters.",
       "network": "We could not connect. Check your internet.",
-      "generic": "Something went wrong. Try again."
+      "generic": "Something went wrong. Try again.",
+      "session_not_found": "We could not find a game with that PIN.",
+      "session_ended": "That game is over."
     },
     "youreIn": "You are in!",
     "lookAtScreen": "Look at the screen: the game starts soon.",
@@ -263,6 +263,6 @@
       "answeredCount": "Answers",
       "correctCount": "Correct"
     },
-    "meta": "{date} · {players} · {questions}"
+    "meta": "{date} · {players}"
   }
 }

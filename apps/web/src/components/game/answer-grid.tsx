@@ -1,4 +1,4 @@
-import type { PublicQuestion } from '@chacota/game/client';
+import type { PublicQuestion } from '@chacota/tiluchi/model';
 import { AnswerIcon, ANSWER_STYLES } from '../answer-icons';
 
 export function choiceLabel(choice: { id: string; text: string }, type: PublicQuestion['type'], labels: { true: string; false: string }) {

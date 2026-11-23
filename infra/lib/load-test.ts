@@ -15,7 +15,7 @@ export class ChacotaLoadTest extends Construct {
   constructor(scope: Construct, id: string, props: { game: ChacotaGame; table: dynamodb.ITableV2 }) {
     super(scope, id);
     const fn = new NodejsFunction(this, 'Function', {
-      entry: `${repoRoot}services/game/scripts/load-lambda.ts`,
+      entry: `${repoRoot}services/api/scripts/load-lambda.ts`,
       projectRoot: repoRoot,
       depsLockFilePath: `${repoRoot}pnpm-lock.yaml`,
       runtime: lambda.Runtime.NODEJS_22_X,

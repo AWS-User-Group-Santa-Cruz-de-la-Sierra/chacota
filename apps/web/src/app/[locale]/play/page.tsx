@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { clientGameConfig } from '@/lib/game';
+import { clientLiveConfig } from '@/lib/live';
 import { PlayerApp } from './player';
 
 export async function generateMetadata() {
@@ -17,6 +17,6 @@ export default async function PlayPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const { pin } = await searchParams;
-  const config = clientGameConfig();
+  const config = clientLiveConfig();
   return <PlayerApp apiUrl={config.apiUrl} realtime={config.realtime} initialPin={/^\d{6}$/.test(pin ?? '') ? pin! : ''} />;
 }

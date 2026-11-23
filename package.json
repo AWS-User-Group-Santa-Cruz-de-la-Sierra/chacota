@@ -16,7 +16,7 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "dev:game": "pnpm --filter @chacota/game dev",
+    "dev:game": "pnpm --filter @chacota/api dev",
     "e2e": "corepack pnpm --filter @chacota/e2e start"
   }
 }

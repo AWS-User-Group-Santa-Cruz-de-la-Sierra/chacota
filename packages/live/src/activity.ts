@@ -19,8 +19,8 @@ export interface ActivityServer<TContent = unknown, TState = unknown> {
   results(live: LiveService, session: Session<TState>, players: Player[]): Promise<ModuleResults>;
   /** Presenter actions besides advancing (Tiluchi: count answers). */
   hostActions?: Record<string, (live: LiveService, session: Session<TState>, args: unknown) => Promise<unknown>>;
-  /** Participant routes, mounted at /m/<id>. */
-  routes?(app: Hono, live: LiveService): void;
+  /** Participant routes, mounted at /m/<id>. The service is created lazily (the Lambda reads its secret first). */
+  routes?(app: Hono, getLive: () => Promise<LiveService>): void;
 }
 
 // The registry holds activities with different content and state types.

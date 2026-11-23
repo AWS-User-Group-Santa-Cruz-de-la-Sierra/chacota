@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { AnswerIcon, ANSWER_STYLES } from '@/components/answer-icons';
 import { buttonClass, Notice } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
-import { startGameAction } from '../../../../../host/actions';
+import { startTiluchiAction } from '../../../../../host/actions';
 import { deleteTiluchiAction, importQuestionsAction, saveTiluchiAction } from './actions';
 
 type Status = 'idle' | 'saving' | 'saved' | 'conflict' | 'invalid';
@@ -164,7 +164,7 @@ export function TiluchiEditor({
             title={dirty ? th('presentHint') : undefined}
             onClick={() =>
               startPresenting(async () => {
-                const result = await startGameAction(slug, tiluchi.id);
+                const result = await startTiluchiAction(slug, tiluchi.id);
                 if (result?.error) setPresentError(result.error === 'org_not_active' ? th('orgNotActive') : th('notPlayable'));
               })
             }

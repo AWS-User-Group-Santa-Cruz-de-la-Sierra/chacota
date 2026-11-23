@@ -1,15 +1,7 @@
 'use client';
 
-import {
-  channels,
-  NICKNAME_MAX,
-  playerCode,
-  type GameEvent,
-  type GameSnapshot,
-  type PublicQuestion,
-  type RankEntry,
-  type RealtimeConfig,
-} from '@chacota/game/client';
+import { channels, NICKNAME_MAX, playerCode, type LiveEvent, type PlatformEvent, type RealtimeConfig } from '@chacota/live/client';
+import type { PublicQuestion, RankEntry, TiluchiEvent, TiluchiSnapshot } from '@chacota/tiluchi/model';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { AnswerIcon, ANSWER_STYLES } from '@/components/answer-icons';
@@ -20,7 +12,7 @@ import { buttonClass } from '@/components/ui';
 
 interface Session {
   token: string;
-  gameId: string;
+  sessionId: string;
   playerId: string;
   nickname: string;
   pin: string;
@@ -39,7 +31,9 @@ const STORAGE_KEY = 'chacota:session';
 function loadSession(): Session | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Session) : null;
+    const session = raw ? (JSON.parse(raw) as Partial<Session>) : null;
+    // Sessions saved before sessions had this field cannot be resumed.
+    return session?.sessionId ? (session as Session) : null;
   } catch {
     return null;
   }
@@ -74,14 +68,19 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
         setScreen({ kind: 'join' });
         return;
       }
-      const snap = (await res.json()) as GameSnapshot;
+      const snap = (await res.json()) as {
+        session: { status: 'lobby' | 'running' | 'ended' };
+        player?: { score: number };
+        module: Partial<TiluchiSnapshot>;
+        serverNow: number;
+      };
       clock.sync(snap.serverNow);
       if (snap.player) setScore(snap.player.score);
-      const g = snap.game;
-      if (g.status === 'lobby') setScreen({ kind: 'lobby' });
-      else if (g.status === 'question' && g.question && g.startedAt)
-        setScreen({ kind: 'question', index: g.index, question: g.question, startedAt: g.startedAt, answered: snap.answered?.value });
-      else if (g.status === 'ended') setScreen({ kind: 'ended' });
+      const m = snap.module;
+      if (snap.session.status === 'ended') setScreen({ kind: 'ended' });
+      else if (snap.session.status === 'lobby' || m.phase === 'lobby') setScreen({ kind: 'lobby' });
+      else if (m.phase === 'question' && m.question && m.startedAt && m.index !== undefined)
+        setScreen({ kind: 'question', index: m.index, question: m.question, startedAt: m.startedAt, answered: m.answered?.value });
       else setScreen({ kind: 'leaderboard' });
     },
     [apiUrl, clock],
@@ -99,14 +98,15 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
   }, [initialPin, resync]);
 
   const onEvent = useCallback(
-    (e: GameEvent) => {
+    (event: LiveEvent) => {
       if (!session) return;
+      const e = event as TiluchiEvent | PlatformEvent;
       switch (e.type) {
-        case 'question':
+        case 'tiluchi.question':
           clock.sync(e.serverNow);
           setScreen({ kind: 'question', index: e.index, question: e.question, startedAt: e.startedAt });
           break;
-        case 'reveal': {
+        case 'tiluchi.reveal': {
           const mine = e.ranks[session.playerId];
           if (mine) {
             setScore(mine.score);
@@ -122,7 +122,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
           });
           break;
         }
-        case 'leaderboard':
+        case 'tiluchi.leaderboard':
           setScreen({ kind: 'leaderboard', rank, score });
           break;
         case 'ended': {
@@ -134,7 +134,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
     },
     [session, clock, myAnswers, rank, score],
   );
-  const { connected } = useRealtime(realtime, session ? [channels.public(session.gameId)] : [], onEvent, () => session && resync(session));
+  const { connected } = useRealtime(realtime, session ? [channels.public(session.sessionId)] : [], onEvent, () => session && resync(session));
 
   async function join(pin: string, nickname: string): Promise<string | null> {
     const res = await fetch(`${apiUrl}/join`, {
@@ -145,7 +145,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
     if (!res) return 'network';
     const body = (await res.json().catch(() => ({}))) as { error?: string } & Partial<Session>;
     if (!res.ok) return body.error ?? 'generic';
-    const s: Session = { token: body.token!, gameId: body.gameId!, playerId: body.playerId!, nickname: body.nickname!, pin };
+    const s: Session = { token: body.token!, sessionId: body.sessionId!, playerId: body.playerId!, nickname: body.nickname!, pin };
     saveSession(s);
     setSession(s);
     setScore(0);
@@ -159,7 +159,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
     if (!session || screen.kind !== 'question' || screen.answered) return;
     setScreen({ ...screen, answered: value });
     setMyAnswers((m) => ({ ...m, [index]: value }));
-    const res = await fetch(`${apiUrl}/answer`, {
+    const res = await fetch(`${apiUrl}/m/tiluchi/answer`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${session.token}` },
       body: JSON.stringify({ questionIndex: index, value }),
@@ -247,7 +247,7 @@ function JoinForm({ initialPin, onJoin }: { initialPin: string; onJoin: (pin: st
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const errorKey = (code: string) =>
-    (['game_not_found', 'game_ended', 'nickname_taken', 'invalid_nickname', 'network'] as const).includes(code as never)
+    (['session_not_found', 'session_ended', 'nickname_taken', 'invalid_nickname', 'network'] as const).includes(code as never)
       ? `errors.${code}`
       : 'errors.generic';
 

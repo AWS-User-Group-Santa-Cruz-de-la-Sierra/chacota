@@ -37,8 +37,9 @@ export const echoActivity: ActivityServer<{ rounds: number }, EchoState> = {
     };
   },
 
-  routes(app, live: LiveService) {
+  routes(app, getLive: () => Promise<LiveService>) {
     app.post('/score', async (c) => {
+      const live = await getLive();
       const header = c.req.header('authorization') ?? '';
       const { sessionId, playerId } = live.verifyToken(header.replace(/^Bearer /, ''));
       await live.addScore(sessionId, playerId, 10);

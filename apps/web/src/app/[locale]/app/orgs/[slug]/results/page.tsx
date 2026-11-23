@@ -4,16 +4,16 @@ import { Card } from '@/components/ui';
 import { SubmitButton } from '@/components/submit-button';
 import { Link } from '@/i18n/navigation';
 import { requireOrgAccess } from '@/lib/auth';
-import { getGameService } from '@/lib/game';
-import { finishGameAction } from './actions';
+import { getLive } from '@/lib/live';
+import { finishSessionAction } from './actions';
 
 export default async function ResultsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const { org, role } = await requireOrgAccess(slug);
   const t = await getTranslations('results');
   const format = await getFormatter();
-  const service = getGameService();
-  const [results, unfinished] = await Promise.all([service.listResults(org.id), service.listUnfinishedGames(org.id)]);
+  const live = getLive();
+  const [results, unfinished] = await Promise.all([live.listResults(org.id), live.listUnfinishedSessions(org.id)]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -31,7 +31,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ slug: 
                     {t('players', { count: g.playerCount })}
                   </span>
                 </span>
-                <form action={finishGameAction.bind(null, g.id)}>
+                <form action={finishSessionAction.bind(null, g.id)}>
                   <SubmitButton variant="secondary">{t('finishAndSave')}</SubmitButton>
                 </form>
               </li>
@@ -45,9 +45,9 @@ export default async function ResultsPage({ params }: { params: Promise<{ slug: 
       ) : (
         <ul className="flex flex-col gap-3">
           {results.map((r) => (
-            <li key={r.gameId}>
+            <li key={r.sessionId}>
               <Link
-                href={`/app/orgs/${slug}/results/${r.gameId}`}
+                href={`/app/orgs/${slug}/results/${r.sessionId}`}
                 className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-noche-3 bg-noche-2/60 p-5 transition-colors hover:border-morado-claro"
               >
                 <span className="flex flex-col gap-1">
@@ -56,7 +56,6 @@ export default async function ResultsPage({ params }: { params: Promise<{ slug: 
                     {t('meta', {
                       date: format.dateTime(new Date(r.endedAt), { dateStyle: 'medium', timeStyle: 'short' }),
                       players: t('players', { count: r.playerCount }),
-                      questions: t('questionsPlayed', { played: r.questionsPlayed, total: r.questionCount }),
                     })}
                   </span>
                 </span>

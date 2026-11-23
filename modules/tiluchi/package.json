@@ -9,7 +9,8 @@
     "./content": "./src/content/index.ts",
     "./importers": "./src/content/importers/index.ts",
     "./exporters": "./src/content/exporters/index.ts",
-    "./server": "./src/server/index.ts"
+    "./server": "./src/server/index.ts",
+    "./model": "./src/server/model.ts"
   },
   "scripts": {
     "test": "vitest run",

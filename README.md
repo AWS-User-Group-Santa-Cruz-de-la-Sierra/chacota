@@ -85,7 +85,7 @@ Resultado en `us-east-1` (noviembre 2026), con 1000 jugadores y 3 preguntas y si
 | Pregunta → celulares (AppSync Events) | 79 ms | 204 ms |
 | Revelación con ranking → celulares | 0.6–0.9 s | 0.8–1.1 s |
 
-Desde Bolivia suma unos 150 ms de red. Para pruebas chicas desde tu máquina: `pnpm --filter @chacota/game exec tsx scripts/load-test.ts --players 300 --concurrency 20`.
+Desde Bolivia suma unos 150 ms de red. Para pruebas chicas desde tu máquina: `pnpm --filter @chacota/api exec tsx scripts/load-test.ts --players 300 --concurrency 20`.
 
 ## Resultados y premios
 

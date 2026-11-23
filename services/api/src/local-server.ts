@@ -6,9 +6,9 @@ import { createServer } from 'node:http';
 import { serve } from '@hono/node-server';
 import { createDb } from '@chacota/db';
 import { WebSocketServer, type WebSocket } from 'ws';
-import { createApi } from './api';
-import { LocalPublisher } from './realtime';
-import { GameService } from './service';
+import { LiveService, LocalPublisher } from '@chacota/live';
+import { createApi } from './app';
+import { activities } from './registry';
 
 const API_PORT = Number(process.env.GAME_API_PORT ?? 4000);
 const BROKER_PORT = Number(process.env.EVENTS_PORT ?? 4001);
@@ -74,10 +74,10 @@ const db = createDb({
   tableName: process.env.CHACOTA_TABLE ?? 'chacota-local',
   endpoint: process.env.DYNAMODB_ENDPOINT ?? 'http://localhost:8000',
 });
-const service = new GameService(db, new LocalPublisher(`http://localhost:${BROKER_PORT}`), {
+const live = new LiveService(db, new LocalPublisher(`http://localhost:${BROKER_PORT}`), activities, {
   tokenSecret: process.env.GAME_TOKEN_SECRET ?? 'local-dev-secret',
 });
 const origins = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:3000').split(',');
-serve({ fetch: createApi(async () => service, origins).fetch, port: API_PORT }, () =>
-  console.log(`[game api] http://localhost:${API_PORT}`),
+serve({ fetch: createApi(async () => live, activities, origins).fetch, port: API_PORT }, () =>
+  console.log(`[participant api] http://localhost:${API_PORT}`),
 );

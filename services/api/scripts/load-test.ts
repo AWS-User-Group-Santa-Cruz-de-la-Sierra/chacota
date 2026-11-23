@@ -9,10 +9,10 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { createDb } from '@chacota/db';
-import { connectRealtime, type RealtimeConnection } from '../src/client';
-import { channels, QUESTION_LEAD_MS, type GameEvent } from '../src/model';
-import { AppSyncPublisher } from '../src/realtime';
-import { GameService } from '../src/service';
+import { connectRealtime, type RealtimeConnection } from '@chacota/live/client';
+import { channels, type LiveEvent, type PlatformEvent } from '@chacota/live';
+import { QUESTION_LEAD_MS, tiluchiActivity, type TiluchiEvent } from '@chacota/tiluchi/server';
+import { AppSyncPublisher, LiveService } from '@chacota/live';
 
 const { values } = parseArgs({
   options: {
@@ -59,8 +59,8 @@ async function post(path: string, body: unknown, token?: string) {
 // ---------- setup ----------
 const publisher = new AppSyncPublisher(outputs.EventsHttpDns, 'us-east-1');
 // Resolve credentials before opening 1000 sockets: SSO refreshes fail on a saturated laptop.
-await publisher.publish('/game/warmup', { type: 'leaderboard', index: 0, top: [] });
-const host = new GameService(createDb({ tableName: outputs.TableName }), publisher, { tokenSecret: 'host-only' });
+await publisher.publish('/game/warmup', { type: 'tiluchi.leaderboard', index: 0, top: [] });
+const host = new LiveService(createDb({ tableName: outputs.TableName }), publisher, [tiluchiActivity], { tokenSecret: 'host-only' });
 const questions = Array.from({ length: Q }, (_, i) => ({
   id: `q${i}`,
   type: 'quiz' as const,
@@ -69,11 +69,12 @@ const questions = Array.from({ length: Q }, (_, i) => ({
   points: 'standard' as const,
   choices: ['a', 'b', 'c', 'd'].map((id) => ({ id, text: id.toUpperCase(), correct: id === 'a' })),
 }));
-const game = await host.createGame({
+const game = await host.createSession({
+    module: 'tiluchi',
   orgId: 'load-test',
   orgName: 'Load test',
   hostUserId: 'load-test',
-  tiluchi: { id: 'load', title: 'Load test', language: 'es', questions },
+  content: { id: 'load', title: 'Load test', language: 'es', questions },
 });
 console.log(`game ${game.id} PIN ${game.pin} · ${N} players · ${Q} questions`);
 
@@ -96,10 +97,11 @@ await pool(Array.from({ length: N }, (_, i) => i), CONCURRENCY, async (i) => {
   }
   const player = { token: res.body.token!, id: res.body.playerId!, received: new Map<string, number>() };
   const conn = connectRealtime({ httpDns: outputs.EventsHttpDns, realtimeUrl: `wss://${outputs.EventsRealtimeDns}/event/realtime`, apiKey: outputs.EventsApiKey });
-  conn.subscribe(channels.public(game.id), (e: GameEvent) => {
+  conn.subscribe(channels.public(game.id), (event: LiveEvent) => {
+    const e = event as TiluchiEvent | PlatformEvent;
     const key = `${e.type}${'index' in e ? e.index : ''}`;
     player.received.set(key, Date.now());
-    if (e.type === 'question') {
+    if (e.type === 'tiluchi.question') {
       // serverNow is stamped on this same machine (the host runs here), so the delay is exact.
       const list = fanout.get(key) ?? [];
       list.push(Date.now() - e.serverNow);
@@ -122,11 +124,11 @@ for (let q = 0; q < Q; q++) {
     await sleep(Math.random() * 5000);
     const s = Date.now();
     const value = Math.random() < 0.6 ? 'a' : ['b', 'c', 'd'][Math.floor(Math.random() * 3)]!;
-    const res = await post('/answer', { questionIndex: q, value }, p.token).catch(() => ({ status: 0, body: {} as Record<string, string> }));
+    const res = await post('/m/tiluchi/answer', { questionIndex: q, value }, p.token).catch(() => ({ status: 0, body: {} as Record<string, string> }));
     answerLatency.push(Date.now() - s);
     if (res.status !== 200) countError(`answer ${res.status} ${res.body.error ?? ''}`);
   }));
-  const counted = await host.countAnswers(game.id, q);
+  const counted = await (host.hostAction(game.id, 'countAnswers', { index: q }) as Promise<number>);
   const s = Date.now();
   await host.advance(game.id); // reveal
   await sleep(4000);

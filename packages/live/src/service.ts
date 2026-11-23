@@ -445,10 +445,15 @@ export class LiveService {
         Limit: limit,
       }),
     );
-    return (Items ?? []).map((item) => {
-      const { columns: _c, details: _d, chunks: _n, ...summary } = strip<StoredSummary>(item);
-      return summary;
-    });
+    return (
+      (Items ?? [])
+        // Results saved before activities existed (dev data only) have no module: skip them.
+        .filter((item) => typeof item.module === 'string')
+        .map((item) => {
+          const { columns: _c, details: _d, chunks: _n, ...summary } = strip<StoredSummary>(item);
+          return summary;
+        })
+    );
   }
 
   /** Full results of an ended session, or undefined if it never ended (or nobody played). */

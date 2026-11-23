@@ -1,16 +1,17 @@
 import { tableToCsv, tableToXlsx } from '@chacota/core/tables';
 import { getTranslations } from 'next-intl/server';
 import type { NextRequest } from 'next/server';
-import { requireOrgResults, resultsFilename, standingsTable } from '@/lib/results';
+import { requireOrgResults, resultsFilename } from '@/lib/results';
+import { standingsTable } from '@/lib/results-table';
 
 const TYPES = {
   csv: 'text/csv; charset=utf-8',
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 } as const;
 
-export async function GET(request: NextRequest, ctx: RouteContext<'/api/orgs/[slug]/results/[gameId]/export'>) {
-  const { slug, gameId } = await ctx.params;
-  const { results } = await requireOrgResults(slug, gameId);
+export async function GET(request: NextRequest, ctx: RouteContext<'/api/orgs/[slug]/results/[sessionId]/export'>) {
+  const { slug, sessionId } = await ctx.params;
+  const { results } = await requireOrgResults(slug, sessionId);
 
   const params = request.nextUrl.searchParams;
   const format = (params.get('format') ?? 'csv') as keyof typeof TYPES;
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<'/api/orgs/[sl
   const locale = params.get('locale') === 'en' ? 'en' : 'es';
   const t = await getTranslations({ locale, namespace: 'results' });
 
-  const rows = standingsTable(results, t, top);
+  const rows = standingsTable(results, locale, (key) => t(key), top);
   const body = format === 'csv' ? tableToCsv(rows) : await tableToXlsx(rows, results.title);
   const filename = resultsFilename(results, top ? `-top${top}` : '', format);
   return new Response(body, {

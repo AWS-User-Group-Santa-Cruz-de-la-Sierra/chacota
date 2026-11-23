@@ -1,20 +1,28 @@
 'use client';
 
-import type { ResultEntry } from '@chacota/game/client';
+import type { TableRow } from '@chacota/core/tables';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { buttonClass, Card, Notice } from '@/components/ui';
 
 const PRESETS = [3, 5, 10] as const;
 
-export function ResultsTable({ standings, exportBase }: { standings: ResultEntry[]; exportBase: string }) {
+interface Winner {
+  rank: number;
+  nickname: string;
+  code: string;
+  score: number;
+}
+
+/** `rows` is the full table (header first) as exported; `codes` are the standings for the prize panel. */
+export function ResultsTable({ rows, codes: standings, exportBase }: { rows: TableRow[]; codes: Winner[]; exportBase: string }) {
+  const [header = [], ...body] = rows;
   const t = useTranslations('results');
   const [top, setTop] = useState<number>(Math.min(5, standings.length));
   const [copied, setCopied] = useState(false);
   const winners = standings.slice(0, top);
   // A shared rank right at the cutoff: someone outside the top has the same score as the last winner.
   const tieRank = top > 0 && standings[top] && standings[top]!.rank === standings[top - 1]!.rank ? standings[top]!.rank : null;
-  const seconds = (ms?: number) => (ms === undefined ? '—' : (ms / 1000).toFixed(1));
 
   async function copy() {
     const text = winners.map((w) => `${w.rank}. ${w.nickname} (${w.code}) — ${w.score}`).join('\n');
@@ -90,23 +98,24 @@ export function ResultsTable({ standings, exportBase }: { standings: ResultEntry
         <table className="w-full min-w-[36rem] text-left text-sm">
           <thead className="text-niebla">
             <tr>
-              {(['rank', 'nickname', 'code', 'score', 'correct', 'answered', 'avgTime'] as const).map((c) => (
-                <th key={c} className={`py-2 pr-3 font-medium ${c === 'nickname' || c === 'code' ? '' : 'text-right'}`}>
-                  {t(`col.${c}`)}
+              {header.map((label, c) => (
+                <th key={c} className={`py-2 pr-3 font-medium ${c === 1 || c === 2 ? '' : 'text-right'}`}>
+                  {label}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {standings.map((r, i) => (
+            {body.map((row, i) => (
               <tr key={i} className={`border-t border-noche-3 ${i < top ? 'bg-sol/10' : ''}`}>
-                <td className="py-2 pr-3 text-right font-display tabular-nums">{r.rank}</td>
-                <td className="py-2 pr-3">{r.nickname}</td>
-                <td className="py-2 pr-3 font-mono tracking-widest">{r.code}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{r.score}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{r.correct}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{r.answered}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{seconds(r.avgCorrectMs)}</td>
+                {row.map((cell, c) => (
+                  <td
+                    key={c}
+                    className={`py-2 pr-3 ${c === 1 ? '' : c === 2 ? 'font-mono tracking-widest' : 'text-right tabular-nums'} ${c === 0 ? 'font-display' : ''}`}
+                  >
+                    {cell ?? '—'}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

@@ -1,6 +1,6 @@
 'use client';
 
-import { connectRealtime, type GameEvent, type RealtimeConfig } from '@chacota/game/client';
+import { connectRealtime, type LiveEvent, type RealtimeConfig } from '@chacota/live/client';
 import { useEffect, useRef, useState } from 'react';
 
 /**
@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 export function useRealtime(
   config: RealtimeConfig,
   channels: string[],
-  onEvent: (event: GameEvent) => void,
+  onEvent: (event: LiveEvent) => void,
   onReconnect?: () => void,
 ) {
   const handlers = useRef({ onEvent, onReconnect });

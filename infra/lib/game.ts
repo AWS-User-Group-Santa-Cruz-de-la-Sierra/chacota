@@ -64,7 +64,7 @@ export class ChacotaGame extends Construct {
     });
 
     this.fn = new NodejsFunction(this, 'ApiFunction', {
-      entry: `${repoRoot}services/game/src/lambda.ts`,
+      entry: `${repoRoot}services/api/src/lambda.ts`,
       projectRoot: repoRoot,
       depsLockFilePath: `${repoRoot}pnpm-lock.yaml`,
       runtime: lambda.Runtime.NODEJS_22_X,

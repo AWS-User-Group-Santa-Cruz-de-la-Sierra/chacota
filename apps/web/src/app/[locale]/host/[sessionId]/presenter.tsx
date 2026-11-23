@@ -1,6 +1,7 @@
 'use client';
 
-import { channels, QUESTION_LEAD_MS, type GameEvent, type GameStatus, type PublicQuestion, type RealtimeConfig, type Standing } from '@chacota/game/client';
+import { channels, type LiveEvent, type PlatformEvent, type RealtimeConfig, type Standing } from '@chacota/live/client';
+import { QUESTION_LEAD_MS, type PublicQuestion, type TiluchiEvent, type TiluchiPhase } from '@chacota/tiluchi/model';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
 import { AnswerTiles } from '@/components/game/answer-grid';
@@ -8,10 +9,10 @@ import { useCountdown, useRealtime, useServerClock } from '@/components/game/use
 import { TiluchiMark } from '@/components/logo';
 import { buttonClass } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
-import { advanceGameAction, answerCountAction, endGameAction } from '../actions';
+import { advanceSessionAction, endSessionAction, hostActionAction } from '../actions';
 
 interface Props {
-  gameId: string;
+  sessionId: string;
   pin: string;
   title: string;
   orgName: string;
@@ -21,7 +22,7 @@ interface Props {
   joinHost: string;
   qrSvg: string;
   questions: PublicQuestion[];
-  initial: { status: GameStatus; index: number; startedAt?: number; serverNow: number; players: string[] };
+  initial: { status: TiluchiPhase | 'ended'; index: number; startedAt?: number; serverNow: number; players: string[] };
   realtime: RealtimeConfig;
 }
 
@@ -62,20 +63,21 @@ export function Presenter(props: Props) {
   useEffect(() => clock.sync(props.initial.serverNow), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onEvent = useCallback(
-    (e: GameEvent) => {
+    (event: LiveEvent) => {
+      const e = event as TiluchiEvent | PlatformEvent;
       switch (e.type) {
         case 'player_joined':
           setPlayers((p) => (p.includes(e.nickname) ? p : [...p, e.nickname]));
           break;
-        case 'question':
+        case 'tiluchi.question':
           clock.sync(e.serverNow);
           setAnswerCount(0);
           setScreen({ kind: 'question', index: e.index, startedAt: e.startedAt });
           break;
-        case 'reveal':
+        case 'tiluchi.reveal':
           setScreen({ kind: 'reveal', index: e.index, correct: e.correct, counts: e.counts, answered: e.answered });
           break;
-        case 'leaderboard':
+        case 'tiluchi.leaderboard':
           setScreen({ kind: 'leaderboard', index: e.index, top: e.top });
           break;
         case 'ended':
@@ -85,15 +87,15 @@ export function Presenter(props: Props) {
     },
     [clock],
   );
-  const { connected } = useRealtime(props.realtime, [channels.public(props.gameId), channels.host(props.gameId)], onEvent, () =>
+  const { connected } = useRealtime(props.realtime, [channels.public(props.sessionId), channels.host(props.sessionId)], onEvent, () =>
     window.location.reload(),
   );
 
   const advance = useCallback(() => {
     startTransition(async () => {
-      await advanceGameAction(props.gameId);
+      await advanceSessionAction(props.sessionId);
     });
-  }, [props.gameId]);
+  }, [props.sessionId]);
 
   // Keyboard / presentation clicker support.
   useEffect(() => {
@@ -121,9 +123,9 @@ export function Presenter(props: Props) {
   useEffect(() => {
     if (screen.kind !== 'question') return;
     const index = screen.index;
-    const timer = setInterval(async () => setAnswerCount(await answerCountAction(props.gameId, index)), 1000);
+    const timer = setInterval(async () => setAnswerCount((await hostActionAction(props.sessionId, 'countAnswers', { index })) as number), 1000);
     return () => clearInterval(timer);
-  }, [screen, props.gameId]);
+  }, [screen, props.sessionId]);
 
   useEffect(() => {
     if (screen.kind !== 'question' || autoRevealed.current === screen.index) return;
@@ -275,7 +277,7 @@ export function Presenter(props: Props) {
             <button
               type="button"
               className={buttonClass('ghost')}
-              onClick={() => confirm(t('confirmEnd')) && startTransition(() => endGameAction(props.gameId))}
+              onClick={() => confirm(t('confirmEnd')) && startTransition(() => endSessionAction(props.sessionId))}
             >
               {t('end')}
             </button>
@@ -285,7 +287,7 @@ export function Presenter(props: Props) {
               <Link href={`/app/orgs/${props.orgSlug}`} className={buttonClass('ghost')}>
                 {t('backToOrg')}
               </Link>
-              <Link href={`/app/orgs/${props.orgSlug}/results/${props.gameId}`} className={buttonClass('primary')}>
+              <Link href={`/app/orgs/${props.orgSlug}/results/${props.sessionId}`} className={buttonClass('primary')}>
                 {t('results')}
               </Link>
             </>

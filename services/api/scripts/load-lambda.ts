@@ -8,10 +8,10 @@
  */
 import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import { dbFromEnv } from '@chacota/db';
-import { connectRealtime, type RealtimeConnection } from '../src/client';
-import { channels, QUESTION_LEAD_MS, type GameEvent } from '../src/model';
-import { AppSyncPublisher } from '../src/realtime';
-import { GameService } from '../src/service';
+import { connectRealtime, type RealtimeConnection } from '@chacota/live/client';
+import { channels, type LiveEvent, type PlatformEvent } from '@chacota/live';
+import { QUESTION_LEAD_MS, tiluchiActivity, type TiluchiEvent } from '@chacota/tiluchi/server';
+import { AppSyncPublisher, LiveService } from '@chacota/live';
 
 const env = {
   apiUrl: process.env.GAME_API_URL!,
@@ -70,16 +70,17 @@ async function worker(input: WorkerInput): Promise<WorkerResult> {
 
     const conn = connectRealtime({ httpDns: env.httpDns, realtimeUrl: `wss://${env.realtimeDns}/event/realtime`, apiKey: env.apiKey });
     connections.push(conn);
-    conn.subscribe(channels.public(input.gameId), (e: GameEvent) => {
+    conn.subscribe(channels.public(input.gameId), (event: LiveEvent) => {
+    const e = event as TiluchiEvent | PlatformEvent;
       const now = Date.now();
-      if (e.type === 'question') {
+      if (e.type === 'tiluchi.question') {
         result.questionDelayMs.push(now - e.serverNow);
         // Answer like a crowd: within 5 seconds after answers open.
         const wait = Math.max(0, e.startedAt - e.serverNow) + Math.random() * 5000;
         setTimeout(async () => {
           const s = Date.now();
           const value = ['a', 'b', 'c', 'd'][Math.floor(Math.random() * 4)];
-          const r = await fetch(`${env.apiUrl}/answer`, {
+          const r = await fetch(`${env.apiUrl}/m/tiluchi/answer`, {
             method: 'POST',
             headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
             body: JSON.stringify({ questionIndex: e.index, value }),
@@ -88,7 +89,7 @@ async function worker(input: WorkerInput): Promise<WorkerResult> {
           if (!r?.ok) err(`answer ${r?.status ?? 'network'}`);
         }, wait);
       }
-      if (e.type === 'reveal') (result.revealReceivedAt[e.index] ??= []).push(now);
+      if (e.type === 'tiluchi.reveal') (result.revealReceivedAt[e.index] ??= []).push(now);
       if (e.type === 'ended') {
         result.endedReceived++;
         ended++;
@@ -111,12 +112,13 @@ const stats = (xs: number[]) => ({ n: xs.length, p50: pct(xs, 50), p95: pct(xs, 
 
 async function orchestrator(input: { players: number; questions: number }) {
   const publisher = new AppSyncPublisher(env.httpDns, process.env.AWS_REGION!);
-  const host = new GameService(dbFromEnv(), publisher, { tokenSecret: 'host-only' });
-  const game = await host.createGame({
+  const host = new LiveService(dbFromEnv(), publisher, [tiluchiActivity], { tokenSecret: 'host-only' });
+  const game = await host.createSession({
+    module: 'tiluchi',
     orgId: 'load-test',
     orgName: 'Load test',
     hostUserId: 'load-test',
-    tiluchi: {
+    content: {
       id: 'load',
       title: 'Load test',
       language: 'es',
@@ -150,7 +152,7 @@ async function orchestrator(input: { players: number; questions: number }) {
   // Wait until everyone joined (and subscribed), at most 2 minutes.
   const joinStart = Date.now();
   while (Date.now() - joinStart < 120_000) {
-    const g = await host.getGame(game.id);
+    const g = await host.getSession(game.id);
     if ((g?.playerCount ?? 0) >= input.players) break;
     await sleep(1000);
   }
@@ -162,7 +164,7 @@ async function orchestrator(input: { players: number; questions: number }) {
   for (let q = 0; q < input.questions; q++) {
     await host.advance(game.id);
     await sleep(QUESTION_LEAD_MS + 7000);
-    stored.push(await host.countAnswers(game.id, q));
+    stored.push(await (host.hostAction(game.id, 'countAnswers', { index: q }) as Promise<number>));
     revealStart.push(Date.now());
     await host.advance(game.id); // reveal
     await sleep(3000);

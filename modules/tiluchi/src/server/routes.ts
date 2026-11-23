@@ -14,8 +14,9 @@ const STATUS: Record<TiluchiErrorCode, 400 | 409> = {
 const AnswerBody = z.object({ questionIndex: z.number().int().min(0), value: z.string().min(1).max(64) });
 
 /** Participant routes, mounted by the platform at /m/tiluchi. */
-export function tiluchiRoutes(app: Hono, live: LiveService) {
+export function tiluchiRoutes(app: Hono, getLive: () => Promise<LiveService>) {
   app.post('/answer', async (c) => {
+    const live = await getLive();
     const header = c.req.header('authorization');
     const token = header?.startsWith('Bearer ') ? header.slice(7) : undefined;
     if (!token) throw new LiveError('invalid_token');
