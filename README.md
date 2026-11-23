@@ -3,7 +3,7 @@
 Juegos comunitarios para meetups y streams, hechos por y para los AWS User Groups.
 Es open source (Apache-2.0) y cualquiera puede desplegarlo en su propia cuenta de AWS.
 
-**Tiluchi** es el primer juego: quizzes estilo Kahoot con editor, modo presentador y modo participante.
+Chacota es una plataforma de **actividades**: cada organización elige cuáles ofrece, y la comunidad puede sumar nuevas (ver [Crear una actividad](docs/actividades.md)). La primera es **Tiluchi**: quizzes estilo Kahoot con editor, modo presentador y modo participante.
 
 ## Estado
 
@@ -16,6 +16,19 @@ Es open source (Apache-2.0) y cualquiera puede desplegarlo en su propia cuenta d
 | Motor de partida en tiempo real (AppSync Events) | ✅ |
 | Presentador + participante | ✅ |
 | Resultados permanentes para premios (top N, código de verificación, CSV/Excel) | ✅ |
+| Plataforma de actividades: administración aparte, Tiluchi como módulo | ✅ |
+
+## Estructura
+
+| Carpeta | Qué es |
+|---|---|
+| `packages/core`, `packages/db` | Plataforma: organizaciones, roles, branding, registro de actividades |
+| `packages/live` | Sesión en vivo que comparten las actividades: PIN, jugadores, tiempo real, resultados |
+| `modules/tiluchi` | La actividad Tiluchi: preguntas, importación de Kahoot, reglas y pantallas |
+| `services/api` | API de participantes (Lambda) con las rutas de cada actividad |
+| `apps/web` | Next.js: inicio con actividades, administración, presentador, celular, historial |
+| `infra` | CDK |
+| `e2e` | Partida completa en Chrome |
 
 ## Desarrollo local
 
@@ -35,7 +48,7 @@ pnpm db:init
 # 3. Variables de entorno: copia apps/web/.env.example a apps/web/.env.local
 #    y completa COGNITO_* con los valores de infra/cdk-outputs.dev.json
 
-pnpm dev:game              # API de juego :4000 + broker de eventos :4001 (emula AppSync Events)
+pnpm dev:game              # API de participantes :4000 + broker de eventos :4001 (emula AppSync Events)
 pnpm dev                   # http://localhost:3000
 ```
 
@@ -62,8 +75,9 @@ Después cierra sesión y vuelve a entrar.
 ## Tests
 
 ```sh
-pnpm test        # core, db (necesita DynamoDB Local corriendo) e infra
+pnpm test        # todos los paquetes (necesita DynamoDB Local corriendo)
 pnpm typecheck
+pnpm e2e         # partida completa en Chrome (ver e2e/README.md)
 ```
 
 ## Prueba de carga
@@ -76,22 +90,22 @@ aws lambda invoke --function-name <LoadTestFunction> --cli-read-timeout 900 \
   --cli-binary-format raw-in-base64-out --payload '{"role":"orchestrator","players":1000,"questions":3}' out.json
 ```
 
-Resultado en `us-east-1` (noviembre 2026), con 1000 jugadores y 3 preguntas y sin errores:
+Resultado en `us-east-1` (noviembre 2026, después de separar las actividades), con 1000 jugadores, 3 preguntas y sin errores: se unieron 1000/1000 en 4.2 s y se guardaron 3000/3000 respuestas.
 
 | Métrica | p50 | p95 |
 |---|---|---|
-| Unirse (HTTP) | 299 ms | 1.7 s (arranque de Lambdas) |
-| Responder (HTTP) | 46 ms | 65 ms |
-| Pregunta → celulares (AppSync Events) | 79 ms | 204 ms |
-| Revelación con ranking → celulares | 0.6–0.9 s | 0.8–1.1 s |
+| Unirse (HTTP) | 293 ms | 1.7 s (arranque de Lambdas) |
+| Responder (HTTP) | 47 ms | 67 ms |
+| Pregunta → celulares (AppSync Events) | 67 ms | 116 ms |
+| Revelación con ranking → celulares | 0.5–1.0 s | 0.7–1.2 s |
 
 Desde Bolivia suma unos 150 ms de red. Para pruebas chicas desde tu máquina: `pnpm --filter @chacota/api exec tsx scripts/load-test.ts --players 300 --concurrency 20`.
 
 ## Resultados y premios
 
-Al terminar cada partida se guardan los resultados completos en la organización (pestaña **Resultados**), y no expiran como los datos en vivo:
+Al terminar cada sesión, de cualquier actividad, se guardan los resultados completos en la organización (**Historial y premios**), y no expiran como los datos en vivo:
 
-- Ranking de todos los jugadores con puntaje, respuestas correctas y tiempo promedio de aciertos, que sirve para desempatar.
+- Ranking de todos los jugadores con puntaje y las columnas de cada actividad. En Tiluchi: respuestas correctas y tiempo promedio de aciertos, que sirve para desempatar.
 - Cada jugador ve un **código de 4 letras** en su celular al terminar. Pedilo para verificar a los ganadores, porque los apodos los elige cada uno.
 - Selector de top 3/5/10 o cualquier número, con aviso si hay un empate justo en el corte.
 - Descarga en Excel o CSV, del ranking completo o solo de los ganadores.
