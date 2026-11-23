@@ -162,7 +162,8 @@
       "time_limit_adjusted": "Fila {row}: ajustamos el tiempo ({detail}).",
       "imported_as_poll": "Fila {row}: sin respuesta correcta, quedó como encuesta.",
       "row_skipped_not_enough_answers": "Fila {row}: se omitió (necesita pregunta y 2 respuestas).",
-      "text_truncated": "Fila {row}: recortamos textos muy largos."
+      "text_truncated": "Fila {row}: recortamos textos muy largos.",
+      "media_removed": "Se quitaron {detail} imágenes que son de otra organización."
     },
     "export": "Exportar",
     "deleteTiluchi": "Borrar tiluchi",

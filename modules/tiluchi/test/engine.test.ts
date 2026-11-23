@@ -22,6 +22,13 @@ describe('publicQuestion', () => {
     expect(pq.choices).toEqual([{ id: 'a', text: 'A' }, { id: 'b', text: 'B' }]);
   });
 
+  it('uses the question background, else the quiz background', () => {
+    expect(publicQuestion({ ...quiz, backgroundKey: 'q-bg' }, 'quiz-bg').backgroundKey).toBe('q-bg');
+    expect(publicQuestion(quiz, 'quiz-bg').backgroundKey).toBe('quiz-bg');
+    expect(publicQuestion(quiz).backgroundKey).toBeUndefined();
+    expect(publicQuestion({ ...quiz, imageKey: 'img' }).imageKey).toBe('img');
+  });
+
   it('turns true/false into two fixed choices', () => {
     expect(publicQuestion(tf).choices.map((c) => c.id)).toEqual(['true', 'false']);
     expect(correctValues(tf)).toEqual(['false']);

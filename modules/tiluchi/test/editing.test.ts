@@ -14,6 +14,12 @@ describe('newQuestion', () => {
 });
 
 describe('changeType', () => {
+  it('keeps image and background when changing type', () => {
+    const q = { ...newQuestion('quiz'), imageKey: 'i', backgroundKey: 'b' };
+    expect(changeType(q, 'poll')).toMatchObject({ imageKey: 'i', backgroundKey: 'b' });
+    expect(changeType(q, 'true_false')).toMatchObject({ imageKey: 'i', backgroundKey: 'b' });
+  });
+
   it('keeps prompt and answers when switching quiz → poll → quiz', () => {
     const quiz = { ...newQuestion('quiz'), prompt: '¿Región?' };
     const poll = changeType(quiz, 'poll');

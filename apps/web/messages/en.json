@@ -162,7 +162,8 @@
       "time_limit_adjusted": "Row {row}: time limit adjusted ({detail}).",
       "imported_as_poll": "Row {row}: no correct answer, imported as a poll.",
       "row_skipped_not_enough_answers": "Row {row}: skipped (needs a question and 2 answers).",
-      "text_truncated": "Row {row}: long texts were shortened."
+      "text_truncated": "Row {row}: long texts were shortened.",
+      "media_removed": "Left out {detail} images that belong to another organization."
     },
     "export": "Export",
     "deleteTiluchi": "Delete tiluchi",
