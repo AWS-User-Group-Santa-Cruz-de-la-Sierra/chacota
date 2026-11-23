@@ -4,7 +4,8 @@
  */
 import { createServer } from 'node:http';
 import { serve } from '@hono/node-server';
-import { createDb, s3FromEnv, s3MediaStore } from '@chacota/db';
+import { createDb } from '@chacota/db';
+import { s3FromEnv, s3MediaStore } from '@chacota/db/s3';
 import { Hono } from 'hono';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { LiveService, LocalPublisher } from '@chacota/live';

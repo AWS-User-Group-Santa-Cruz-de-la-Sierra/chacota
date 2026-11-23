@@ -1,7 +1,7 @@
 import 'server-only';
 import type { S3Client } from '@aws-sdk/client-s3';
 import { mediaUrl, newOrgMediaKey, type MediaContentType } from '@chacota/core';
-import { presignPut, s3FromEnv } from '@chacota/db';
+import { presignPut, s3FromEnv } from '@chacota/db/s3';
 import { env } from './env';
 
 let s3: S3Client | undefined;
