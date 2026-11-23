@@ -41,6 +41,8 @@ export class ChacotaStack extends Stack {
 
     new CfnOutput(this, 'TableName', { value: this.data.table.tableName });
     new CfnOutput(this, 'MediaBucketName', { value: this.data.mediaBucket.bucketName });
+    new CfnOutput(this, 'MediaUrl', { value: `https://${this.data.mediaDistribution.distributionDomainName}` });
+    new CfnOutput(this, 'WebServerPolicyArn', { value: this.data.webServerPolicy.managedPolicyArn });
     new CfnOutput(this, 'UserPoolId', { value: this.auth.userPool.userPoolId });
     new CfnOutput(this, 'UserPoolClientId', { value: this.auth.webClient.userPoolClientId });
     new CfnOutput(this, 'AuthDomain', { value: this.auth.domain.baseUrl() });
