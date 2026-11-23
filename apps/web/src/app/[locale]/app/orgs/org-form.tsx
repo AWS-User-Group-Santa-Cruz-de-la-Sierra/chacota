@@ -83,7 +83,7 @@ export function OrgForm({
             value={logoKey || undefined}
             slug={slug}
             purpose="logo"
-            maxSide={512}
+            maxSide={1600}
             mediaBaseUrl={mediaBaseUrl}
             onChange={(key) => setLogoKey(key ?? '')}
           />

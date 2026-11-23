@@ -38,7 +38,8 @@ export function ImagePicker({
     setError(null);
     startUpload(async () => {
       try {
-        const blob = await prepareImage(file, maxSide);
+        // Logos keep every detail: they are shown large on the projector and have sharp edges and text.
+        const blob = await prepareImage(file, maxSide, purpose === 'logo' ? 1 : 0.88);
         const signed = await requestMediaUploadAction(slug, purpose, { contentType: blob.type, size: blob.size });
         if (!signed.ok) return setError(t(`errors.${signed.error}`));
         const res = await fetch(signed.url, { method: 'PUT', headers: { 'content-type': blob.type }, body: blob });
