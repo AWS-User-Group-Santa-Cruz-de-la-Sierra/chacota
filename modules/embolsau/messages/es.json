@@ -1,0 +1,104 @@
+{
+  "card": {
+    "name": "Embolsau",
+    "description": "Carrera de embolsados: empujá a tu animalito sin caerte."
+  },
+  "form": {
+    "title": "Nueva carrera",
+    "meter": "Medidor de velocidad",
+    "meterOn": "Visible: se ve cuándo te podés caer",
+    "meterOff": "A ciegas: hay que adivinar el ritmo",
+    "track": "Largo de la pista",
+    "tracks": {
+      "short": "Corta (unos 15 s)",
+      "normal": "Normal (unos 20 s)",
+      "long": "Larga (unos 30 s)"
+    },
+    "rounds": "Carreras",
+    "roundsValue": "{n, plural, one {# carrera} other {# carreras con puntaje acumulado}}",
+    "maxPlayers": "Tope de jugadores",
+    "maxPlayersHint": "Hasta 100.",
+    "start": "Empezar carrera",
+    "starting": "Preparando…",
+    "hostOnly": "Solo quienes pueden presentar arman carreras.",
+    "name": "Nombre de la carrera",
+    "defaultName": "Carrera de embolsados"
+  },
+  "animals": {
+    "jochi": "Jochi",
+    "tatu": "Tatú",
+    "nandu": "Ñandú",
+    "capibara": "Capibara"
+  },
+  "host": {
+    "phase": {
+      "picking": "Elegí tu animalito",
+      "countdown": "¡Preparados!",
+      "racing": "¡A correr!",
+      "closing": "¡Últimos segundos!",
+      "roundResults": "Resultados de la carrera"
+    },
+    "animals": {
+      "jochi": "Jochi",
+      "tatu": "Tatú",
+      "nandu": "Ñandú",
+      "capibara": "Capibara"
+    },
+    "picked": "{picked} de {total} eligieron",
+    "secondsLeft": "quedan {seconds} s",
+    "subtitle": "Carrera {round} de {rounds}",
+    "advance": {
+      "startNow": "Largar ya",
+      "starting": "Largando…",
+      "endRound": "Terminar carrera",
+      "nextRound": "Siguiente carrera",
+      "podium": "Ver podio"
+    },
+    "roundTitle": "Carrera {round}",
+    "table": {
+      "player": "Jugador",
+      "time": "Tiempo",
+      "points": "Puntos",
+      "total": "Total",
+      "seconds": "{seconds} s",
+      "meters": "{meters} m"
+    },
+    "behind": "{count, plural, one {# quedó atrás} other {# quedaron atrás}}",
+    "leaders": "Punteros",
+    "everyone": "Todos los corredores",
+    "bump": "¡pum!",
+    "closingLeft": "¡Quedan {seconds} s!",
+    "lobbySummary": "{rounds, plural, one {# carrera} other {# carreras}} · {track} · {meter}",
+    "tracks": {
+      "short": "pista corta",
+      "normal": "pista normal",
+      "long": "pista larga"
+    },
+    "withMeter": "con medidor",
+    "blind": "a ciegas"
+  },
+  "play": {
+    "pick": "Elegí tu animalito",
+    "picked": "¡Listo! Esperá la largada.",
+    "yourAnimal": "Tu animalito",
+    "place": "{place}°",
+    "points": "+{points} puntos",
+    "total": "Total: {total}",
+    "ready": "¡Preparate para empujar!",
+    "push": "¡Empujá!",
+    "fallen": "¡Te caíste! Levantándote…",
+    "closing": "¡Últimos segundos!",
+    "finished": "¡Llegaste!",
+    "lookAtScreen": "Mirá la pantalla grande.",
+    "getReadyNext": "Preparate para la próxima carrera.",
+    "nextRound": "Esta no la corriste: la próxima sí.",
+    "lateTitle": "Entraste con la carrera en marcha",
+    "lateBody": "Corrés la próxima. Mientras, mirá la pantalla grande.",
+    "meter": {
+      "label": "Velocidad",
+      "green": "Tranqui",
+      "yellow": "Cuidado",
+      "red": "¡Te caés!"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import type { AnyActivityServer } from '@chacota/live';
+import { embolsauActivity } from '@chacota/embolsau/server';
 import { tiluchiActivity } from '@chacota/tiluchi/server';
 
 /** Activities whose participant routes this API serves. Add one line per activity. */
-export const activities: AnyActivityServer[] = [tiluchiActivity];
+export const activities: AnyActivityServer[] = [tiluchiActivity, embolsauActivity];

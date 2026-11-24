@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.1175.0",
     "@chacota/db": "workspace:*",
+    "@chacota/embolsau": "workspace:*",
     "@chacota/live": "workspace:*",
     "@chacota/tiluchi": "workspace:*",
     "@hono/node-server": "^2.1.11",

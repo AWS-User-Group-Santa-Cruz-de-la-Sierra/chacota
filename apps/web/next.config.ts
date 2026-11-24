@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
     ]);
   },
   experimental: { authInterrupts: true },
-  transpilePackages: ['@chacota/core', '@chacota/db', '@chacota/live', '@chacota/tiluchi'],
+  transpilePackages: ['@chacota/core', '@chacota/db', '@chacota/live', '@chacota/tiluchi', '@chacota/embolsau'],
   turbopack: {
     rules: {
       '*.css': {

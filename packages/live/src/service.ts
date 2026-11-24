@@ -25,6 +25,7 @@ export type LiveErrorCode =
   | 'session_not_found'
   | 'session_ended'
   | 'nickname_taken'
+  | 'session_full'
   | 'invalid_nickname'
   | 'invalid_token'
   | 'invalid_transition'
@@ -103,7 +104,7 @@ export class LiveService {
     content: unknown;
   }): Promise<Session> {
     const activity = this.requireActivity(input.module);
-    const { title, state } = activity.prepare(input.content);
+    const { title, state, maxPlayers } = activity.prepare(input.content);
 
     for (let attempt = 0; attempt < 10; attempt++) {
       const session: Session = {
@@ -119,6 +120,7 @@ export class LiveService {
         status: 'lobby',
         version: 1,
         playerCount: 0,
+        ...(maxPlayers !== undefined ? { maxPlayers } : {}),
         createdAt: new Date(this.now()).toISOString(),
         state,
       };
@@ -252,6 +254,26 @@ export class LiveService {
     if (!session) throw new LiveError('session_not_found');
     if (session.status === 'ended') throw new LiveError('session_ended');
 
+    // Reserve the place first, with a plain atomic ADD: hundreds of players join at once, and
+    // transactions touching the same session item would conflict. The cap is checked in the same write.
+    let playerCount: number;
+    try {
+      const { Attributes } = await this.db.doc.send(
+        new UpdateCommand({
+          TableName: this.db.tableName,
+          Key: k.session(session.id),
+          UpdateExpression: 'ADD playerCount :one',
+          ConditionExpression: 'attribute_not_exists(maxPlayers) OR playerCount < maxPlayers',
+          ExpressionAttributeValues: { ':one': 1 },
+          ReturnValues: 'UPDATED_NEW',
+        }),
+      );
+      playerCount = Number(Attributes?.playerCount ?? session.playerCount + 1);
+    } catch (error) {
+      if (isConditionalCheckFailure(error)) throw new LiveError('session_full');
+      throw error;
+    }
+
     const player: Player = { id: newId(), sessionId: session.id, nickname, score: 0, joinedAt: this.now() };
     try {
       await this.db.doc.send(
@@ -269,23 +291,21 @@ export class LiveService {
         }),
       );
     } catch (error) {
+      // Give the place back: the player was not created.
+      await this.db.doc.send(
+        new UpdateCommand({
+          TableName: this.db.tableName,
+          Key: k.session(session.id),
+          UpdateExpression: 'ADD playerCount :minus',
+          ExpressionAttributeValues: { ':minus': -1 },
+        }),
+      );
       if (isConditionalCheckFailure(error)) throw new LiveError('nickname_taken');
       throw error;
     }
-    // Kept outside the transaction: hundreds of players join at once, and transactions touching
-    // the same session item would conflict. A plain atomic ADD never does.
-    const { Attributes } = await this.db.doc.send(
-      new UpdateCommand({
-        TableName: this.db.tableName,
-        Key: k.session(session.id),
-        UpdateExpression: 'ADD playerCount :one',
-        ExpressionAttributeValues: { ':one': 1 },
-        ReturnValues: 'UPDATED_NEW',
-      }),
-    );
     await this.publish(
       session.id,
-      { type: 'player_joined', nickname, playerCount: Number(Attributes?.playerCount ?? session.playerCount + 1) },
+      { type: 'player_joined', nickname, playerCount },
       channels.host(session.id),
     );
     return {

@@ -9,8 +9,11 @@ import type { LiveService } from './service';
  */
 export interface ActivityServer<TContent = unknown, TState = unknown> {
   manifest: ActivityManifest;
-  /** Validates the content a host starts with and builds the initial state. Throws LiveError('not_playable'). */
-  prepare(content: TContent): { title: string; state: TState };
+  /**
+   * Validates the content a host starts with and builds the initial state. Throws LiveError('not_playable').
+   * `maxPlayers` caps how many can join; past it, joining fails with LiveError('session_full').
+   */
+  prepare(content: TContent): { title: string; state: TState; maxPlayers?: number };
   /** The presenter moves forward while the session runs. Use live.transition/publish, or live.end when done. */
   advance(live: LiveService, session: Session<TState>): Promise<Session<TState>>;
   /** What a reconnecting client needs (the presenter when playerId is undefined). */

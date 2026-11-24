@@ -7,6 +7,7 @@ const STATUS: Record<LiveErrorCode, 400 | 401 | 403 | 404 | 409> = {
   session_not_found: 404,
   session_ended: 409,
   nickname_taken: 409,
+  session_full: 409,
   invalid_nickname: 400,
   invalid_token: 401,
   invalid_transition: 409,

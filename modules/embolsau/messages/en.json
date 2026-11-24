@@ -1,0 +1,104 @@
+{
+  "card": {
+    "name": "Embolsau",
+    "description": "Sack race: push your critter without tripping."
+  },
+  "form": {
+    "title": "New race",
+    "meter": "Speed meter",
+    "meterOn": "Visible: you can see when you might trip",
+    "meterOff": "Blind: guess the pace",
+    "track": "Track length",
+    "tracks": {
+      "short": "Short (about 15 s)",
+      "normal": "Normal (about 20 s)",
+      "long": "Long (about 30 s)"
+    },
+    "rounds": "Races",
+    "roundsValue": "{n, plural, one {# race} other {# races, scores add up}}",
+    "maxPlayers": "Player limit",
+    "maxPlayersHint": "Up to 100.",
+    "start": "Start race",
+    "starting": "Getting ready…",
+    "hostOnly": "Only people who can present set up races.",
+    "name": "Race name",
+    "defaultName": "Sack race"
+  },
+  "animals": {
+    "jochi": "Jochi",
+    "tatu": "Tatú",
+    "nandu": "Ñandú",
+    "capibara": "Capibara"
+  },
+  "host": {
+    "phase": {
+      "picking": "Pick your critter",
+      "countdown": "Get ready!",
+      "racing": "Run!",
+      "closing": "Last seconds!",
+      "roundResults": "Race results"
+    },
+    "animals": {
+      "jochi": "Jochi",
+      "tatu": "Tatú",
+      "nandu": "Ñandú",
+      "capibara": "Capibara"
+    },
+    "picked": "{picked} of {total} picked",
+    "secondsLeft": "{seconds} s left",
+    "subtitle": "Race {round} of {rounds}",
+    "advance": {
+      "startNow": "Start now",
+      "starting": "Starting…",
+      "endRound": "End race",
+      "nextRound": "Next race",
+      "podium": "Show podium"
+    },
+    "roundTitle": "Race {round}",
+    "table": {
+      "player": "Player",
+      "time": "Time",
+      "points": "Points",
+      "total": "Total",
+      "seconds": "{seconds} s",
+      "meters": "{meters} m"
+    },
+    "behind": "{count, plural, one {# fell behind} other {# fell behind}}",
+    "leaders": "Leaders",
+    "everyone": "All runners",
+    "bump": "bump!",
+    "closingLeft": "{seconds} s left!",
+    "lobbySummary": "{rounds, plural, one {# race} other {# races}} · {track} · {meter}",
+    "tracks": {
+      "short": "short track",
+      "normal": "normal track",
+      "long": "long track"
+    },
+    "withMeter": "with meter",
+    "blind": "blind"
+  },
+  "play": {
+    "pick": "Pick your critter",
+    "picked": "Done! Wait for the start.",
+    "yourAnimal": "Your critter",
+    "place": "#{place}",
+    "points": "+{points} points",
+    "total": "Total: {total}",
+    "ready": "Get ready to push!",
+    "push": "Push!",
+    "fallen": "You tripped! Getting up…",
+    "closing": "Last seconds!",
+    "finished": "You made it!",
+    "lookAtScreen": "Look at the big screen.",
+    "getReadyNext": "Get ready for the next race.",
+    "nextRound": "You missed this one: you'll run the next.",
+    "lateTitle": "You joined mid-race",
+    "lateBody": "You'll run the next one. Meanwhile, watch the big screen.",
+    "meter": {
+      "label": "Speed",
+      "green": "Easy",
+      "yellow": "Careful",
+      "red": "You'll trip!"
+    }
+  }
+}
