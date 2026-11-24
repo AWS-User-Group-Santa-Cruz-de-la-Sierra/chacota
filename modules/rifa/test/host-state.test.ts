@@ -8,7 +8,6 @@ import {
   applyEntriesEvent,
   applyHostEvent,
   chipScale,
-  nextBoundary,
   visibleEntries,
   visibleWinners,
   type HostData,
@@ -163,19 +162,6 @@ describe('visibleWinners (no spoilers)', () => {
     expect(visibleWinners(winners, r, r.winner.startsAt)).toEqual(winners);
     expect(visibleWinners(winners, r, r.endsAt)).toEqual(winners);
     expect(visibleWinners(winners, null, 0)).toEqual(winners);
-  });
-});
-
-describe('nextBoundary', () => {
-  it('walks every step start, reveal and the end, then stops', () => {
-    const r = draw('discard');
-    const [o1, o2] = r.out;
-    expect(nextBoundary(r, 1_000)).toBe(o1!.startsAt);
-    expect(nextBoundary(r, o1!.startsAt)).toBe(o2!.startsAt);
-    expect(nextBoundary(r, o2!.startsAt)).toBe(r.winner.startsAt);
-    expect(nextBoundary(r, r.winner.startsAt)).toBe(r.endsAt);
-    expect(nextBoundary(r, r.endsAt)).toBeUndefined();
-    expect(nextBoundary(null, 0)).toBeUndefined();
   });
 });
 

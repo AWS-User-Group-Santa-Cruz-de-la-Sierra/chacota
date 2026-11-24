@@ -1,5 +1,6 @@
 import { isPlaying, winOf, withResetMark } from '../bag';
-import { SCENE_MS, type BagEntry, type BagReply, type EntryStatus, type RifaEvent, type Round, type WinnersItem } from '../model';
+import type { BagEntry, BagReply, EntryStatus, RifaEvent, Round, WinnersItem } from '../model';
+import { revealOf } from '../timeline';
 
 export type BagEvent = Extract<RifaEvent, { type: 'rifa.bag' }>;
 
@@ -73,8 +74,6 @@ export function applyBagReply(d: HostData, reply: Pick<BagReply, 'entries' | 'ro
   return { ...d, entries };
 }
 
-const revealOf = (o: Round['out'][number]) => o.startsAt + SCENE_MS[o.scene];
-
 /**
  * The bag as the audience may see it. The server marks the round's result when it draws, so while
  * the round plays each of its entries keeps its status from before the round (in the bag) until
@@ -94,13 +93,6 @@ export function visibleEntries(entries: BagEntry[], round: Round | null, now: nu
 export function visibleWinners(winners: WinnersItem[], round: Round | null, now: number): WinnersItem[] {
   if (!round || now >= round.winner.startsAt) return winners;
   return winners.filter((w) => !(w.kind === 'win' && w.round === round.n));
-}
-
-/** The next moment the screen changes during a round (a step starts or is revealed, or the round ends). */
-export function nextBoundary(round: Round | null, now: number): number | undefined {
-  if (!round) return undefined;
-  const times = [...round.out.flatMap((o) => [o.startsAt, revealOf(o)]), round.winner.startsAt, round.endsAt].filter((t) => t > now);
-  return times.length > 0 ? Math.min(...times) : undefined;
 }
 
 const CHIP_STEPS = [24, 60, 120, 250];

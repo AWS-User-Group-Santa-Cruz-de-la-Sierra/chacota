@@ -1,4 +1,5 @@
-import { SCENE_MS, type EntryStatus, type OnOverboard, type OutStep, type PlayerSnapshot, type RifaEvent, type Round } from '../model';
+import type { EntryStatus, OnOverboard, PlayerSnapshot, RifaEvent, Round } from '../model';
+import { revealOf } from '../timeline';
 
 export type PhoneView =
   | { kind: 'idle'; status: EntryStatus }
@@ -15,9 +16,6 @@ export interface PhoneData {
   /** Number of the last round applied, so a round replayed late is not applied twice. */
   lastRound: number;
 }
-
-/** When an "al agua" step is revealed: the end of its scene. */
-export const revealOf = (o: OutStep) => o.startsAt + SCENE_MS[o.scene];
 
 // The line under the flood follows the status: it is the round's choice unless the presenter
 // changed it by hand.

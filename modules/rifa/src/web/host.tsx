@@ -2,16 +2,17 @@
 
 import type { HostScreenProps } from '@chacota/live/web';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useReducer, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import type { BagEntry, BagReply, HostSnapshot, OnOverboard, RifaEvent, Round } from '../model';
 import { stepAt } from '../timeline';
 import { BagChips } from './bag-chips';
 import { Controls } from './controls';
-import { advanceState, applyBagReply, applyHostEvent, nextBoundary, visibleEntries, visibleWinners, type HostData } from './host-state';
+import { advanceState, applyBagReply, applyHostEvent, visibleEntries, visibleWinners, type HostData } from './host-state';
 import { ScenePlayer } from './scene-player';
 import { Duende, DuendeDefs } from './scenes/duende';
 import { Stage, Stars, useSvgIds } from './scenes/stage';
 import { SCENE_STYLES } from './scenes/styles';
+import { useRoundTicker } from './use-round-ticker';
 import { WinnersList } from './winners-list';
 
 /** Pause between two bag fetches while players keep joining. */
@@ -101,7 +102,6 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
   const [busy, setBusy] = useState<ReadonlySet<string>>(() => new Set());
   const [failed, setFailed] = useState(false);
   const [bagFailed, setBagFailed] = useState(false);
-  const [, rerender] = useReducer((n: number) => n + 1, 0);
   // Time comes from the client clock: the server render and hydration must not depend on it. The
   // first timed render comes after mount, once the frame's own effects have synced the clock.
   const [ready, setReady] = useState(false);
@@ -254,15 +254,8 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
   const stageRound = data.round && (playing || data.winners[data.winners.length - 1]?.kind !== 'reset') ? data.round : null;
   const { caption, announce } = useCaption(stageRound, now);
 
-  // Re-render when the next step starts or is revealed, and when the round ends.
-  useEffect(() => {
-    if (!ready) return;
-    const at = clock.now();
-    const next = nextBoundary(data.round, at);
-    if (next === undefined) return;
-    const timer = setTimeout(rerender, next - at + 20);
-    return () => clearTimeout(timer);
-  });
+  // Re-render when the next step starts or is revealed, and when the round ends; not before mount.
+  useRoundTicker(data.round, clock, ready);
 
   const label = t(`advance.${advance.label}`);
   useEffect(() => setAdvanceLabel(label), [label, setAdvanceLabel]);

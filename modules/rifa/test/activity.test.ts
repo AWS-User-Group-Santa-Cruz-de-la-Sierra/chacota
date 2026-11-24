@@ -208,4 +208,24 @@ describe('Rifa activity', () => {
     const finalPhone = (await live.snapshot(session.id, ana.player.id)).module as { wins: number[] };
     expect(finalPhone.wins).toEqual([1]);
   });
+
+  it('after a reset a phone gets no round to stay on, until the next one', async () => {
+    const session = await qrRifa(1);
+    const ana = await live.join(session.pin, 'Ana');
+    await live.join(session.pin, 'Beto');
+    await live.advance(session.id);
+    await live.advance(session.id);
+    const r1 = rounds(session.id)[0]!;
+    clock = r1.endsAt;
+    const phone = async () => (await live.snapshot(session.id, ana.player.id)).module as { status: string; round: Round | null };
+    expect((await phone()).round).toEqual(r1);
+
+    await action(session.id, 'reset');
+    expect(await phone()).toMatchObject({ status: 'bag', round: null });
+    // The presenter's screen keeps it: its own stage rule hides it after a reset.
+    expect(((await live.snapshot(session.id)).module as { round: Round }).round).toEqual(r1);
+
+    await live.advance(session.id);
+    expect((await phone()).round).toEqual(rounds(session.id)[1]);
+  });
 });

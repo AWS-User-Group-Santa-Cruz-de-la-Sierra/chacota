@@ -65,7 +65,8 @@ export function Flood({ name, onOverboard, since, clock }: { name: string; onOve
           <path d={WAVE} fill="#38bdf8cc" />
         </svg>
         <div className="absolute inset-x-0 -top-6 flex justify-center">
-          <span className="rifa-flood-tag flex h-10 max-w-[85%] items-center overflow-hidden rounded-md border-[3px] border-[#78350F] bg-[#E9C98F] px-3 font-display text-lg font-extrabold text-ellipsis whitespace-nowrap text-[#78350F]">
+          {/* A block, not flex, so a long name ends in an ellipsis; 34 px is the height inside the border. */}
+          <span className="rifa-flood-tag block h-10 max-w-[85%] truncate rounded-md border-[3px] border-[#78350F] bg-[#E9C98F] px-3 font-display text-lg leading-[34px] font-extrabold text-[#78350F]">
             {name}
           </span>
         </div>

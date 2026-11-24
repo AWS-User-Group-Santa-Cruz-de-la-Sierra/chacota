@@ -4,12 +4,12 @@ import type { PlayScreenProps } from '@chacota/live/web';
 import { useTranslations } from 'next-intl';
 import { useEffect, useLayoutEffect, useReducer, useRef } from 'react';
 import type { PlayerSnapshot, RifaEvent, Round } from '../model';
-import { stepAt } from '../timeline';
+import { revealOf, stepAt } from '../timeline';
 import { Flood } from './flood';
-import { nextBoundary } from './host-state';
 import { RifaIcon } from './icon';
-import { applyPhoneEvent, initialPhoneData, phoneView, revealedWins, revealOf, type PhoneData, type PhoneView } from './phone-state';
+import { applyPhoneEvent, initialPhoneData, phoneView, revealedWins, type PhoneData, type PhoneView } from './phone-state';
 import { ScenePlayer } from './scene-player';
+import { useRoundTicker } from './use-round-ticker';
 import { WinnerPhone } from './winner-phone';
 
 type Action = { playerId: string; event: RifaEvent };
@@ -35,7 +35,6 @@ function useAnnouncement(view: PhoneView, round: Round | null, now: number, idle
 export function RifaPlay({ playerId, snapshot, clock, subscribe, setScore }: PlayScreenProps) {
   const t = useTranslations('rifa.play');
   const [data, dispatch] = useReducer(reduce, snapshot as Partial<PlayerSnapshot>, initialPhoneData);
-  const [, rerender] = useReducer((n: number) => n + 1, 0);
 
   // The hub replays its buffer on every subscribe: each event once.
   const seen = useRef(new WeakSet<object>());
@@ -63,14 +62,9 @@ export function RifaPlay({ playerId, snapshot, clock, subscribe, setScore }: Pla
   const score = wins.length;
   useLayoutEffect(() => setScore(score), [score, setScore]);
 
-  // Re-render when a step starts or is revealed, and when the round ends.
-  useEffect(() => {
-    const at = clock.now();
-    const next = nextBoundary(round, at);
-    if (next === undefined) return;
-    const timer = setTimeout(rerender, next - at + 20);
-    return () => clearTimeout(timer);
-  });
+  // Re-render when a step starts or is revealed, and when the round ends. The frame mounts this
+  // screen only on the client, after /state answered, so the clock is already synced.
+  useRoundTicker(round, clock);
 
   let body;
   const mine = round?.out.find((o) => o.entryId === playerId);

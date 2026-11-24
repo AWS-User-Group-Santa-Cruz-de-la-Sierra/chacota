@@ -42,10 +42,14 @@ const GOLD: [number, number, number, string][] = [
   [90, 3_100, 3_000, '#fbf8ff'],
 ];
 
-/** About 0.75 em per glyph of the display font in bold, so the name keeps to one line when it can. */
+/**
+ * About 0.75 em per glyph of the display font in bold, so the name keeps to one line when it can.
+ * The width is the text's own: the frame's and this screen's side padding (2 × 1rem each), and
+ * the column's 28rem less this screen's padding.
+ */
 function neonSize(name: string): string {
   const chars = Math.max(1, Array.from(name.trim()).length);
-  return `min(3rem, calc(min(100vw - 2rem, 28rem) * 1.3 / ${chars}))`;
+  return `min(3rem, calc(min(100vw - 4rem, 26rem) * 1.3 / ${chars}))`;
 }
 
 /** The winner's phone: their name lights up in neon, a gold crown drops and bounces, gold rains. */

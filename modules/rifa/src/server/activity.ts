@@ -83,7 +83,10 @@ export function createRifaActivity(opts: { randomInt?: RandomInt } = {}): Activi
         return { ...host };
       }
       const status: EntryStatus = s.state.won.includes(playerId) ? 'won' : s.state.discarded.includes(playerId) ? 'out' : 'bag';
-      const player: PlayerSnapshot = { status, round, wins: winsOf(s.state, playerId) };
+      // After a reset the phone has no round to stay on, like a phone that saw the reset live (and
+      // the presenter's stage). A reset never happens while a round plays.
+      const afterReset = winners[winners.length - 1]?.kind === 'reset';
+      const player: PlayerSnapshot = { status, round: afterReset ? null : round, wins: winsOf(s.state, playerId) };
       return { ...player };
     },
 
