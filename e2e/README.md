@@ -1,6 +1,9 @@
 # e2e
 
-Partida completa en Chrome: presentador más tres celulares, reconexión, código de verificación, resultados y CSV.
+Dos recorridos completos en Chrome, uno detrás del otro:
+
+- **Tiluchi** (`src/game.ts`): presentador más tres celulares, reconexión, código de verificación, resultados, CSV y activar/desactivar la actividad.
+- **Embolsau** (`src/embolsau.ts`): el formulario "Nueva carrera", una sesión llena (el tercer celular recibe "Este juego ya está lleno."), elegir animalito, empujar a dos ritmos hasta que la ronda cierra sola, podio, código y las columnas del historial. Usa su propia organización (`e2e-embolsau`).
 
 Requisitos:
 
@@ -20,4 +23,4 @@ Correr:
 E2E_EMAIL=e2e-tester@example.com E2E_PASSWORD='<clave>' pnpm e2e
 ```
 
-Termina con `ALL PASSED`. Las capturas quedan en `e2e/out/`. `E2E_BASE_URL` cambia la URL base (por defecto `http://localhost:3000`).
+Termina con `ALL PASSED` y `ALL PASSED (Embolsau)`. Para correr uno solo: `corepack pnpm --filter @chacota/e2e start:tiluchi` o `start:embolsau` (con las mismas variables). Las capturas quedan en `e2e/out/`. `E2E_BASE_URL` cambia la URL base (por defecto `http://localhost:3000`).

@@ -41,3 +41,16 @@ export async function seed(ownerUserId: string): Promise<{ orgSlug: string; tilu
   );
   return { orgSlug: org.slug, tiluchiId: tiluchi.id };
 }
+
+export const EMBOLSAU_ORG_SLUG = 'e2e-embolsau';
+
+/** Organization for the Embolsau run, with only Embolsau enabled. Idempotent. */
+export async function seedEmbolsau(ownerUserId: string): Promise<{ orgSlug: string }> {
+  const env = webEnv();
+  const db = createDb({ tableName: env.CHACOTA_TABLE!, endpoint: env.DYNAMODB_ENDPOINT });
+  const org =
+    (await getOrgBySlug(db, EMBOLSAU_ORG_SLUG)) ??
+    (await createOrg(db, { slug: EMBOLSAU_ORG_SLUG, name: 'E2E Embolsau', primaryColor: '#D63A72' }, ownerUserId, 'active'));
+  await setOrgActivities(db, org.id, ['embolsau']);
+  return { orgSlug: org.slug };
+}
