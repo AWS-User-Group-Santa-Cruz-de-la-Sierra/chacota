@@ -35,7 +35,45 @@
       "racing": "Run!",
       "closing": "Last seconds!",
       "roundResults": "Race results"
-    }
+    },
+    "animals": {
+      "jochi": "Jochi",
+      "tatu": "Tatú",
+      "nandu": "Ñandú",
+      "capibara": "Capibara"
+    },
+    "picked": "{picked} of {total} picked",
+    "secondsLeft": "{seconds} s left",
+    "subtitle": "Race {round} of {rounds}",
+    "advance": {
+      "startNow": "Start now",
+      "starting": "Starting…",
+      "endRound": "End race",
+      "nextRound": "Next race",
+      "podium": "Show podium"
+    },
+    "roundTitle": "Race {round}",
+    "table": {
+      "player": "Player",
+      "time": "Time",
+      "points": "Points",
+      "total": "Total",
+      "seconds": "{seconds} s",
+      "meters": "{meters} m"
+    },
+    "behind": "{count, plural, one {# fell behind} other {# fell behind}}",
+    "leaders": "Leaders",
+    "everyone": "All runners",
+    "bump": "bump!",
+    "closingLeft": "{seconds} s left!",
+    "lobbySummary": "{rounds, plural, one {# race} other {# races}} · {track} · {meter}",
+    "tracks": {
+      "short": "short track",
+      "normal": "normal track",
+      "long": "long track"
+    },
+    "withMeter": "with meter",
+    "blind": "blind"
   },
   "play": {
     "pick": "Pick your critter",

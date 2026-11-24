@@ -35,7 +35,45 @@
       "racing": "¡A correr!",
       "closing": "¡Últimos segundos!",
       "roundResults": "Resultados de la carrera"
-    }
+    },
+    "animals": {
+      "jochi": "Jochi",
+      "tatu": "Tatú",
+      "nandu": "Ñandú",
+      "capibara": "Capibara"
+    },
+    "picked": "{picked} de {total} eligieron",
+    "secondsLeft": "quedan {seconds} s",
+    "subtitle": "Carrera {round} de {rounds}",
+    "advance": {
+      "startNow": "Largar ya",
+      "starting": "Largando…",
+      "endRound": "Terminar carrera",
+      "nextRound": "Siguiente carrera",
+      "podium": "Ver podio"
+    },
+    "roundTitle": "Carrera {round}",
+    "table": {
+      "player": "Jugador",
+      "time": "Tiempo",
+      "points": "Puntos",
+      "total": "Total",
+      "seconds": "{seconds} s",
+      "meters": "{meters} m"
+    },
+    "behind": "{count, plural, one {# quedó atrás} other {# quedaron atrás}}",
+    "leaders": "Punteros",
+    "everyone": "Todos los corredores",
+    "bump": "¡pum!",
+    "closingLeft": "¡Quedan {seconds} s!",
+    "lobbySummary": "{rounds, plural, one {# carrera} other {# carreras}} · {track} · {meter}",
+    "tracks": {
+      "short": "pista corta",
+      "normal": "pista normal",
+      "long": "pista larga"
+    },
+    "withMeter": "con medidor",
+    "blind": "a ciegas"
   },
   "play": {
     "pick": "Elegí tu animalito",
