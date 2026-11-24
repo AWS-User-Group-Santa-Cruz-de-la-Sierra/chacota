@@ -1,4 +1,6 @@
 import type { Animal } from '../model';
+import backdrop from './assets/fondo.jpg';
+import track from './assets/pista.jpg';
 import capibaraDown from './assets/capibara-down.png';
 import capibaraIcon from './assets/capibara-icon.png';
 import capibaraRun from './assets/capibara-run.png';
@@ -27,3 +29,9 @@ export const ART: Record<Animal, { run: string; down: string; icon: string }> = 
 
 /** Player colors (the shadow under each runner), indexed by bagOf(playerId). */
 export const BAGS = ['#D63A72', '#FFC629', '#0B8048', '#8A5CF0', '#C9A46A', '#3FA7D6'];
+
+/**
+ * The scenery: dark earth for the track (seamless, 20 m wide) and the Santa Cruz flora behind it
+ * (motacú and toborochi, seamless), both by the maintainer.
+ */
+export const SCENERY = { track: track.src, backdrop: backdrop.src };

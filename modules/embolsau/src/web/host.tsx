@@ -5,9 +5,9 @@ import type { HostScreenProps } from '@chacota/live/web';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ANIMALS, TRACK_METERS, type Animal, type EmbolsauEvent, type HostSnapshot, type PhaseInfo, type RoundPlace, type RoundRank } from '../model';
-import { ART } from './art';
+import { ART, SCENERY } from './art';
 import { HISTORY, type Snapshot } from './camera';
-import { drawRace, FRAME, type Sprites } from './race-canvas';
+import { drawRace, FRAME, type Scenery, type Sprites } from './race-canvas';
 
 const TICK_MS = 500;
 const TICKING = new Set(['picking', 'countdown', 'racing', 'closing']);
@@ -184,6 +184,9 @@ function RaceView({
         return [a, { run, down }];
       }),
     ) as Sprites;
+    const scenery: Scenery = { track: new Image(), backdrop: new Image() };
+    scenery.track.src = SCENERY.track;
+    scenery.backdrop.src = SCENERY.backdrop;
     let frame = 0;
     const camera = { x: 0, at: 0 };
     const draw = () => {
@@ -205,6 +208,7 @@ function RaceView({
         trackMeters,
         closingLeftMs: closing.current === null ? null : Math.max(0, closing.current - at),
         sprites,
+        scenery,
         labels: labels.current,
       });
       frame = requestAnimationFrame(draw);

@@ -78,6 +78,24 @@ export interface RaceLabels {
 
 export type Sprites = Record<Animal, { run: HTMLImageElement; down: HTMLImageElement }>;
 
+/** The track and backdrop textures, once loaded. */
+export interface Scenery {
+  track: HTMLImageElement;
+  backdrop: HTMLImageElement;
+}
+
+/** Meters of track one repetition of the earth texture covers. */
+const TRACK_TILE_METERS = 20;
+/** The backdrop moves at this fraction of the camera's speed, so it looks far away. */
+const BACKDROP_PARALLAX = 0.5;
+
+/** Where each repetition of a texture `tileW` wide starts, with the scene scrolled `offset` px. */
+export function tileStarts(offset: number, tileW: number, width: number): number[] {
+  const starts: number[] = [];
+  for (let x = 0 - (((offset % tileW) + tileW) % tileW); x < width; x += tileW) starts.push(x);
+  return starts;
+}
+
 const COLORS = { noche: '#1A0E2E', pista: '#2B1A47', linea: '#3D2A5C', niebla: '#CFC3E6', sol: '#FFC629', tajibo: '#D63A72', blanco: '#FFFFFF' };
 
 /** One frame of the race: the crowd near the leaders, the counter of who fell behind, the strip with everybody. */
@@ -90,6 +108,8 @@ export function drawRace(
     trackMeters: number;
     closingLeftMs: number | null;
     sprites: Sprites;
+    /** Optional: without it the track is a flat color. */
+    scenery?: Scenery;
     labels: RaceLabels;
     /** Camera state kept between frames, so it follows smoothly. */
     camera: { x: number; at: number };
@@ -111,9 +131,21 @@ export function drawRace(
   const bottom = h - 130;
 
   // Track, a line every 10 m, and the finish line.
-  ctx.fillStyle = COLORS.pista;
-  ctx.fillRect(0, top, w, bottom - top);
-  ctx.strokeStyle = COLORS.linea;
+  const pxPerMeter = w / VIEW_METERS;
+  const scenery = input.scenery;
+  if (scenery?.backdrop.complete && scenery.backdrop.naturalWidth > 0) {
+    // The top band: the flora far behind, moving slower than the track.
+    const tileW = (scenery.backdrop.naturalWidth / scenery.backdrop.naturalHeight) * top;
+    for (const x of tileStarts(camX * pxPerMeter * BACKDROP_PARALLAX, tileW, w)) ctx.drawImage(scenery.backdrop, x, 0, tileW, top);
+  }
+  if (scenery?.track.complete && scenery.track.naturalWidth > 0) {
+    const tileW = TRACK_TILE_METERS * pxPerMeter;
+    for (const x of tileStarts(camX * pxPerMeter, tileW, w)) ctx.drawImage(scenery.track, x, top, tileW + 1, bottom - top);
+  } else {
+    ctx.fillStyle = COLORS.pista;
+    ctx.fillRect(0, top, w, bottom - top);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
   ctx.lineWidth = 2;
   ctx.font = '14px sans-serif';
   for (let m = 0; m <= trackMeters; m += 10) {
