@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { behindCount, cameraX, interpolate, VIEW_METERS, type RunnerView } from '../src/web/camera';
+import { behindCount, between, cameraX, interpolate, smoothCamera, VIEW_METERS, type RunnerView } from '../src/web/camera';
 
 const runner = (patch: Partial<RunnerView> = {}): RunnerView => ({
   id: 'a', nickname: 'Ana', animal: 'jochi', bag: 0, meters: 50, speed: 8, down: false, place: 1, finished: false, at: 10_000, ...patch,
@@ -37,5 +37,46 @@ describe('interpolate', () => {
 
   it('a fallen runner does not move', () => {
     expect(interpolate(runner({ down: true }), 10_500, 240).meters).toBe(50);
+  });
+});
+
+describe('between: drawing half a second in the past, between two real updates', () => {
+  const prev = [runner({ meters: 50, at: 10_000 })];
+  const next = [runner({ meters: 60, at: 10_500, place: 2 })];
+
+  it('glides evenly from the previous position to the next one', () => {
+    expect(between(prev, next, 10_250, 240)[0]!.meters).toBeCloseTo(55);
+    expect(between(prev, next, 10_000, 240)[0]!.meters).toBeCloseTo(50);
+    expect(between(prev, next, 10_500, 240)[0]!.meters).toBeCloseTo(60);
+  });
+
+  it('takes the place and the rest from the latest update', () => {
+    expect(between(prev, next, 10_100, 240)[0]!.place).toBe(2);
+  });
+
+  it('a runner that just appeared starts where it is', () => {
+    expect(between([], next, 10_250, 240)[0]!.meters).toBe(60);
+  });
+
+  it('if an update is late, keeps going from the latest one instead of stopping', () => {
+    const late = between(prev, next, 10_800, 240)[0]!.meters;
+    expect(late).toBeGreaterThan(60);
+    expect(late).toBeLessThanOrEqual(240);
+  });
+
+  it('falls and gets up halfway between the two updates', () => {
+    const fall = [runner({ meters: 60, at: 10_500, down: true })];
+    expect(between(prev, fall, 10_200, 240)[0]!.down).toBe(false);
+    expect(between(prev, fall, 10_300, 240)[0]!.down).toBe(true);
+  });
+});
+
+describe('smoothCamera', () => {
+  it('moves toward the target without jumping or overshooting', () => {
+    const x = smoothCamera(0, 10, 16);
+    expect(x).toBeGreaterThan(0);
+    expect(x).toBeLessThan(10);
+    expect(smoothCamera(0, 10, 0)).toBe(0);
+    expect(smoothCamera(0, 10, 5_000)).toBeCloseTo(10);
   });
 });

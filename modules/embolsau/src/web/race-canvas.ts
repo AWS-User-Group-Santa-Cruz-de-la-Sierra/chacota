@@ -1,7 +1,7 @@
 import type { Animal } from '../model';
 import { BAGS } from './art';
 import { feetOf } from './sprite-feet';
-import { behindCount, cameraX, interpolate, laneOf, VIEW_METERS, type RunnerView } from './camera';
+import { behindCount, between, cameraX, laneOf, RENDER_DELAY_MS, smoothCamera, VIEW_METERS, type RunnerView } from './camera';
 
 /** The drawing works in a 1280×720 frame; the canvas scales it to its real size. */
 export const FRAME = { width: 1280, height: 720 };
@@ -26,15 +26,30 @@ const COLORS = { noche: '#1A0E2E', pista: '#2B1A47', linea: '#3D2A5C', niebla: '
 /** One frame of the race: the crowd near the leaders, the counter of who fell behind, the strip with everybody. */
 export function drawRace(
   ctx: CanvasRenderingContext2D,
-  input: { runners: RunnerView[]; now: number; trackMeters: number; closingLeftMs: number | null; sprites: Sprites; labels: RaceLabels },
+  input: {
+    /** The two latest standings: the race is drawn a little in the past, gliding between them. */
+    prev: RunnerView[];
+    next: RunnerView[];
+    now: number;
+    trackMeters: number;
+    closingLeftMs: number | null;
+    sprites: Sprites;
+    labels: RaceLabels;
+    /** Camera state kept between frames, so it follows smoothly. */
+    camera: { x: number; at: number };
+  },
 ) {
   const { width: w, height: h } = FRAME;
   const { now, trackMeters, sprites, labels } = input;
-  const runners = input.runners.map((r) => interpolate(r, now, trackMeters));
+  const runners = between(input.prev, input.next, now - RENDER_DELAY_MS, trackMeters);
   ctx.clearRect(0, 0, w, h);
 
   const leader = runners.reduce((m, r) => Math.max(m, r.meters), 0);
-  const camX = cameraX(leader, trackMeters);
+  const target = cameraX(leader, trackMeters);
+  const cam = input.camera;
+  cam.x = cam.at === 0 ? target : smoothCamera(cam.x, target, now - cam.at);
+  cam.at = now;
+  const camX = cam.x;
   const toX = (m: number) => ((m - camX) / VIEW_METERS) * w;
   const top = 90;
   const bottom = h - 130;

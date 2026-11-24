@@ -26,4 +26,28 @@ export function interpolate(r: RunnerView, at: number, trackMeters: number): Run
   return { ...r, meters: moved.meters, speed: moved.speed };
 }
 
+/**
+ * Where each runner is at `at`, gliding evenly between the two latest updates. The screen draws a
+ * little in the past (RENDER_DELAY_MS) so `at` normally falls between them: no guessing, no jumps.
+ * If an update is late, it carries on from the latest one.
+ */
+export function between(prev: RunnerView[], next: RunnerView[], at: number, trackMeters: number): RunnerView[] {
+  const before = new Map(prev.map((r) => [r.id, r]));
+  return next.map((r) => {
+    const p = before.get(r.id);
+    if (!p || at >= r.at || r.at <= p.at) return interpolate(r, at, trackMeters);
+    if (at <= p.at) return { ...r, meters: p.meters, speed: p.speed, down: p.down };
+    const k = (at - p.at) / (r.at - p.at);
+    return { ...r, meters: p.meters + (r.meters - p.meters) * k, speed: p.speed + (r.speed - p.speed) * k, down: k < 0.5 ? p.down : r.down };
+  });
+}
+
+/** How far behind real time the race is drawn: a bit more than the 500 ms between updates. */
+export const RENDER_DELAY_MS = 600;
+
+/** The camera follows its target smoothly instead of jerking with every update (dt in ms). */
+export function smoothCamera(current: number, target: number, dtMs: number): number {
+  return current + (target - current) * (1 - Math.exp(-dtMs / 180));
+}
+
 export { laneOf };

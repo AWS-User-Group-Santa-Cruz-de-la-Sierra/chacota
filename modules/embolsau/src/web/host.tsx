@@ -21,7 +21,7 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
   const [phase, setPhase] = useState<PhaseInfo>(s0);
   const [picks, setPicks] = useState<{ counts: Record<Animal, number>; picked: number } | null>(null);
   const [lastRound, setLastRound] = useState<LastRound | undefined>(s0.lastRound);
-  const runners = useRef<RunnerView[]>([]);
+  const runners = useRef<{ prev: RunnerView[]; next: RunnerView[] }>({ prev: [], next: [] });
   const trackMeters = TRACK_METERS[s0.track];
 
   useEffect(
@@ -30,9 +30,9 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
         const e = event as EmbolsauEvent;
         if (e.type === 'embolsau.phase') {
           setPhase(e);
-          if (e.phase === 'countdown') runners.current = [];
+          if (e.phase === 'countdown') runners.current = { prev: [], next: [] };
         } else if (e.type === 'embolsau.picks') setPicks(e);
-        else if (e.type === 'embolsau.standings') runners.current = e.runners.map((r) => ({ ...r, at: e.at }));
+        else if (e.type === 'embolsau.standings') runners.current = { prev: runners.current.next, next: e.runners.map((r) => ({ ...r, at: e.at })) };
         else if (e.type === 'embolsau.roundResults') setLastRound(e);
       }),
     [subscribe],
@@ -153,7 +153,7 @@ function RaceView({
   trackMeters,
   closingEndsAt,
 }: {
-  runners: React.RefObject<RunnerView[]>;
+  runners: React.RefObject<{ prev: RunnerView[]; next: RunnerView[] }>;
   now: () => number;
   trackMeters: number;
   closingEndsAt: number | null;
@@ -184,6 +184,7 @@ function RaceView({
       }),
     ) as Sprites;
     let frame = 0;
+    const camera = { x: 0, at: 0 };
     const draw = () => {
       // Draw at the canvas's real resolution, in the 1280×720 frame's coordinates.
       const ratio = window.devicePixelRatio || 1;
@@ -197,7 +198,9 @@ function RaceView({
       ctx.setTransform(width / FRAME.width, 0, 0, height / FRAME.height, 0, 0);
       const at = now();
       drawRace(ctx, {
-        runners: runners.current,
+        prev: runners.current.prev,
+        next: runners.current.next,
+        camera,
         now: at,
         trackMeters,
         closingLeftMs: closing.current === null ? null : Math.max(0, closing.current - at),
