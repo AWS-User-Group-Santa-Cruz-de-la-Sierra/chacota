@@ -18,6 +18,25 @@ export function nameTag(place: number): { podium: boolean } | null {
   return place <= NAMED_PLACES ? { podium: place <= PODIUM } : null;
 }
 
+/** Where a runner is drawn: finishers stop 1.5–6.5 m past the line (by crowd depth), never on it. */
+export function drawnMeters(r: { id: string; meters: number; finished: boolean }, trackMeters: number): number {
+  return r.finished ? trackMeters + 1.5 + laneOf(r.id) * 5 : r.meters;
+}
+
+/**
+ * The finish line: a two-column checkerboard straddling the line at `x`, white at the top-left,
+ * black at the top-right, then the other way round on every row.
+ */
+export function finishSquares(x: number, top: number, bottom: number, size: number) {
+  const squares: { x: number; y: number; w: number; h: number; color: 'white' | 'black' }[] = [];
+  for (let row = 0, y = top; y < bottom; row++, y += size) {
+    for (const col of [0, 1]) {
+      squares.push({ x: x - size + col * size, y, w: size, h: Math.min(size, bottom - y), color: (row + col) % 2 === 0 ? 'white' : 'black' });
+    }
+  }
+  return squares;
+}
+
 /** A name tag's box: (x, y) is its top-left corner. */
 export interface TagBox {
   place: number;
@@ -78,7 +97,7 @@ export function drawRace(
 ) {
   const { width: w, height: h } = FRAME;
   const { now, trackMeters, sprites, labels } = input;
-  const runners = sampleAt(input.history, now - RENDER_DELAY_MS, trackMeters);
+  const runners = sampleAt(input.history, now - RENDER_DELAY_MS, trackMeters).map((r) => ({ ...r, meters: drawnMeters(r, trackMeters) }));
   ctx.clearRect(0, 0, w, h);
 
   const leader = runners.reduce((m, r) => Math.max(m, r.meters), 0);
@@ -108,10 +127,10 @@ export function drawRace(
     ctx.fillText(`${m} m`, x + 4, bottom + 18);
   }
   const finish = toX(trackMeters);
-  if (finish < w + 20) {
-    for (let y = top, i = 0; y < bottom; y += 12, i++) {
-      ctx.fillStyle = i % 2 ? COLORS.blanco : '#000';
-      ctx.fillRect(finish - 6, y, 12, 12);
+  if (finish < w + 40) {
+    for (const sq of finishSquares(finish, top, bottom, 20)) {
+      ctx.fillStyle = sq.color === 'white' ? COLORS.blanco : '#000';
+      ctx.fillRect(sq.x, sq.y, sq.w, sq.h);
     }
   }
 
@@ -224,7 +243,7 @@ export function drawRace(
   for (const r of runners) {
     ctx.fillStyle = r.down ? COLORS.blanco : BAGS[r.bag % BAGS.length]!;
     ctx.beginPath();
-    ctx.arc(sx(r.meters), sy - 16 + laneOf(r.id) * 32, 4, 0, Math.PI * 2);
+    ctx.arc(sx(Math.min(r.meters, trackMeters)), sy - 16 + laneOf(r.id) * 32, 4, 0, Math.PI * 2);
     ctx.fill();
   }
 }
