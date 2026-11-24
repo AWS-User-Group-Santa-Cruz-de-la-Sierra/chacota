@@ -28,6 +28,9 @@ importers:
       '@chacota/live':
         specifier: workspace:*
         version: link:../../packages/live
+      '@chacota/rifa':
+        specifier: workspace:*
+        version: link:../../modules/rifa
       '@chacota/tiluchi':
         specifier: workspace:*
         version: link:../../modules/tiluchi
@@ -412,6 +415,9 @@ importers:
       '@chacota/live':
         specifier: workspace:*
         version: link:../../packages/live
+      '@chacota/rifa':
+        specifier: workspace:*
+        version: link:../../modules/rifa
       '@chacota/tiluchi':
         specifier: workspace:*
         version: link:../../modules/tiluchi

@@ -1,1 +1,26 @@
-{ "card": { "name": "Rifa solidaria", "description": "Sorteo con duendes: unos se van al agua y uno gana." } }
+{
+  "card": { "name": "Rifa solidaria", "description": "Sorteo con duendes: unos se van al agua y uno gana." },
+  "form": {
+    "title": "Nueva rifa",
+    "name": "Nombre",
+    "defaultName": "Rifa solidaria",
+    "mode": "¿Cómo se anota la gente?",
+    "modes": { "list": "Escribo los nombres", "qr": "Se anotan con el QR" },
+    "overboard": "Al agua por ronda",
+    "names": "Un nombre por línea",
+    "count": "{count, plural, =0 {Ningún nombre todavía} one {# nombre} other {# nombres}}. Escribí al menos 2.",
+    "tooMany": "Hay demasiados nombres: el máximo es {max}.",
+    "duplicates": "Hay nombres repetidos: cuentan como boletos separados.",
+    "start": "Empezar rifa",
+    "starting": "Preparando…",
+    "invalid": "Las opciones de la rifa no son válidas.",
+    "hostOnly": "Solo quienes pueden presentar arman rifas."
+  },
+  "host": {
+    "bag": "La bolsa",
+    "status": { "bag": "en la bolsa", "out": "al agua", "won": "ganó" }
+  },
+  "play": {
+    "status": { "bag": "Estás en la bolsa. ¡Suerte!", "out": "Te fuiste al agua.", "won": "¡Ganaste!" }
+  }
+}

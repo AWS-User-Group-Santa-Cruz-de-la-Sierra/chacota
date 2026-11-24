@@ -14,6 +14,7 @@
     "@chacota/db": "workspace:*",
     "@chacota/embolsau": "workspace:*",
     "@chacota/live": "workspace:*",
+    "@chacota/rifa": "workspace:*",
     "@chacota/tiluchi": "workspace:*",
     "@hono/node-server": "^2.1.11",
     "hono": "^4.13.20",

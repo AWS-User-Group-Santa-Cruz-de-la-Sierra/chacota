@@ -1,1 +1,26 @@
-{ "card": { "name": "Charity raffle", "description": "A raffle with imps: some go overboard and one wins." } }
+{
+  "card": { "name": "Charity raffle", "description": "A raffle with imps: some go overboard and one wins." },
+  "form": {
+    "title": "New raffle",
+    "name": "Name",
+    "defaultName": "Charity raffle",
+    "mode": "How do people sign up?",
+    "modes": { "list": "I type the names", "qr": "They sign up with the QR" },
+    "overboard": "Overboard per round",
+    "names": "One name per line",
+    "count": "{count, plural, =0 {No names yet} one {# name} other {# names}}. Enter at least 2.",
+    "tooMany": "Too many names: the limit is {max}.",
+    "duplicates": "Some names are repeated: they count as separate tickets.",
+    "start": "Start raffle",
+    "starting": "Getting ready…",
+    "invalid": "The raffle options are not valid.",
+    "hostOnly": "Only people who can present set up raffles."
+  },
+  "host": {
+    "bag": "The bag",
+    "status": { "bag": "in the bag", "out": "overboard", "won": "won" }
+  },
+  "play": {
+    "status": { "bag": "You are in the bag. Good luck!", "out": "You went overboard.", "won": "You won!" }
+  }
+}
