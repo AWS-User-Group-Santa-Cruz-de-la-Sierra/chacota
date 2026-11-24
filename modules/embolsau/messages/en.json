@@ -36,5 +36,29 @@
       "closing": "Last seconds!",
       "roundResults": "Race results"
     }
+  },
+  "play": {
+    "pick": "Pick your critter",
+    "picked": "Done! Wait for the start.",
+    "yourAnimal": "Your critter",
+    "place": "#{place}",
+    "points": "+{points} points",
+    "total": "Total: {total}",
+    "ready": "Get ready to push!",
+    "push": "Push!",
+    "fallen": "You tripped! Getting up…",
+    "closing": "Last seconds!",
+    "finished": "You made it!",
+    "lookAtScreen": "Look at the big screen.",
+    "getReadyNext": "Get ready for the next race.",
+    "nextRound": "You missed this one: you'll run the next.",
+    "lateTitle": "You joined mid-race",
+    "lateBody": "You'll run the next one. Meanwhile, watch the big screen.",
+    "meter": {
+      "label": "Speed",
+      "green": "Easy",
+      "yellow": "Careful",
+      "red": "You'll trip!"
+    }
   }
 }

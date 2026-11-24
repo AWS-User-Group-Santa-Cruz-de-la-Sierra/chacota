@@ -2,7 +2,7 @@ import { randomInt } from 'node:crypto';
 import { GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { isConditionalCheckFailure, strip } from '@chacota/db';
 import { LiveError, sessionKeys, shardOf, type LiveService, type Session } from '@chacota/live';
-import { ANIMALS, bagOf, ROUND_MAX_MS, TRACK_METERS, type Animal, type EmbolsauState } from '../model';
+import { ANIMALS, bagOf, ROUND_MAX_MS, TRACK_METERS, type Animal, type EmbolsauState, type RunnerResult } from '../model';
 import { limitTaps, PHYSICS, simulate, startRunner, type Runner } from '../physics';
 import { placesKey, runnerSk, runnersPk } from './keys';
 
@@ -23,15 +23,7 @@ export interface StoredRunner extends Runner {
   seq: number;
 }
 
-export interface PushResult {
-  meters: number;
-  speed: number;
-  down: boolean;
-  downUntil: number;
-  finished: boolean;
-  place: number | null;
-  falls: number;
-}
+export type PushResult = RunnerResult;
 
 /** Secure randomness for falls: the phone can't predict them. */
 export const secureRng = () => randomInt(0, 2 ** 32) / 2 ** 32;

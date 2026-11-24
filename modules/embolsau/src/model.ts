@@ -52,3 +52,74 @@ export function bagOf(playerId: string): number {
 export function laneOf(playerId: string): number {
   return (fnv1a(`lane:${playerId}`) % 1000) / 1000;
 }
+
+/** What a phone's race answer and snapshot carry about its own runner. */
+export interface RunnerResult {
+  meters: number;
+  speed: number;
+  down: boolean;
+  /** Server time until which the runner is down. */
+  downUntil: number;
+  finished: boolean;
+  place: number | null;
+  falls: number;
+}
+
+export interface RoundRank {
+  place: number;
+  points: number;
+  total: number;
+}
+
+export interface RoundPlace {
+  playerId: string;
+  nickname: string;
+  place: number;
+  meters: number;
+  /** Milliseconds from the start to the line, or null if it didn't finish. */
+  timeMs: number | null;
+  points: number;
+}
+
+/** One runner on the presenter's screen. */
+export interface StandingRunner {
+  id: string;
+  nickname: string;
+  animal: Animal;
+  bag: number;
+  meters: number;
+  speed: number;
+  down: boolean;
+  place: number;
+  finished: boolean;
+}
+
+export interface PhaseInfo {
+  phase: Phase | null;
+  round: number;
+  rounds: number;
+  phaseEndsAt: number | null;
+  raceStartedAt: number | null;
+}
+
+export type EmbolsauEvent =
+  | ({ type: 'embolsau.phase' } & PhaseInfo)
+  | { type: 'embolsau.roundResults'; round: number; rounds: number; top: RoundPlace[]; ranks: Record<string, RoundRank> }
+  | { type: 'embolsau.standings'; round: number; at: number; runners: StandingRunner[] }
+  | { type: 'embolsau.picks'; counts: Record<Animal, number>; picked: number };
+
+export interface PlayerSnapshot extends PhaseInfo {
+  track: Track;
+  meter: boolean;
+  animal: Animal | null;
+  inRound: boolean;
+  runner: RunnerResult | null;
+  lastRank?: RoundRank;
+}
+
+export interface HostSnapshot extends PhaseInfo {
+  track: Track;
+  meter: boolean;
+  config: EmbolsauConfig;
+  lastRound?: { round: number; top: RoundPlace[]; ranks: Record<string, RoundRank> };
+}

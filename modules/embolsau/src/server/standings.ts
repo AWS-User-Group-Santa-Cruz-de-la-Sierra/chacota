@@ -1,16 +1,9 @@
 import type { Player } from '@chacota/live';
+import type { RoundPlace } from '../model';
 import { simulate } from '../physics';
 import type { StoredRunner } from './runners';
 
-export interface RoundPlace {
-  playerId: string;
-  nickname: string;
-  place: number;
-  meters: number;
-  /** Milliseconds from the start to the line, or null if it didn't finish. */
-  timeMs: number | null;
-  points: number;
-}
+export type { RoundPlace };
 
 export interface RoundClock {
   raceStartedAt: number;

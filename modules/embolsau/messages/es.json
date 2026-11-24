@@ -36,5 +36,29 @@
       "closing": "¡Últimos segundos!",
       "roundResults": "Resultados de la carrera"
     }
+  },
+  "play": {
+    "pick": "Elegí tu animalito",
+    "picked": "¡Listo! Esperá la largada.",
+    "yourAnimal": "Tu animalito",
+    "place": "{place}°",
+    "points": "+{points} puntos",
+    "total": "Total: {total}",
+    "ready": "¡Preparate para empujar!",
+    "push": "¡Empujá!",
+    "fallen": "¡Te caíste! Levantándote…",
+    "closing": "¡Últimos segundos!",
+    "finished": "¡Llegaste!",
+    "lookAtScreen": "Mirá la pantalla grande.",
+    "getReadyNext": "Preparate para la próxima carrera.",
+    "nextRound": "Esta no la corriste: la próxima sí.",
+    "lateTitle": "Entraste con la carrera en marcha",
+    "lateBody": "Corrés la próxima. Mientras, mirá la pantalla grande.",
+    "meter": {
+      "label": "Velocidad",
+      "green": "Tranqui",
+      "yellow": "Cuidado",
+      "red": "¡Te caés!"
+    }
   }
 }
