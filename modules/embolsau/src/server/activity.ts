@@ -32,7 +32,7 @@ const TOP = 10;
 
 async function publishPhase(live: LiveService, s: S): Promise<S> {
   const { phase, round, phaseEndsAt, raceStartedAt, config } = s.state;
-  await live.publish(s.id, { type: 'embolsau.phase', phase, round, rounds: config.rounds, phaseEndsAt, raceStartedAt });
+  await live.publish(s.id, { type: 'embolsau.phase', phase, round, rounds: config.rounds, phaseEndsAt, raceStartedAt, meter: config.meter, track: config.track });
   return s;
 }
 
@@ -62,7 +62,7 @@ async function assignMissingAnimals(live: LiveService, s: S): Promise<void> {
 }
 
 async function startCountdown(live: LiveService, s: S, round: number): Promise<S> {
-  if (round === 1) await assignMissingAnimals(live, s);
+  await assignMissingAnimals(live, s);
   const raceStartedAt = live.now() + COUNTDOWN_MS;
   return moveTo(live, s, 'countdown', { round, phaseEndsAt: raceStartedAt, raceStartedAt });
 }
@@ -156,10 +156,11 @@ async function race(live: LiveService, s: S): Promise<S> {
   ]);
 
   const finished = runners.filter((r) => r.finishedAt !== null).length;
-  if (s.state.phase !== 'racing' || finished === 0) return s;
+  if (finished === 0) return s;
   const eligible = eligibleOf(await live.listPlayers(s.id), s).length;
-  if (finished >= eligible) return moveTo(live, s, 'closing', { phaseEndsAt: now });
-  if (finished >= PODIUM_FINISHERS) return moveTo(live, s, 'closing', { phaseEndsAt: now + CLOSING_MS });
+  // Everybody is in: no need to wait for the rest of the closing.
+  if (finished >= eligible) return closeRound(live, s);
+  if (s.state.phase === 'racing' && finished >= PODIUM_FINISHERS) return moveTo(live, s, 'closing', { phaseEndsAt: now + CLOSING_MS });
   return s;
 }
 

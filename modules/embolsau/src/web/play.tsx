@@ -3,10 +3,11 @@
 import { useCountdown } from '@chacota/live/react';
 import type { PlayScreenProps } from '@chacota/live/web';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import type { Animal, EmbolsauEvent, PhaseInfo, PlayerSnapshot, RoundRank, RunnerResult } from '../model';
+import { useCallback, useEffect, useReducer, useRef, useState, type ReactNode } from 'react';
+import type { Animal, EmbolsauEvent, PlayerSnapshot, RunnerResult } from '../model';
 import { simulate, startRunner, type Runner } from '../physics';
 import { AnimalPicker } from './animal-picker';
+import { initialPhoneState, phoneReducer } from './play-state';
 import { ART } from './art';
 import { SpeedMeter } from './meter';
 import { usePushLoop, type PushBatch } from './use-push-loop';
@@ -14,40 +15,37 @@ import { usePushLoop, type PushBatch } from './use-push-loop';
 const never = () => 1;
 const FAR = 1e9; // the phone's own runner never "finishes": it only drives the meter
 
+const PUSH_TIMEOUT_MS = 4000;
+
 /** Phone screen while Embolsau runs: pick a critter, then push it with the big button. */
 export function EmbolsauPlay({ token, apiUrl, snapshot, clock, playerId, subscribe, setScore }: PlayScreenProps) {
-  const s0 = snapshot as unknown as PlayerSnapshot;
   const t = useTranslations('embolsau.play');
-  const [phase, setPhase] = useState<PhaseInfo>(s0);
-  const [animal, setAnimal] = useState<Animal | null>(s0.animal);
-  const [inRound, setInRound] = useState(s0.inRound || s0.raceStartedAt === null);
-  const [result, setResult] = useState<RunnerResult | null>(s0.runner);
-  const [lastRank, setLastRank] = useState<RoundRank | undefined>(s0.lastRank);
+  const [phase, dispatch] = useReducer(phoneReducer, snapshot as Partial<PlayerSnapshot>, initialPhoneState);
+  const { animal, inRound, result, lastRank, downUntil } = phase;
   const [speed, setSpeed] = useState(0);
-  const local = useRef<Runner>(startRunner(s0.raceStartedAt ?? 0));
-  const downUntil = useRef(s0.runner?.downUntil ?? 0);
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
+  const local = useRef<Runner>(startRunner(phase.raceStartedAt ?? 0));
 
   useEffect(
     () =>
       subscribe((event) => {
         const e = event as EmbolsauEvent;
-        if (e.type === 'embolsau.phase') {
-          setPhase(e);
-          if (e.phase === 'countdown') {
-            // A new round: everyone in the session runs it.
-            setInRound(true);
-            setResult(null);
-            downUntil.current = 0;
-            local.current = startRunner(e.raceStartedAt ?? clock.now());
-          }
-        } else if (e.type === 'embolsau.roundResults') {
-          const mine = e.ranks[playerId];
-          setLastRank(mine);
-          if (mine) setScore(mine.total);
-        }
+        dispatch({ type: 'event', event: e, playerId });
+        if (e.type === 'embolsau.phase' && e.phase === 'countdown') local.current = startRunner(e.raceStartedAt ?? clock.now());
+        if (e.type === 'embolsau.roundResults' && e.ranks[playerId]) setScore(e.ranks[playerId].total);
       }),
     [subscribe, playerId, setScore, clock],
   );
+
+  // A fall learned from the server: the meter starts over, and the button comes back exactly on time.
+  useEffect(() => {
+    const wait = downUntil - clock.now();
+    if (wait <= 0) return;
+    local.current = { ...local.current, speed: 0 };
+    setSpeed(0);
+    const timer = setTimeout(rerender, wait + 20);
+    return () => clearTimeout(timer);
+  }, [downUntil, clock]);
 
   const startsIn = useCountdown(phase.raceStartedAt ?? undefined, clock.now);
   const raceOn =
@@ -61,20 +59,15 @@ export function EmbolsauPlay({ token, apiUrl, snapshot, clock, playerId, subscri
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
         body: JSON.stringify(batch),
+        signal: AbortSignal.timeout(PUSH_TIMEOUT_MS),
       });
       if (res.ok) {
-        const r = (await res.json()) as RunnerResult;
-        setResult(r);
-        if (r.downUntil > downUntil.current) {
-          // The server decided a fall: the meter starts over from zero.
-          downUntil.current = r.downUntil;
-          local.current = { ...local.current, speed: 0 };
-        }
+        dispatch({ type: 'push', result: (await res.json()) as RunnerResult });
         return;
       }
       if (res.status >= 500) throw new Error('retry');
       const { error } = (await res.json().catch(() => ({}))) as { error?: string };
-      if (error === 'not_in_round') setInRound(false);
+      if (error === 'not_in_round') dispatch({ type: 'notInRound' });
     },
     [apiUrl, token],
   );
@@ -82,24 +75,24 @@ export function EmbolsauPlay({ token, apiUrl, snapshot, clock, playerId, subscri
 
   // The meter follows the phone's own taps; the server still decides everything.
   useEffect(() => {
-    if (!raceOn || !s0.meter) return;
+    if (!raceOn || !phase.meter) return;
     const timer = setInterval(() => {
       local.current = simulate(local.current, [], clock.now(), FAR, never);
       setSpeed(local.current.speed);
     }, 100);
     return () => clearInterval(timer);
-  }, [raceOn, s0.meter, clock]);
+  }, [raceOn, phase.meter, clock]);
 
   const push = () => {
     const now = clock.now();
-    if (now < downUntil.current || result?.finished) return;
+    if (now < downUntil || result?.finished) return;
     tap();
     local.current = simulate(local.current, [now], now + 1, FAR, never);
     setSpeed(local.current.speed);
   };
 
   async function pick(choice: Animal) {
-    setAnimal(choice);
+    dispatch({ type: 'picked', animal: choice });
     await fetch(`${apiUrl}/m/embolsau/pick`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
@@ -107,9 +100,9 @@ export function EmbolsauPlay({ token, apiUrl, snapshot, clock, playerId, subscri
     }).catch(() => null);
   }
 
-  const header = animal && (
+  const header = (animal || result?.place != null) && (
     <div className="flex items-center justify-between gap-3">
-      <img src={ART[animal].icon} alt={t('yourAnimal')} width={56} height={56} />
+      {animal ? <img src={ART[animal].icon} alt={t('yourAnimal')} width={56} height={56} /> : <span />}
       {result?.place != null && <p className="font-display text-4xl font-extrabold text-sol">{t('place', { place: result.place })}</p>}
     </div>
   );
@@ -164,12 +157,12 @@ export function EmbolsauPlay({ token, apiUrl, snapshot, clock, playerId, subscri
     );
   }
 
-  const down = clock.now() < downUntil.current;
+  const down = clock.now() < downUntil;
   return (
     <Column>
       {header}
       {phase.phase === 'closing' && <p className="text-center font-bold text-sol">{t('closing')}</p>}
-      {s0.meter && !down && !result?.finished && <SpeedMeter speed={speed} />}
+      {phase.meter && !down && !result?.finished && <SpeedMeter speed={speed} />}
       {result?.finished ? (
         <Centered>
           <p className="font-display text-4xl font-extrabold text-sol">{t('finished')}</p>

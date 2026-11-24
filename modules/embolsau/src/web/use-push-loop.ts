@@ -12,25 +12,36 @@ const MAX_TAPS = 40;
 
 /**
  * Collects taps and sends them about once a second, even when there are none (the answer carries
- * the phone's place). One send at a time; taps of a failed send go out with the next one.
+ * the phone's place). One send at a time.
+ * - `seq` comes from the clock, so it keeps growing when the screen remounts (a reconnect) and the
+ *   server never takes the new batches for old ones.
+ * - A failed batch is resent as is, with the same seq: if the first try did reach the server, the
+ *   retry is ignored instead of counting the taps twice. Newer taps wait for the next batch.
  */
 export function createPushLoop({ send, now, intervalMs = 1000 }: { send: (batch: PushBatch) => Promise<void>; now: () => number; intervalMs?: number }) {
   let pending: number[] = [];
+  let retry: { seq: number; taps: number[] } | null = null;
   let inFlight = false;
-  let seq = 0;
+  let lastSeq = 0;
   let stopped = false;
 
   async function flush() {
     if (inFlight || stopped) return;
     const at = now();
-    const batch = pending.filter((t) => at - t <= MAX_AGO_MS).slice(-MAX_TAPS);
-    pending = [];
+    // A retry whose taps are all too old for the server is not worth sending again.
+    if (retry && retry.taps.every((t) => at - t > MAX_AGO_MS)) retry = null;
+    let batch = retry;
+    if (!batch) {
+      lastSeq = Math.max(lastSeq + 1, Math.floor(at));
+      batch = { seq: lastSeq, taps: pending.slice(-MAX_TAPS) };
+      pending = [];
+    }
     inFlight = true;
-    seq++;
     try {
-      await send({ seq, ago: batch.map((t) => Math.max(0, Math.round(at - t))) });
+      await send({ seq: batch.seq, ago: batch.taps.map((t) => Math.max(0, Math.round(at - t))).filter((a) => a <= MAX_AGO_MS) });
+      retry = null;
     } catch {
-      pending = [...batch, ...pending];
+      retry = batch;
     } finally {
       inFlight = false;
     }

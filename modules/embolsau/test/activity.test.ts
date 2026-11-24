@@ -154,6 +154,39 @@ describe('Embolsau activity', () => {
     expect((await push(live, late.token, { seq: 1, ago: [100] }, never)).meters).toBeGreaterThanOrEqual(0);
   });
 
+  it('closes right away when the last runner finishes during the closing', async () => {
+    const session = await newRace();
+    const players = [];
+    for (const n of ['A', 'B', 'C', 'D']) players.push(await live.join(session.pin, n));
+    await toRace(session.id);
+    const seqs = new Map<string, number>();
+    const all = players.map((p, i) => ({ p, rate: i < 3 ? 6 : 5 }));
+    for (let s = 0; s < 40 && (await state(session.id)).state.phase !== 'roundResults'; s++) await runSeconds(session.id, 1, all, seqs);
+    // D (5 taps/s) arrives a few seconds after the third: well before the 10 s closing ends.
+    expect((await state(session.id)).state.phase).toBe('roundResults');
+    const ranks = publisher.last('embolsau.roundResults')!.ranks as Record<string, { place: number }>;
+    expect(ranks[players[3]!.player.id]!.place).toBe(4);
+    const closingAt = publisher.events.findIndex((e) => e.event.type === 'embolsau.phase' && e.event.phase === 'closing');
+    const resultsAt = publisher.events.findIndex((e) => e.event.type === 'embolsau.roundResults');
+    const ticksBetween = publisher.events.slice(closingAt, resultsAt).filter((e) => e.event.type === 'embolsau.standings').length;
+    expect(ticksBetween).toBeLessThan(7); // the full closing would be 9 ticks
+  });
+
+  it('every phone learns its critter, and late joiners get one for the next round', async () => {
+    const session = await newRace({ rounds: 2 });
+    const ana = await live.join(session.pin, 'Ana');
+    await toRace(session.id); // Ana never picked: she gets one at random
+    clock += 200;
+    const late = await live.join(session.pin, 'Tarde');
+    clock += 800;
+    const r = await push(live, ana.token, { seq: 1, ago: [100] }, never);
+    expect(r.animal).toBe((await live.getPlayer(session.id, ana.player.id))!.data!.animal);
+    clock += ROUND_MAX_MS.short;
+    await tick(session.id);
+    await live.advance(session.id); // round 2 countdown
+    expect((await live.getPlayer(session.id, late.player.id))!.data?.animal).toBeDefined();
+  });
+
   it('concurrent ticks close the round once', async () => {
     const session = await newRace();
     const ana = await live.join(session.pin, 'Ana');

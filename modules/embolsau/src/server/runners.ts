@@ -66,8 +66,9 @@ export function roundCutoff(state: EmbolsauState): number {
   return state.phase === 'closing' && state.phaseEndsAt !== null ? Math.min(state.phaseEndsAt, limit) : limit;
 }
 
-export function toResult(runner: Runner, now: number, place: number | null): PushResult {
+export function toResult(runner: StoredRunner, now: number, place: number | null): PushResult {
   return {
+    animal: runner.animal,
     meters: runner.meters,
     speed: runner.speed,
     down: now < runner.downUntil,

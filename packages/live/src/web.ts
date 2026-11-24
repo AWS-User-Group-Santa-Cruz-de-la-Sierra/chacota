@@ -24,6 +24,7 @@ export interface HostScreenProps {
   setAdvanceLabel(label: string): void;
   /** Short progress text shown next to the title in the header (e.g. "Question 2 of 10"), or null. */
   setSubtitle(text: string | null): void;
+  /** Runs an activity's host action. A result with a numeric `version` keeps the main button in sync with phases the action moved. */
   hostAction(name: string, args?: unknown): Promise<unknown>;
   /** Shows an image (S3 key) behind the whole presenter screen, under a dark veil; null removes it. */
   setBackground(key: string | null): void;

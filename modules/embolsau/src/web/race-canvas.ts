@@ -69,14 +69,17 @@ export function drawRace(
     const hop = r.down || r.finished ? 0 : Math.abs(Math.sin(now / 110 + lane * 20)) * s * 0.5;
     ctx.save();
     ctx.translate(x, y - hop);
+    // The sack, in the player's color (tipped over on a fall), and the critter coming out of it.
+    // The "down" picture is already drawn fallen, so only the sack is rotated.
+    ctx.save();
     if (r.down) ctx.rotate(Math.PI / 2.4);
-    // The sack, in the player's color, and the critter coming out of it.
     ctx.fillStyle = BAGS[r.bag % BAGS.length]!;
     ctx.beginPath();
     ctx.roundRect(-s * 0.6, -s * 1.2, s * 1.2, s * 1.2, s * 0.2);
     ctx.fill();
+    ctx.restore();
     const img = r.down ? sprites[r.animal].down : sprites[r.animal].run;
-    if (img.complete) ctx.drawImage(img, -s, -s * 2.6, s * 2, s * 2);
+    if (img.complete) ctx.drawImage(img, r.down ? -s * 0.2 : -s, r.down ? -s * 1.8 : -s * 2.6, s * 2, s * 2);
     ctx.restore();
     if (r.down) {
       ctx.fillStyle = COLORS.sol;

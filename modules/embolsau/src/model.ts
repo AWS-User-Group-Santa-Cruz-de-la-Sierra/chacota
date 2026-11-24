@@ -55,6 +55,7 @@ export function laneOf(playerId: string): number {
 
 /** What a phone's race answer and snapshot carry about its own runner. */
 export interface RunnerResult {
+  animal: Animal;
   meters: number;
   speed: number;
   down: boolean;
@@ -103,7 +104,7 @@ export interface PhaseInfo {
 }
 
 export type EmbolsauEvent =
-  | ({ type: 'embolsau.phase' } & PhaseInfo)
+  | ({ type: 'embolsau.phase'; meter: boolean; track: Track } & PhaseInfo)
   | { type: 'embolsau.roundResults'; round: number; rounds: number; top: RoundPlace[]; ranks: Record<string, RoundRank> }
   | { type: 'embolsau.standings'; round: number; at: number; runners: StandingRunner[] }
   | { type: 'embolsau.picks'; counts: Record<Animal, number>; picked: number };

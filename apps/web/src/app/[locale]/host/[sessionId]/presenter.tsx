@@ -11,6 +11,7 @@ import { BackLink } from '@/components/back-link';
 import { Podium } from '@/components/game/podium';
 import { buttonClass } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
+import { newerVersion } from '@/lib/host-version';
 import { advanceSessionAction, endSessionAction, hostActionAction } from '../actions';
 
 interface Props {
@@ -100,7 +101,14 @@ export function Presenter(props: Props) {
       }
     });
   }, [props.sessionId]);
-  const hostAction = useCallback((name: string, args?: unknown) => hostActionAction(props.sessionId, name, args), [props.sessionId]);
+  const hostAction = useCallback(
+    async (name: string, args?: unknown) => {
+      const result = await hostActionAction(props.sessionId, name, args);
+      version.current = newerVersion(version.current, result);
+      return result;
+    },
+    [props.sessionId],
+  );
 
   // Keyboard / presentation clicker support.
   useEffect(() => {
