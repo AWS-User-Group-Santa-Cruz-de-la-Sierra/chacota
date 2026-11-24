@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ANIMALS, TRACK_METERS, type Animal, type EmbolsauEvent, type HostSnapshot, type PhaseInfo, type RoundPlace, type RoundRank } from '../model';
 import { ART } from './art';
-import type { RunnerView } from './camera';
+import { HISTORY, type Snapshot } from './camera';
 import { drawRace, FRAME, type Sprites } from './race-canvas';
 
 const TICK_MS = 500;
@@ -21,7 +21,7 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
   const [phase, setPhase] = useState<PhaseInfo>(s0);
   const [picks, setPicks] = useState<{ counts: Record<Animal, number>; picked: number } | null>(null);
   const [lastRound, setLastRound] = useState<LastRound | undefined>(s0.lastRound);
-  const runners = useRef<{ prev: RunnerView[]; next: RunnerView[] }>({ prev: [], next: [] });
+  const runners = useRef<Snapshot[]>([]);
   const trackMeters = TRACK_METERS[s0.track];
 
   useEffect(
@@ -30,9 +30,10 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
         const e = event as EmbolsauEvent;
         if (e.type === 'embolsau.phase') {
           setPhase(e);
-          if (e.phase === 'countdown') runners.current = { prev: [], next: [] };
+          if (e.phase === 'countdown') runners.current = [];
         } else if (e.type === 'embolsau.picks') setPicks(e);
-        else if (e.type === 'embolsau.standings') runners.current = { prev: runners.current.next, next: e.runners.map((r) => ({ ...r, at: e.at })) };
+        else if (e.type === 'embolsau.standings')
+          runners.current = [...runners.current, { at: e.at, runners: e.runners.map((r) => ({ ...r, at: e.at })) }].slice(-HISTORY);
         else if (e.type === 'embolsau.roundResults') setLastRound(e);
       }),
     [subscribe],
@@ -153,7 +154,7 @@ function RaceView({
   trackMeters,
   closingEndsAt,
 }: {
-  runners: React.RefObject<{ prev: RunnerView[]; next: RunnerView[] }>;
+  runners: React.RefObject<Snapshot[]>;
   now: () => number;
   trackMeters: number;
   closingEndsAt: number | null;
@@ -198,8 +199,7 @@ function RaceView({
       ctx.setTransform(width / FRAME.width, 0, 0, height / FRAME.height, 0, 0);
       const at = now();
       drawRace(ctx, {
-        prev: runners.current.prev,
-        next: runners.current.next,
+        history: runners.current,
         camera,
         now: at,
         trackMeters,

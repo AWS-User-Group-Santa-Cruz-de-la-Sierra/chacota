@@ -42,6 +42,27 @@ export function between(prev: RunnerView[], next: RunnerView[], at: number, trac
   });
 }
 
+/** One standings update as the screen keeps it. */
+export interface Snapshot {
+  at: number;
+  runners: RunnerView[];
+}
+
+/** How many updates the screen keeps: enough to always have the segment it is drawing. */
+export const HISTORY = 4;
+
+/**
+ * The runners at `at`, from a short history of updates (oldest first): interpolates inside the
+ * segment that contains `at`, carries on past the latest one, and shows the oldest before it starts.
+ */
+export function sampleAt(history: Snapshot[], at: number, trackMeters: number): RunnerView[] {
+  if (history.length === 0) return [];
+  let i = history.length - 1;
+  while (i > 0 && history[i]!.at > at) i--;
+  if (i === history.length - 1) return between(history[i - 1]?.runners ?? [], history[i]!.runners, at, trackMeters);
+  return between(history[i]!.runners, history[i + 1]!.runners, at, trackMeters);
+}
+
 /** How far behind real time the race is drawn: a bit more than the 500 ms between updates. */
 export const RENDER_DELAY_MS = 600;
 

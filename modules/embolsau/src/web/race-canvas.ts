@@ -1,7 +1,7 @@
 import type { Animal } from '../model';
 import { BAGS } from './art';
 import { feetOf } from './sprite-feet';
-import { behindCount, between, cameraX, laneOf, RENDER_DELAY_MS, smoothCamera, VIEW_METERS, type RunnerView } from './camera';
+import { behindCount, cameraX, laneOf, RENDER_DELAY_MS, sampleAt, smoothCamera, VIEW_METERS, type Snapshot } from './camera';
 
 /** The drawing works in a 1280×720 frame; the canvas scales it to its real size. */
 export const FRAME = { width: 1280, height: 720 };
@@ -27,9 +27,8 @@ const COLORS = { noche: '#1A0E2E', pista: '#2B1A47', linea: '#3D2A5C', niebla: '
 export function drawRace(
   ctx: CanvasRenderingContext2D,
   input: {
-    /** The two latest standings: the race is drawn a little in the past, gliding between them. */
-    prev: RunnerView[];
-    next: RunnerView[];
+    /** The latest standings, oldest first: the race is drawn a little in the past, gliding between them. */
+    history: Snapshot[];
     now: number;
     trackMeters: number;
     closingLeftMs: number | null;
@@ -41,7 +40,7 @@ export function drawRace(
 ) {
   const { width: w, height: h } = FRAME;
   const { now, trackMeters, sprites, labels } = input;
-  const runners = between(input.prev, input.next, now - RENDER_DELAY_MS, trackMeters);
+  const runners = sampleAt(input.history, now - RENDER_DELAY_MS, trackMeters);
   ctx.clearRect(0, 0, w, h);
 
   const leader = runners.reduce((m, r) => Math.max(m, r.meters), 0);

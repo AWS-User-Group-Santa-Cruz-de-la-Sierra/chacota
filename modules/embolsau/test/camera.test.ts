@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { behindCount, between, cameraX, interpolate, smoothCamera, VIEW_METERS, type RunnerView } from '../src/web/camera';
+import { behindCount, between, cameraX, interpolate, sampleAt, smoothCamera, VIEW_METERS, type RunnerView } from '../src/web/camera';
 
 const runner = (patch: Partial<RunnerView> = {}): RunnerView => ({
   id: 'a', nickname: 'Ana', animal: 'jochi', bag: 0, meters: 50, speed: 8, down: false, place: 1, finished: false, at: 10_000, ...patch,
@@ -78,5 +78,31 @@ describe('smoothCamera', () => {
     expect(x).toBeLessThan(10);
     expect(smoothCamera(0, 10, 0)).toBe(0);
     expect(smoothCamera(0, 10, 5_000)).toBeCloseTo(10);
+  });
+});
+
+describe('sampleAt: drawing from a short history of updates', () => {
+  const snap = (at: number, meters: number) => ({ at, runners: [runner({ meters, at })] });
+  const history = [snap(0, 0), snap(500, 5), snap(1000, 10)];
+
+  it('right after an update, still glides in the previous segment (no freeze, no jump)', () => {
+    // An update just arrived at 1000; drawing 600 ms behind means 400, between the first two.
+    expect(sampleAt(history, 400, 240)[0]!.meters).toBeCloseTo(4);
+    expect(sampleAt(history, 750, 240)[0]!.meters).toBeCloseTo(7.5);
+  });
+
+  it('is continuous across updates', () => {
+    const a = sampleAt(history, 499, 240)[0]!.meters;
+    const b = sampleAt(history, 501, 240)[0]!.meters;
+    expect(Math.abs(b - a)).toBeLessThan(0.05);
+  });
+
+  it('before the history starts it shows the oldest update, after it keeps going', () => {
+    expect(sampleAt(history, -100, 240)[0]!.meters).toBe(0);
+    expect(sampleAt(history, 1200, 240)[0]!.meters).toBeGreaterThan(10);
+  });
+
+  it('an empty history draws nobody', () => {
+    expect(sampleAt([], 100, 240)).toEqual([]);
   });
 });
