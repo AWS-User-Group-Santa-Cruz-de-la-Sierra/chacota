@@ -12,7 +12,7 @@ import { Podium } from '@/components/game/podium';
 import { buttonClass } from '@/components/ui';
 import { Link } from '@/i18n/navigation';
 import { newerVersion } from '@/lib/host-version';
-import { advanceSessionAction, endSessionAction, hostActionAction } from '../actions';
+import { advanceSessionAction, endSessionAction, finalSnapshotAction, hostActionAction } from '../actions';
 
 interface Props {
   sessionId: string;
@@ -29,6 +29,8 @@ interface Props {
   joinUrl: string;
   joinHost: string;
   qrSvg: string;
+  /** False when the session has no phones: no PIN in the header and no saved results. */
+  phones: boolean;
   initial: { status: SessionStatus; version: number; serverNow: number; players: string[]; snapshot: Record<string, unknown> };
   realtime: RealtimeConfig;
 }
@@ -48,6 +50,14 @@ export function Presenter(props: Props) {
   const [players, setPlayers] = useState<string[]>(props.initial.players);
   const [podium, setPodium] = useState<Standing[]>([]);
   const [advanceLabel, setAdvanceLabel] = useState(t('next'));
+  const [advanceDisabled, setAdvanceDisabledState] = useState(false);
+  const advanceDisabledNow = useRef(false);
+  const setAdvanceDisabled = useCallback((disabled: boolean) => {
+    advanceDisabledNow.current = disabled;
+    setAdvanceDisabledState(disabled);
+  }, []);
+  // The activity's own final data, for activities that replace the podium.
+  const [final, setFinal] = useState<Record<string, unknown> | null>(props.initial.status === 'ended' ? props.initial.snapshot : null);
   const [subtitle, setSubtitle] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [background, setBackground] = useState<string | null>(null);
@@ -70,6 +80,7 @@ export function Presenter(props: Props) {
       }
       if (e.type === 'ended') {
         setPodium(e.podium);
+        if (activity.Final) finalSnapshotAction(props.sessionId).then(setFinal, () => setFinal({}));
         setBackground(null);
       }
       const step = frameOnEvent(statusNow.current, event.type);
@@ -80,7 +91,7 @@ export function Presenter(props: Props) {
       }
       if (step.deliver) hub.emit(event);
     },
-    [clock, hub],
+    [clock, hub, activity, props.sessionId],
   );
   const { connected } = useRealtime(props.realtime, [channels.public(props.sessionId), channels.host(props.sessionId)], onEvent, () =>
     window.location.reload(),
@@ -91,7 +102,7 @@ export function Presenter(props: Props) {
   const version = useRef(props.initial.version);
   const advancing = useRef(false);
   const advance = useCallback(() => {
-    if (advancing.current) return;
+    if (advancing.current || advanceDisabledNow.current) return;
     advancing.current = true;
     startTransition(async () => {
       try {
@@ -241,7 +252,7 @@ export function Presenter(props: Props) {
           {!connected && <span className="text-sm text-sol">{tp('reconnecting')}</span>}
           <activity.Icon size={44} color={props.primaryColor} />
           <span className="font-display text-[1.375rem] font-extrabold lowercase tracking-tight">{ta('card.name')}</span>
-          {status === 'running' && (
+          {status === 'running' && props.phones && (
             <span className="ml-3 rounded-full bg-noche-2 px-4 py-2 text-sm text-niebla">
               {props.joinHost} · PIN <span className="font-display text-lg font-extrabold tracking-widest text-sol">{props.pin}</span>
             </span>
@@ -260,6 +271,7 @@ export function Presenter(props: Props) {
             subscribe={hub.subscribe}
             advance={advance}
             setAdvanceLabel={setAdvanceLabel}
+            setAdvanceDisabled={setAdvanceDisabled}
             setSubtitle={setSubtitle}
             hostAction={hostAction}
             setBackground={setBackground}
@@ -267,7 +279,8 @@ export function Presenter(props: Props) {
           />
         )}
 
-        {status === 'ended' && <Podium title={t('podium')} mentionsLabel={t('mentions')} podium={podium} />}
+        {status === 'ended' &&
+          (activity.Final ? final && <activity.Final snapshot={final} /> : <Podium title={t('podium')} mentionsLabel={t('mentions')} podium={podium} />)}
       </main>
 
       <footer className="relative flex flex-wrap items-center justify-between gap-3">
@@ -287,12 +300,14 @@ export function Presenter(props: Props) {
               <Link href={`/app/orgs/${props.orgSlug}/${props.module}`} className={buttonClass('ghost')}>
                 {t('backToActivity', { name: ta('card.name') })}
               </Link>
-              <Link href={`/app/orgs/${props.orgSlug}/historial/${props.sessionId}`} className={buttonClass('primary')}>
-                {t('results')}
-              </Link>
+              {props.phones && (
+                <Link href={`/app/orgs/${props.orgSlug}/historial/${props.sessionId}`} className={buttonClass('primary')}>
+                  {t('results')}
+                </Link>
+              )}
             </>
           ) : (
-            <button type="button" className={buttonClass('primary', 'min-h-14 px-8 text-lg')} onClick={advance} disabled={pending}>
+            <button type="button" className={buttonClass('primary', 'min-h-14 px-8 text-lg')} onClick={advance} disabled={pending || advanceDisabled}>
               {advanceLabel}
             </button>
           )}

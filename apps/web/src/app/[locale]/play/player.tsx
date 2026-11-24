@@ -26,7 +26,7 @@ type Screen =
   | { kind: 'lobby' }
   /** `key` remounts the activity screen whenever it starts from a new snapshot. */
   | { kind: 'running'; snapshot: Record<string, unknown>; key: number }
-  | { kind: 'ended'; rank?: number };
+  | { kind: 'ended'; rank?: number; final?: Record<string, unknown> };
 
 interface Snapshot {
   session: { status: 'lobby' | 'running' | 'ended'; module: string };
@@ -104,7 +104,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       if (snap.player) setScore(snap.player.score);
       hub.reset();
       if (snap.session.status === 'lobby') setScreen({ kind: 'lobby' });
-      else if (snap.session.status === 'ended') setScreen({ kind: 'ended' });
+      else if (snap.session.status === 'ended') setScreen({ kind: 'ended', final: snap.module });
       else setScreen({ kind: 'running', snapshot: snap.module, key: Date.now() });
       return true;
     },
@@ -145,6 +145,8 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
         const mine = e.ranks[session.playerId];
         if (mine) setScore(mine.score);
         setScreen({ kind: 'ended', rank: mine?.rank });
+        // The activity's own final data comes with the state.
+        if (session && activityWebs[session.module]?.PlayFinal) void resync(session);
         return;
       }
       const current = screenNow.current.kind;
@@ -155,7 +157,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       }
       if (step.deliver) hub.emit(event);
     },
-    [session, clock, hub, setScreen],
+    [session, clock, hub, setScreen, resync],
   );
   const { connected } = useRealtime(realtime, session ? [channels.public(session.sessionId)] : [], onEvent, () => session && resync(session));
 
@@ -190,6 +192,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
   }
 
   const Play = session ? activityWebs[session.module]?.Play : undefined;
+  const PlayFinal = session ? activityWebs[session.module]?.PlayFinal : undefined;
 
   return (
     <div className="flex min-h-svh flex-col bg-noche px-4 pb-6 pt-4">
@@ -249,7 +252,11 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
         {screen.kind === 'ended' && (
           <Centered>
             <p className="font-display text-4xl font-extrabold">{t('thanks')}</p>
-            {screen.rank && <p className="text-2xl">{t('finalRank', { rank: screen.rank })}</p>}
+            {PlayFinal && session ? (
+              <PlayFinal snapshot={screen.final ?? {}} playerId={session.playerId} />
+            ) : (
+              screen.rank && <p className="text-2xl">{t('finalRank', { rank: screen.rank })}</p>
+            )}
             {session && (
               <div className="mt-4 flex flex-col items-center gap-1 rounded-2xl border border-noche-3 bg-noche-2 px-6 py-4">
                 <span className="text-sm text-niebla">{t('yourCode')}</span>

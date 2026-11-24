@@ -16,7 +16,9 @@ export default async function HostPage({ params }: { params: Promise<{ sessionId
     getLive().snapshot(session.id),
   ]);
   const joinUrl = `${env.publicOrigin}/play?pin=${session.pin}`;
-  const qrSvg = await QRCode.toString(joinUrl, { type: 'svg', margin: 0, color: { dark: '#1A0E2E', light: '#FBF8FF' } });
+  // A session without phones has nobody to join, so no QR.
+  const phones = session.phones !== false;
+  const qrSvg = phones ? await QRCode.toString(joinUrl, { type: 'svg', margin: 0, color: { dark: '#1A0E2E', light: '#FBF8FF' } }) : '';
 
   return (
     <Presenter
@@ -32,6 +34,7 @@ export default async function HostPage({ params }: { params: Promise<{ sessionId
       joinUrl={joinUrl}
       joinHost={new URL(env.publicOrigin).host}
       qrSvg={qrSvg}
+      phones={phones}
       initial={{
         status: session.status,
         version: snapshot.session.version,
