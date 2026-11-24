@@ -89,9 +89,17 @@ function StepView({ round, step }: { round: Round; step: Step }) {
  */
 export function ScenePlayer({ round, clock, compact = false }: { round: Round; clock: Clock; compact?: boolean }) {
   const [, rerender] = useReducer((n: number) => n + 1, 0);
-  const step = stepAt(round, clock.now());
+  // Time depends on the client clock, so nothing timed is server-rendered or hydrated. The first
+  // timed render comes after mount, once the frame's own effects have synced the clock.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const first = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(first);
+  }, []);
+  const step = mounted ? stepAt(round, clock.now()) : null;
 
   useEffect(() => {
+    if (!mounted) return;
     const now = clock.now();
     const next = boundaries(round).find((b) => b > now);
     if (next === undefined) return;
@@ -105,7 +113,7 @@ export function ScenePlayer({ round, clock, compact = false }: { round: Round; c
       <style href="rifa-scenes" precedence="default">
         {SCENE_STYLES}
       </style>
-      <StepView key={stepKey(round, step)} round={round} step={step} />
+      {step ? <StepView key={stepKey(round, step)} round={round} step={step} /> : <IdleStage />}
     </div>
   );
 }

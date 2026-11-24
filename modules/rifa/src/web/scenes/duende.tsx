@@ -1,7 +1,7 @@
 'use client';
 
-import type { CSSProperties, ReactNode } from 'react';
-import { useStageIds } from './stage';
+import type { ReactNode } from 'react';
+import { loop as loopStyle, useStageIds } from './stage';
 import { fitTagFont, tagNeedsSqueeze, TAG_WIDTH } from './tag';
 
 const INK = '#1E293B';
@@ -151,11 +151,10 @@ interface DuendeProps {
 
 /** The duende: white robe, sombrero de saó over the face, and the name sign on the chest. */
 export function Duende({ name, x, y, scale, className, loop, sign, hat, children }: DuendeProps) {
-  const idle: CSSProperties | undefined = loop ? { animation: loop } : undefined;
   return (
     <g transform={`translate(${x} ${y}) scale(${scale})`}>
       <g className={className}>
-        <g className={loop ? 'rifa-loop' : undefined} style={idle}>
+        <g className={loop ? 'rifa-loop' : undefined} style={loop ? loopStyle(loop) : undefined}>
           <DuendeBody />
           {sign ?? <ChestSign name={name} />}
           {hat ?? <DuendeHat />}

@@ -14,7 +14,7 @@ export const SCENE_STYLES = `
 
 .rifa-a { transform-box: view-box; transform-origin: 0 0; animation-duration: var(--rifa-T, 7000ms); animation-iteration-count: 1; animation-fill-mode: both; animation-delay: var(--rifa-t0, 0ms); }
 .rifa-loop { transform-box: view-box; transform-origin: 0 0; }
-.rifa-flag { transform-box: fill-box; transform-origin: 50% 0; animation: rifa-flag 2.2s ease-in-out infinite; }
+.rifa-flag { transform-box: fill-box; transform-origin: 50% 0; animation: rifa-flag 2.2s ease-in-out infinite backwards; }
 .rifa-spark { transform-box: fill-box; transform-origin: center; }
 
 @keyframes rifa-spin { to { transform: rotate(360deg); } }

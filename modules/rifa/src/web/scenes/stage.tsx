@@ -42,9 +42,12 @@ export function at(fraction: number): CSSProperties {
   return { animationDelay: `calc(var(--rifa-T) * ${fraction} + var(--rifa-t0, 0ms))` };
 }
 
-/** A looping animation that keeps going for as long as the scene is on screen. */
+/**
+ * A looping animation that keeps going for as long as the scene is on screen. Until its delay
+ * passes it holds its first keyframe, so nothing waits at its untransformed spot (e.g. confetti at 0,0).
+ */
 export function loop(animation: string, extra?: Record<string, string>): CSSProperties {
-  return { ...extra, animation } as CSSProperties;
+  return { ...extra, animation: `${animation} backwards` } as CSSProperties;
 }
 
 /** The "¡Al agua!" banner that closes every scene; `still` shows it without the pop. */
