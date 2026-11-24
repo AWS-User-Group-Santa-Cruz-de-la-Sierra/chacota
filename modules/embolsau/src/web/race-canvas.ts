@@ -5,6 +5,12 @@ import { behindCount, cameraX, laneOf, RENDER_DELAY_MS, sampleAt, smoothCamera, 
 
 /** The drawing works in a 1280×720 frame; the canvas scales it to its real size. */
 export const FRAME = { width: 1280, height: 720 };
+
+/** The largest 16:9 size (CSS px, whole) that fits in a `width` × `height` box. */
+export function fitFrame(width: number, height: number): { width: number; height: number } {
+  const w = Math.max(0, Math.floor(Math.min(width, (height * FRAME.width) / FRAME.height)));
+  return { width: w, height: Math.floor((w * FRAME.height) / FRAME.width) };
+}
 /** Base sprite size, chosen with the mockups (about 75 m in view). */
 const SIZE = 28;
 /** The square picture is this many times SIZE wide; FEET is where its feet are until it is measured. */

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ANIMALS, TRACK_METERS, type Animal, type EmbolsauEvent, type HostSnapshot, type PhaseInfo, type RoundPlace, type RoundRank } from '../model';
 import { ART, SCENERY } from './art';
 import { HISTORY, type Snapshot } from './camera';
-import { drawRace, FRAME, type Scenery, type Sprites } from './race-canvas';
+import { drawRace, fitFrame, FRAME, type Scenery, type Sprites } from './race-canvas';
 
 const TICK_MS = 500;
 const TICKING = new Set(['picking', 'countdown', 'racing', 'closing']);
@@ -22,18 +22,21 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
   const [picks, setPicks] = useState<{ counts: Record<Animal, number>; picked: number } | null>(null);
   const [lastRound, setLastRound] = useState<LastRound | undefined>(s0.lastRound);
   const runners = useRef<Snapshot[]>([]);
+  const runnersRound = useRef<number | null>(null);
   const trackMeters = TRACK_METERS[s0.track];
 
   useEffect(
     () =>
       subscribe((event) => {
         const e = event as EmbolsauEvent;
-        if (e.type === 'embolsau.phase') {
-          setPhase(e);
-          if (e.phase === 'countdown') runners.current = [];
-        } else if (e.type === 'embolsau.picks') setPicks(e);
-        else if (e.type === 'embolsau.standings')
-          runners.current = [...runners.current, { at: e.at, runners: e.runners.map((r) => ({ ...r, at: e.at })) }].slice(-HISTORY);
+        if (e.type === 'embolsau.phase') setPhase(e);
+        else if (e.type === 'embolsau.picks') setPicks(e);
+        else if (e.type === 'embolsau.standings') {
+          // A new round starts its history over (the first standings come during the countdown).
+          const kept = runnersRound.current === e.round ? runners.current : [];
+          runnersRound.current = e.round;
+          runners.current = [...kept, { at: e.at, runners: e.runners.map((r) => ({ ...r, at: e.at })) }].slice(-HISTORY);
+        }
         else if (e.type === 'embolsau.roundResults') setLastRound(e);
       }),
     [subscribe],
@@ -96,17 +99,6 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
     );
   }
 
-  if (phase.phase === 'countdown' && left !== null && left > 0) {
-    return (
-      <Screen>
-        <p className="font-display text-[14rem] leading-none font-extrabold text-sol" aria-live="assertive">
-          {Math.ceil(left / 1000)}
-        </p>
-        <p className="text-3xl text-niebla">{t('phase.countdown')}</p>
-      </Screen>
-    );
-  }
-
   if (phase.phase === 'roundResults') {
     const top = lastRound?.round === phase.round ? lastRound.top : [];
     return (
@@ -144,6 +136,18 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
       now={clock.now}
       trackMeters={trackMeters}
       closingEndsAt={phase.phase === 'closing' ? phase.phaseEndsAt : null}
+      overlay={
+        phase.phase === 'countdown' &&
+        left !== null &&
+        left > 0 && (
+          <div className="flex flex-col items-center gap-2 rounded-[3rem] bg-noche/70 px-16 py-8 text-center">
+            <p className="font-display text-[12rem] leading-none font-extrabold text-sol" aria-live="assertive">
+              {Math.ceil(left / 1000)}
+            </p>
+            <p className="text-3xl text-niebla">{t('phase.countdown')}</p>
+          </div>
+        )
+      }
     />
   );
 }
@@ -153,13 +157,17 @@ function RaceView({
   now,
   trackMeters,
   closingEndsAt,
+  overlay,
 }: {
   runners: React.RefObject<Snapshot[]>;
   now: () => number;
   trackMeters: number;
   closingEndsAt: number | null;
+  /** Shown over the track, centered: the 3-2-1 before the start. */
+  overlay?: ReactNode;
 }) {
   const t = useTranslations('embolsau.host');
+  const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const closing = useRef(closingEndsAt);
   closing.current = closingEndsAt;
@@ -173,8 +181,9 @@ function RaceView({
 
   useEffect(() => {
     const el = canvas.current;
+    const area = box.current;
     const ctx = el?.getContext('2d');
-    if (!el || !ctx) return;
+    if (!el || !area || !ctx) return;
     const sprites = Object.fromEntries(
       ANIMALS.map((a) => {
         const run = new Image();
@@ -190,11 +199,17 @@ function RaceView({
     let frame = 0;
     const camera = { x: 0, at: 0 };
     const draw = () => {
+      // As big as fits in the space the frame leaves (width and height), keeping 16:9, so the
+      // strip at the bottom never falls off the screen.
+      const css = fitFrame(area.clientWidth, area.clientHeight);
+      if (el.style.width !== `${css.width}px` || el.style.height !== `${css.height}px`) {
+        el.style.width = `${css.width}px`;
+        el.style.height = `${css.height}px`;
+      }
       // Draw at the canvas's real resolution, in the 1280×720 frame's coordinates.
       const ratio = window.devicePixelRatio || 1;
-      const cssWidth = el.clientWidth;
-      const width = Math.round(cssWidth * ratio);
-      const height = Math.round(((cssWidth * FRAME.height) / FRAME.width) * ratio);
+      const width = Math.round(css.width * ratio);
+      const height = Math.round(css.height * ratio);
       if (el.width !== width || el.height !== height) {
         el.width = width;
         el.height = height;
@@ -217,7 +232,14 @@ function RaceView({
     return () => cancelAnimationFrame(frame);
   }, [now, runners, trackMeters]);
 
-  return <canvas ref={canvas} className="aspect-video w-full rounded-2xl" aria-label={t('phase.racing')} role="img" />;
+  return (
+    <div ref={box} className="relative min-h-0 w-full flex-1 basis-0">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <canvas ref={canvas} className="rounded-2xl" aria-label={t('phase.racing')} role="img" />
+      </div>
+      {overlay && <div className="absolute inset-0 flex items-center justify-center">{overlay}</div>}
+    </div>
+  );
 }
 
 function Screen({ children }: { children: ReactNode }) {

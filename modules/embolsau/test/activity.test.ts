@@ -116,6 +116,24 @@ describe('Embolsau activity', () => {
     expect(answer.place).toBe(1);
   });
 
+  it('everybody is at the start line from the countdown, before any phone pushes', async () => {
+    const session = await newRace();
+    await live.join(session.pin, 'Ana');
+    await live.join(session.pin, 'Beto');
+    await live.advance(session.id); // lobby → picking
+    clock += PICK_MS;
+    await tick(session.id); // → countdown
+    publisher.events.length = 0;
+    clock += 500;
+    await tick(session.id); // still counting down
+    expect((await state(session.id)).state.phase).toBe('countdown');
+    const standings = publisher.last('embolsau.standings')!;
+    expect((standings.runners as { nickname: string; meters: number }[]).map((r) => [r.nickname, r.meters])).toEqual([
+      ['Ana', 0],
+      ['Beto', 0],
+    ]);
+  });
+
   it('the third finisher opens the 10 s closing', async () => {
     const session = await newRace();
     const players = [];

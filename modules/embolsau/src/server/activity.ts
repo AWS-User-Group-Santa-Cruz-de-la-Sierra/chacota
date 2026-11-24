@@ -1,10 +1,11 @@
 import { GetCommand, PutCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { strip } from '@chacota/db';
+import { isConditionalCheckFailure, strip } from '@chacota/db';
 import { channels, LiveError, sessionKeys, shardOf, type ActivityServer, type LiveService, type Player, type Session } from '@chacota/live';
 import { embolsauManifest } from '../manifest';
 import {
   ANIMAL_NAMES,
   ANIMALS,
+  bagOf,
   CLOSING_MS,
   DEFAULT_TITLE,
   COUNTDOWN_MS,
@@ -16,6 +17,7 @@ import {
   type EmbolsauState,
   type Phase,
 } from '../model';
+import { startRunner } from '../physics';
 import { parseConfig } from './config';
 import { placesKey, roundSk, roundsPk, runnerSk, runnersPk } from './keys';
 import { embolsauRoutes } from './routes';
@@ -43,29 +45,48 @@ async function moveTo(live: LiveService, s: S, phase: Phase, patch: Partial<Embo
   return publishPhase(live, updated);
 }
 
-/** Whoever didn't pick gets a random animal: choosing is only visual. */
-async function assignMissingAnimals(live: LiveService, s: S): Promise<void> {
+/**
+ * Gets everyone onto the start line: whoever didn't pick gets a random animal (choosing is only
+ * visual), and every player gets a runner at 0 m, so the presenter's screen shows the whole crowd
+ * from the countdown on instead of waiting for each phone's first push.
+ */
+async function lineUp(live: LiveService, s: S, round: number, raceStartedAt: number): Promise<void> {
   const players = await live.listPlayers(s.id);
   await Promise.all(
-    players
-      .filter((p) => !ANIMALS.includes(p.data?.animal as Animal))
-      .map((p) =>
-        live.db.doc.send(
+    players.map(async (p) => {
+      let animal = p.data?.animal as Animal;
+      if (!ANIMALS.includes(animal)) {
+        animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)]!;
+        await live.db.doc.send(
           new UpdateCommand({
             TableName: live.db.tableName,
             Key: sessionKeys.player(s.id, p.id),
             UpdateExpression: 'SET #data = :data',
             ExpressionAttributeNames: { '#data': 'data' },
-            ExpressionAttributeValues: { ':data': { ...p.data, animal: ANIMALS[Math.floor(Math.random() * ANIMALS.length)] } },
+            ExpressionAttributeValues: { ':data': { ...p.data, animal } },
           }),
-        ),
-      ),
+        );
+      }
+      const runner: StoredRunner = { ...startRunner(raceStartedAt), playerId: p.id, nickname: p.nickname, animal, bag: bagOf(p.id), seq: 0 };
+      try {
+        await live.db.doc.send(
+          new PutCommand({
+            TableName: live.db.tableName,
+            Item: { pk: runnersPk(s.id, round, shardOf(p.id)), sk: runnerSk(p.id), ...runner, ttl: live.ttl() },
+            // A push that got there first (the clocks are close at the start) wins.
+            ConditionExpression: 'attribute_not_exists(pk)',
+          }),
+        );
+      } catch (error) {
+        if (!isConditionalCheckFailure(error)) throw error;
+      }
+    }),
   );
 }
 
 async function startCountdown(live: LiveService, s: S, round: number): Promise<S> {
-  await assignMissingAnimals(live, s);
   const raceStartedAt = live.now() + COUNTDOWN_MS;
+  await lineUp(live, s, round, raceStartedAt);
   return moveTo(live, s, 'countdown', { round, phaseEndsAt: raceStartedAt, raceStartedAt });
 }
 
@@ -127,12 +148,8 @@ async function publishPicks(live: LiveService, s: S): Promise<void> {
   await live.publish(s.id, { type: 'embolsau.picks', counts, picked: Object.values(counts).reduce((a, b) => a + b, 0) }, channels.host(s.id));
 }
 
-/** Ranks the runners now, tells the presenter's screen, and stores each place for the phones. */
-async function race(live: LiveService, s: S): Promise<S> {
-  const now = live.now();
-  const cutoff = roundCutoff(s.state);
-  if (now >= cutoff) return closeRound(live, s);
-
+/** Ranks the runners at `now`, tells the presenter's screen, and stores each place for the phones. */
+async function publishStandings(live: LiveService, s: S, now: number): Promise<StoredRunner[]> {
   const trackMeters = TRACK_METERS[s.state.config.track];
   const runners = sortRunners((await listRunners(live, s.id, s.state.round)).map((r) => project(r, now, trackMeters)));
   const places = Object.fromEntries(runners.map((r, i) => [r.playerId, i + 1]));
@@ -159,6 +176,13 @@ async function race(live: LiveService, s: S): Promise<S> {
       channels.host(s.id),
     ),
   ]);
+  return runners;
+}
+
+async function race(live: LiveService, s: S): Promise<S> {
+  const now = live.now();
+  if (now >= roundCutoff(s.state)) return closeRound(live, s);
+  const runners = await publishStandings(live, s, now);
 
   const finished = runners.filter((r) => r.finishedAt !== null).length;
   if (finished === 0) return s;
@@ -181,6 +205,8 @@ async function tick(live: LiveService, session: S): Promise<{ phase: Phase | nul
       else await publishPicks(live, s);
     } else if (phase === 'countdown') {
       if (isRaceOn(s, now)) s = await race(live, await moveTo(live, s, 'racing', { phaseEndsAt: null }));
+      // The crowd waits on the start line while the screen counts down.
+      else await publishStandings(live, s, now);
     } else if (phase === 'racing') {
       s = await race(live, s);
     } else if (phase === 'closing') {
