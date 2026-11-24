@@ -20,6 +20,8 @@ const fail = (msg: string): never => {
 
 // A round is 1.5 s + the out scenes (7-9 s each) + 6 s for the winner.
 const ROUND_MS = 45_000;
+// The reset mark reads "↺ Reinicio" (the arrow is its own span).
+const RESET_MARK = /^↺\s*Reinicio$/;
 
 /** Waits until the main button reads `label` and is enabled again. */
 const buttonReady = (page: Page, label: string) =>
@@ -44,10 +46,12 @@ const { orgSlug } = await seedRifa(login.userId);
 const hostName = new URL(BASE).hostname;
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
+const pages: Page[] = [];
 try {
   const hostCtx = await browser.newContext({ viewport: { width: 1280, height: 800 }, locale: 'es-BO' });
   await hostCtx.addCookies(login.cookies.map((c) => ({ ...c, domain: hostName, path: '/' })));
   const host = await hostCtx.newPage();
+  pages.push(host);
   host.on('pageerror', (e) => console.log('host pageerror', e.message));
   // "Reiniciar" and "Terminar" ask for confirmation.
   host.on('dialog', (d) => void d.accept());
@@ -68,7 +72,7 @@ try {
   await host.getByRole('button', { name: /Empezar rifa/ }).click();
   await host.waitForURL(/\/host\//, { timeout: 15_000 });
   await host.getByRole('button', { name: 'Sortear ronda', exact: true }).waitFor({ timeout: 15_000 });
-  if (await host.getByText('PIN', { exact: true }).count()) fail('List mode shows a PIN');
+  if (await host.getByText(/PIN/).count()) fail('List mode shows a PIN');
   for (const name of ['Ana', 'Beto', 'Caro']) await host.getByRole('button', { name: `Descartar a ${name}` }).waitFor();
   step('list rifa opened with its 3 names and no PIN');
 
@@ -83,7 +87,7 @@ try {
   await host.getByRole('button', { name: /^Devolver a .* a la bolsa$/ }).first().waitFor({ timeout: 10_000 });
   step('a chip was discarded');
   await host.getByRole('button', { name: 'Reiniciar' }).click();
-  await host.getByText('Reinicio').first().waitFor({ timeout: 10_000 });
+  await host.getByText(RESET_MARK).waitFor({ timeout: 10_000 });
   await host.getByRole('button', { name: /^Descartar a / }).nth(2).waitFor({ timeout: 10_000 });
   await shot(host, 'list-3-reset');
   step('reset: everyone is back in the bag and the winners list keeps its reset mark');
@@ -92,7 +96,7 @@ try {
   await host.getByText('Fin del juego').waitFor({ timeout: 15_000 });
   await host.getByRole('heading', { name: 'Ganadores' }).waitFor();
   await host.getByText('Ronda 1', { exact: true }).waitFor();
-  await host.getByText('Reinicio').first().waitFor();
+  await host.getByText(RESET_MARK).waitFor();
   if (await host.getByRole('link', { name: 'Ver resultados' }).count()) fail('List mode shows a results link');
   await shot(host, 'list-4-final');
   step('final screen lists the winner and the reset mark, with no results link');
@@ -110,6 +114,7 @@ try {
   const join = async (name: string) => {
     const ctx = await browser.newContext({ ...devices['iPhone 13'], hasTouch: true, locale: 'es-BO' });
     const p = await ctx.newPage();
+    pages.push(p);
     p.on('pageerror', (e) => console.log(`${name} pageerror`, e.message));
     await p.goto(`${BASE}/play?pin=${pin}`);
     await p.getByPlaceholder('Tu apodo').fill(name);
@@ -126,6 +131,8 @@ try {
   await host.getByRole('button', { name: 'Descartar a Ana' }).waitFor({ timeout: 15_000 });
   await host.getByRole('button', { name: 'Descartar a Beto' }).waitFor();
   await buttonReady(host, 'Sortear ronda');
+  // Proves the PIN locator used in list mode does match a running header.
+  await host.getByText(/PIN/).first().waitFor({ timeout: 5_000 });
   await shot(host, 'qr-2-bag');
 
   // Start waiting on the phones before the draw: the flood scene does not stay.
@@ -164,6 +171,9 @@ try {
   await shot(host, 'qr-5-results');
   step('history has the "Ganó en" column and both players');
   console.log('ALL PASSED (Rifa)');
+} catch (error) {
+  await Promise.all(pages.map((p, i) => shot(p, `failure-${i}`).catch(() => undefined)));
+  throw error;
 } finally {
   await browser.close();
 }
