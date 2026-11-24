@@ -22,5 +22,22 @@
   },
   "play": {
     "status": { "bag": "You are in the bag. Good luck!", "out": "You went overboard.", "won": "You won!" }
+  },
+  "scenes": {
+    "alAgua": "Overboard!",
+    "carnavalito": "Carnavalito",
+    "stop": "BUS STOP",
+    "para72": "Stop, 72!",
+    "winner": "WINNER!",
+    "candy": "candy",
+    "labels": {
+      "waiting": "The round is about to start",
+      "retrete": "{name}'s sign falls into a toilet and spirals down the drain",
+      "globazo": "Two water balloons hit {name}'s imp and tear the sign in half",
+      "lagarto": "A caiman grabs {name}'s imp and drags it into the river; the hat and the sign float up",
+      "micro72": "{name}'s imp waits for bus 72, gets soaked by a downpour, and the bus drives past without stopping",
+      "reduced": "{name}'s sign falls into the water and gets soaked",
+      "winner": "{name} wins: their name in neon, a crown, and an imp with a bag of candy"
+    }
   }
 }

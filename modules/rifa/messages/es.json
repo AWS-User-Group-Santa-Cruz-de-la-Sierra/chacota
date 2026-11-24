@@ -22,5 +22,22 @@
   },
   "play": {
     "status": { "bag": "Estás en la bolsa. ¡Suerte!", "out": "Te fuiste al agua.", "won": "¡Ganaste!" }
+  },
+  "scenes": {
+    "alAgua": "¡Al agua!",
+    "carnavalito": "Carnavalito",
+    "stop": "PARADA",
+    "para72": "¡Pará, 72!",
+    "winner": "¡GANADOR!",
+    "candy": "dulces",
+    "labels": {
+      "waiting": "Se viene la ronda",
+      "retrete": "El cartel de {name} cae a un retrete y se va en espiral",
+      "globazo": "Le tiran dos globazos al duende de {name} y se le rompe el cartel",
+      "lagarto": "Un lagarto atrapa al duende de {name} y lo jala al río; flotan el sombrero y el cartel",
+      "micro72": "El duende de {name} espera el micro 72, lo moja un diluvio y el micro pasa sin levantarlo",
+      "reduced": "El cartel de {name} cae al agua y se moja",
+      "winner": "{name} gana: su nombre en neón, una corona y un duende con una bolsa de dulces"
+    }
   }
 }
