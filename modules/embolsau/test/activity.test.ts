@@ -2,6 +2,7 @@ import { useTestDb } from '@chacota/db/testing';
 import { channels, LiveError, LiveService, MemoryPublisher, type JoinResult } from '@chacota/live';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CLOSING_MS, COUNTDOWN_MS, PICK_MS, ROUND_MAX_MS, TRACK_METERS, type EmbolsauConfig } from '../src/model';
+import { PHYSICS } from '../src/physics';
 import { embolsauActivity, pick, pointsFor, push } from '../src/server';
 import { never } from './helpers';
 
@@ -185,6 +186,35 @@ describe('Embolsau activity', () => {
     await tick(session.id);
     await live.advance(session.id); // round 2 countdown
     expect((await live.getPlayer(session.id, late.player.id))!.data?.animal).toBeDefined();
+  });
+
+  it('a runner close to the line is not finished until its own push says so', async () => {
+    const session = await newRace();
+    const ana = await live.join(session.pin, 'Ana');
+    await toRace(session.id);
+    // Push in short batches until coasting alone would carry her over the line.
+    let seq = 0;
+    const coast = (speed: number) => (speed / PHYSICS.drag) * (1 - Math.exp(-PHYSICS.drag * 0.9));
+    for (;;) {
+      clock += 300;
+      const r = await push(live, ana.token, { seq: ++seq, ago: [250, 100] }, never);
+      expect(r.finished).toBe(false);
+      if (r.meters + coast(r.speed) > TRACK_METERS.short) break;
+    }
+    // Coasting would carry her over the line, but no push has confirmed it yet.
+    clock += 900;
+    await tick(session.id);
+    expect((await state(session.id)).state.phase).toBe('racing');
+    const standings = publisher.last('embolsau.standings')!.runners as { finished: boolean; meters: number }[];
+    expect(standings[0]!.finished).toBe(false);
+    expect(standings[0]!.meters).toBeLessThan(TRACK_METERS.short);
+    // Her next pushes confirm it, and then the round closes.
+    for (let i = 0; i < 3; i++) {
+      clock += 1_000;
+      await push(live, ana.token, { seq: ++seq, ago: [900, 700, 500, 300, 100] }, never);
+    }
+    await tick(session.id);
+    expect((await state(session.id)).state.phase).toBe('roundResults');
   });
 
   it('concurrent ticks close the round once', async () => {

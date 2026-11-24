@@ -29,9 +29,18 @@ export function pointsFor(
   return Math.round(300 + 700 * (1 - behind));
 }
 
-/** Where each runner is at `at`, without new taps (the sack only slows down; no falls are drawn). */
+/** Just short of the line: where an estimate stops until the runner's own push confirms the finish. */
+const BEFORE_LINE = 0.01;
+
+/**
+ * Where each runner probably is at `at`, coasting without new taps. Only an estimate: falls are not
+ * drawn here, so it never decides a finish. A runner crosses the line only when its own push,
+ * simulated with its real taps and falls, says so.
+ */
 export function project(runner: StoredRunner, at: number, trackMeters: number): StoredRunner {
-  return { ...runner, ...simulate(runner, [], at, trackMeters, () => 1) };
+  if (runner.finishedAt !== null) return runner;
+  const coasted = simulate(runner, [], at, Number.POSITIVE_INFINITY, () => 1);
+  return { ...runner, ...coasted, meters: Math.min(coasted.meters, trackMeters - BEFORE_LINE), finishedAt: null };
 }
 
 /** Finishers by time, then the rest by meters, then the eligible players who never pushed. */
