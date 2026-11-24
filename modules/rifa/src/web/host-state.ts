@@ -1,5 +1,5 @@
-import { isPlaying } from '../bag';
-import { SCENE_MS, type BagEntry, type EntryStatus, type RifaEvent, type Round, type WinnersItem } from '../model';
+import { isPlaying, winOf, withResetMark } from '../bag';
+import { SCENE_MS, type BagEntry, type BagReply, type EntryStatus, type RifaEvent, type Round, type WinnersItem } from '../model';
 
 export type BagEvent = Extract<RifaEvent, { type: 'rifa.bag' }>;
 
@@ -46,12 +46,6 @@ export function applyEntriesEvent(entries: BagEntry[], e: RifaEvent): BagEntry[]
   return e.type === 'rifa.round' ? applyRoundEntries(entries, e.round) : applyBagEvent(entries, e);
 }
 
-/** Same rule as the server's reset: a mark, unless the list is empty or already ends with one. */
-function winnersAfterReset(winners: WinnersItem[]): WinnersItem[] {
-  const last = winners[winners.length - 1];
-  return last === undefined || last.kind === 'reset' ? winners : [...winners, { kind: 'reset' }];
-}
-
 export function applyHostEvent(d: HostData, e: RifaEvent): HostData {
   if (e.type === 'rifa.round') {
     // A snapshot taken after the draw already has this round.
@@ -59,12 +53,24 @@ export function applyHostEvent(d: HostData, e: RifaEvent): HostData {
     const { round } = e;
     return {
       entries: applyRoundEntries(d.entries, round),
-      winners: [...d.winners, { kind: 'win', round: round.n, entryId: round.winner.entryId, name: round.winner.name }],
+      winners: [...d.winners, winOf(round)],
       rounds: round.n,
       round,
     };
   }
-  return { ...d, entries: applyBagEvent(d.entries, e), winners: e.reset ? winnersAfterReset(d.winners) : d.winners };
+  return { ...d, entries: applyBagEvent(d.entries, e), winners: e.reset ? withResetMark(d.winners) : d.winners };
+}
+
+/**
+ * Folds a `bag()` reply into the screen's data. The bag is the server's, plus the events that
+ * arrived while the fetch was in flight (`missed`). A reply with a round this screen has not had an
+ * event for yet (the event is still on its way) brings that round and its winner, so the result
+ * stays hidden until its step, and the late event is skipped as already applied.
+ */
+export function applyBagReply(d: HostData, reply: Pick<BagReply, 'entries' | 'rounds' | 'round' | 'winners'>, missed: RifaEvent[]): HostData {
+  const entries = missed.reduce(applyEntriesEvent, reply.entries);
+  if (reply.rounds > d.rounds) return { entries, winners: reply.winners, rounds: reply.rounds, round: reply.round };
+  return { ...d, entries };
 }
 
 const revealOf = (o: Round['out'][number]) => o.startsAt + SCENE_MS[o.scene];

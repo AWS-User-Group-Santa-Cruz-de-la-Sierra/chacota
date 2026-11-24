@@ -4,6 +4,7 @@ import { rifaManifest } from '../manifest';
 import {
   DEFAULT_TITLE,
   type BagEntry,
+  type BagReply,
   type Entry,
   type EntryStatus,
   type FinalSnapshot,
@@ -129,9 +130,12 @@ export function createRifaActivity(opts: { randomInt?: RandomInt } = {}): Activi
         return { version: updated.version };
       },
 
+      // With the round and the winners, so a presenter screen whose reply beats the rifa.round event can still hide the result.
       async bag(live, session) {
         const s = await fresh(live, session.id);
-        return { version: s.version, entries: await bagOf(live, s) };
+        const { rounds, round, winners, onOverboard } = s.state;
+        const reply: BagReply = { version: s.version, entries: await bagOf(live, s), rounds, round, winners, onOverboard };
+        return reply;
       },
     },
   };

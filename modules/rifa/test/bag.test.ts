@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyRound, drawRound, resetBag, setStatus, isPlaying } from '../src/bag';
+import { applyRound, drawRound, resetBag, setStatus, isPlaying, winOf, withResetMark } from '../src/bag';
 import type { RifaState } from '../src/model';
 
 const seq = (...xs: number[]) => { let i = 0; return (max: number) => xs[i++ % xs.length]! % max; };
@@ -52,6 +52,15 @@ describe('bag', () => {
     expect(z.winners.at(-1)).toEqual({ kind: 'reset' });
     expect(resetBag(z).winners).toEqual(z.winners);
     expect(resetBag(base).winners).toEqual([]);
+  });
+
+  it('winOf and withResetMark are the rules the screens share', () => {
+    const r = drawRound(entries, base, 0, seq(2, 0, 1, 3, 0))!;
+    expect(winOf(r)).toEqual({ kind: 'win', round: 1, entryId: r.winner.entryId, name: 'Dani' });
+    expect(withResetMark([])).toEqual([]);
+    expect(withResetMark([winOf(r)])).toEqual([winOf(r), { kind: 'reset' }]);
+    const marked = withResetMark([winOf(r)]);
+    expect(withResetMark(marked)).toBe(marked);
   });
 
   it('partial Fisher–Yates with non-trivial picks gives the exact order', () => {

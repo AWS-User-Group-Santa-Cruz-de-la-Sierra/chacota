@@ -4,6 +4,7 @@ import { SCENE_MS, type BagEntry, type RifaEvent, type RifaState, type Round, ty
 import {
   advanceState,
   applyBagEvent,
+  applyBagReply,
   applyEntriesEvent,
   applyHostEvent,
   chipScale,
@@ -94,6 +95,32 @@ describe('applyEntriesEvent', () => {
     const after = events.reduce(applyEntriesEvent, applyBagEvent(applyEntriesEvent(bag(), events[0]!), { type: 'rifa.bag', changes: { L1: 'bag' } }));
     expect(statusOf(before)).toEqual(statusOf(after));
     expect(statusOf(before)).toMatchObject({ L0: 'won', L1: 'bag', L3: 'out' });
+  });
+});
+
+describe('applyBagReply', () => {
+  const empty: HostData = { entries: bag(), winners: [], rounds: 0, round: null };
+
+  it('a reply that has a round before its event hides it, and the late event changes nothing', () => {
+    const r = draw('discard');
+    // What the server has once it drew: the reply reads it before the rifa.round event arrives.
+    const server = applyHostEvent(empty, { type: 'rifa.round', round: r });
+    const replied = applyBagReply(empty, { entries: server.entries, rounds: 1, round: r, winners: server.winners }, []);
+    expect(replied).toEqual(server);
+    expect(statusOf(visibleEntries(replied.entries, replied.round, 1_000))).toMatchObject({ L0: 'bag', L1: 'bag', L3: 'bag' });
+    expect(visibleWinners(replied.winners, replied.round, 1_000)).toEqual([]);
+    expect(applyHostEvent(replied, { type: 'rifa.round', round: r })).toBe(replied);
+  });
+
+  it('a reply read before a round that arrived meanwhile keeps the round and replays it over the bag', () => {
+    const r = draw('discard');
+    const d = applyHostEvent(empty, { type: 'rifa.round', round: r });
+    const joined: BagEntry[] = [...bag(), { id: 'L6', name: 'Gabo', status: 'bag' }];
+    const replied = applyBagReply(d, { entries: joined, rounds: 0, round: null, winners: [] }, [{ type: 'rifa.round', round: r }]);
+    expect(replied.round).toBe(r);
+    expect(replied.rounds).toBe(1);
+    expect(replied.winners).toBe(d.winners);
+    expect(statusOf(replied.entries)).toMatchObject({ L0: 'won', L1: 'out', L3: 'out', L6: 'bag' });
   });
 });
 

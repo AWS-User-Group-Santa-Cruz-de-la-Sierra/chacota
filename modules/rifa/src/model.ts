@@ -69,6 +69,11 @@ export interface PlayerSnapshot {
   round: Round | null;
   wins: number[];
 }
+/** What the host action `bag` returns: the bag with what a presenter screen needs to keep it honest. */
+export interface BagReply extends Pick<RifaState, 'rounds' | 'round' | 'winners' | 'onOverboard'> {
+  version: number;
+  entries: BagEntry[];
+}
 export interface FinalSnapshot {
   winners: WinnersItem[];
   wins?: number[];

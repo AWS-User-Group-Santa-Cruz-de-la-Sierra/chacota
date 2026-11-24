@@ -38,7 +38,9 @@
     "onOverboard": { "label": "Overboard:", "discard": "discard", "return": "back in the bag" },
     "resetButton": "Reset",
     "confirmReset": "Reset the raffle? Everyone goes back in the bag, winners too. The winners list stays, with a reset mark.",
-    "actionFailed": "The change didn't go through. The bag was reloaded; try again."
+    "actionFailed": "The change didn't go through. The bag was reloaded; try again.",
+    "bagFailed": "Couldn't load the bag.",
+    "retry": "Try again"
   },
   "final": {
     "title": "Winners",

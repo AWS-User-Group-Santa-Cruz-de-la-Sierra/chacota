@@ -38,7 +38,9 @@
     "onOverboard": { "label": "Al agua:", "discard": "descartar", "return": "vuelven a la bolsa" },
     "resetButton": "Reiniciar",
     "confirmReset": "¿Reiniciar la rifa? Todos vuelven a la bolsa, también los ganadores. La lista de ganadores queda, con una marca de reinicio.",
-    "actionFailed": "No se pudo hacer el cambio. La bolsa se volvió a cargar; probá de nuevo."
+    "actionFailed": "No se pudo hacer el cambio. La bolsa se volvió a cargar; probá de nuevo.",
+    "bagFailed": "No se pudo cargar la bolsa.",
+    "retry": "Reintentar"
   },
   "final": {
     "title": "Ganadores",

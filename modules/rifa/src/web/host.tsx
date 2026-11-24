@@ -1,13 +1,13 @@
 'use client';
 
 import type { HostScreenProps } from '@chacota/live/web';
-import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import type { BagEntry, HostSnapshot, OnOverboard, RifaEvent, Round } from '../model';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useReducer, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import type { BagEntry, BagReply, HostSnapshot, OnOverboard, RifaEvent, Round } from '../model';
 import { stepAt } from '../timeline';
 import { BagChips } from './bag-chips';
 import { Controls } from './controls';
-import { advanceState, applyEntriesEvent, applyHostEvent, nextBoundary, visibleEntries, visibleWinners, type HostData } from './host-state';
+import { advanceState, applyBagReply, applyHostEvent, nextBoundary, visibleEntries, visibleWinners, type HostData } from './host-state';
 import { ScenePlayer } from './scene-player';
 import { Duende, DuendeDefs } from './scenes/duende';
 import { Stage, Stars, useSvgIds } from './scenes/stage';
@@ -16,6 +16,9 @@ import { WinnersList } from './winners-list';
 
 /** Pause between two bag fetches while players keep joining. */
 const REFETCH_GAP_MS = 500;
+/** A failed bag fetch is retried after 0.5, 1 and 2 s before the screen says so. */
+const FETCH_RETRIES = 3;
+const RETRY_MS = 500;
 const FAILED_SHOWN_MS = 6_000;
 const STAGE_BG = 'radial-gradient(ellipse at 50% 110%, rgb(11 128 72 / .33), transparent 60%), linear-gradient(#2b1a47, #1a0e2e)';
 
@@ -51,6 +54,16 @@ function ReadyStage() {
   );
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Sort key that ignores case and accents and is the same on the server and in every browser. */
+const nameKey = (name: string) => name.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+const byName = (a: BagEntry, b: BagEntry) => {
+  const x = nameKey(a.name);
+  const y = nameKey(b.name);
+  return x < y ? -1 : x > y ? 1 : a.id < b.id ? -1 : 1;
+};
+
 /** The short line over the stage, and what a screen reader hears, for the step playing now. */
 function useCaption(round: Round | null, now: number): { caption: string | null; announce: string } {
   const t = useTranslations('rifa.host');
@@ -74,7 +87,6 @@ function useCaption(round: Round | null, now: number): { caption: string | null;
 export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, setAdvanceLabel, setAdvanceDisabled, setSubtitle }: HostScreenProps) {
   const s0 = snapshot as unknown as Partial<HostSnapshot>;
   const t = useTranslations('rifa.host');
-  const locale = useLocale();
   const mode = s0.mode ?? 'list';
   // In QR mode the lobby's start also opens the rifa (one advance does both), and the snapshot this
   // screen starts from may have been read in the lobby, before that.
@@ -88,14 +100,26 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
   const [onOverboard, setOnOverboard] = useState<OnOverboard>(s0.onOverboard ?? 'return');
   const [busy, setBusy] = useState<ReadonlySet<string>>(() => new Set());
   const [failed, setFailed] = useState(false);
+  const [bagFailed, setBagFailed] = useState(false);
   const [, rerender] = useReducer((n: number) => n + 1, 0);
+  // Time comes from the client clock: the server render and hydration must not depend on it. The
+  // first timed render comes after mount, once the frame's own effects have synced the clock.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const first = setTimeout(() => setReady(true), 0);
+    return () => clearTimeout(first);
+  }, []);
 
   // Every event once (the hub replays its buffer on each subscribe), kept in order to replay it
   // over a bag fetch that was in flight meanwhile.
   const log = useRef<RifaEvent[]>([]);
   const seen = useRef(new WeakSet<object>());
-  // Changes of "al agua" this screen is still saving, so a round drawn meanwhile does not undo them.
+  // Changes of "al agua" this screen is saving, and how many it started: what the server says about
+  // the choice meanwhile (a round, a bag reply) may predate them.
   const saving = useRef(0);
+  const toggles = useRef(0);
+  // The newest round this screen knows of, from an event or a bag reply: an older round's choice is stale.
+  const latestRound = useRef(s0.rounds ?? 0);
   useEffect(
     () =>
       subscribe((event) => {
@@ -104,8 +128,11 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
         seen.current.add(e);
         log.current.push(e);
         setData((d) => applyHostEvent(d, e));
-        // Another presenter screen may have changed it: the round says what the server had.
-        if (e.type === 'rifa.round' && saving.current === 0) setOnOverboard(e.round.onOverboard);
+        // Another presenter screen may have changed it: a new round says what the server had.
+        if (e.type === 'rifa.round' && e.round.n > latestRound.current) {
+          latestRound.current = e.round.n;
+          if (saving.current === 0) setOnOverboard(e.round.onOverboard);
+        }
       }),
     [subscribe],
   );
@@ -118,7 +145,8 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
     };
   }, []);
 
-  // One fetch at a time; a request that comes in meanwhile runs once more afterwards.
+  // One fetch at a time; a request that comes in meanwhile runs once more afterwards. A failed one
+  // is retried with backoff, then the screen offers to try again.
   const fetching = useRef(false);
   const again = useRef(false);
   const refresh = useCallback(async () => {
@@ -128,17 +156,27 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
     }
     fetching.current = true;
     try {
+      let failures = 0;
       do {
         again.current = false;
         const from = log.current.length;
+        const toggled = toggles.current;
         try {
-          const { entries } = (await hostAction('bag')) as { entries: BagEntry[] };
+          const reply = (await hostAction('bag')) as BagReply;
           const missed = log.current.slice(from);
-          setData((d) => ({ ...d, entries: missed.reduce(applyEntriesEvent, entries) }));
+          failures = 0;
+          setBagFailed(false);
+          setData((d) => applyBagReply(d, reply, missed));
+          const current = reply.rounds >= latestRound.current;
+          latestRound.current = Math.max(latestRound.current, reply.rounds);
+          if (current && reply.onOverboard && toggles.current === toggled && saving.current === 0) setOnOverboard(reply.onOverboard);
         } catch (error) {
           console.error('rifa: loading the bag failed', error);
+          failures++;
+          if (failures <= FETCH_RETRIES) again.current = true;
+          else setBagFailed(true);
         }
-        if (again.current) await new Promise((resolve) => setTimeout(resolve, REFETCH_GAP_MS));
+        if (again.current) await sleep(failures > 0 ? RETRY_MS * 2 ** (failures - 1) : REFETCH_GAP_MS);
       } while (again.current && alive.current);
     } finally {
       fetching.current = false;
@@ -189,6 +227,7 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
   const changeOnOverboard = async (value: OnOverboard) => {
     const before = onOverboard;
     setOnOverboard(value);
+    toggles.current++;
     saving.current++;
     try {
       const result = (await act('setOnOverboard', { value })) as { onOverboard?: OnOverboard } | undefined;
@@ -202,11 +241,12 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
     if (confirm(t('confirmReset'))) void act('reset');
   };
 
-  const now = clock.now();
+  // Until then time stands before the round: nothing of it is revealed, on the server or while hydrating.
+  const now = ready ? clock.now() : Number.NEGATIVE_INFINITY;
   const playing = data.round !== null && now < data.round.endsAt;
   const shown = visibleEntries(data.entries, data.round, now);
   // QR players come in no useful order: alphabetical, so the presenter can find a name.
-  const chips = mode === 'qr' ? [...shown].sort((a, b) => a.name.localeCompare(b.name, locale)) : shown;
+  const chips = mode === 'qr' ? [...shown].sort(byName) : shown;
   const inBag = shown.filter((e) => e.status === 'bag').length;
   const winners = visibleWinners(data.winners, data.round, now);
   const advance = advanceState({ opened, round: data.round, inBag }, now);
@@ -216,6 +256,7 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
 
   // Re-render when the next step starts or is revealed, and when the round ends.
   useEffect(() => {
+    if (!ready) return;
     const at = clock.now();
     const next = nextBoundary(data.round, at);
     if (next === undefined) return;
@@ -230,8 +271,18 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
   const subtitle = data.rounds > 0 ? t('subtitle', { round: data.rounds, count: inBag }) : t('subtitleStart', { count: inBag });
   useEffect(() => setSubtitle(subtitle), [subtitle, setSubtitle]);
 
+  // The frame advances on Space anywhere on the page; on one of these buttons Space presses the
+  // button instead (a draw can't be undone). The clicker keys still advance.
+  const keepSpace = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === ' ' && e.target instanceof HTMLButtonElement) e.stopPropagation();
+  };
+  // After a mouse or touch press, let go of the focus so Space draws again.
+  const dropFocus = (e: MouseEvent<HTMLDivElement>) => {
+    if (e.detail > 0 && e.target instanceof Element) e.target.closest('button')?.blur();
+  };
+
   return (
-    <div className="flex flex-1 flex-col gap-4 lg:gap-5">
+    <div className="flex flex-1 flex-col gap-4 lg:gap-5" onKeyDown={keepSpace} onClick={dropFocus}>
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-5">
         <div className="relative flex min-w-0 flex-1 flex-col items-center justify-center gap-3 rounded-3xl p-3 lg:p-5" style={{ background: STAGE_BG }}>
           {caption && (
@@ -252,6 +303,18 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
           </div>
         </div>
       </div>
+      {bagFailed && (
+        <div role="alert" className="flex flex-wrap items-center gap-3 rounded-2xl border border-tajibo/40 bg-tajibo/15 px-4 py-2">
+          <p className="text-[#ff9cc0]">{t('bagFailed')}</p>
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="inline-flex min-h-11 items-center rounded-xl px-4 font-semibold text-blanco transition-colors hover:bg-noche-2"
+          >
+            {t('retry')}
+          </button>
+        </div>
+      )}
       <div className="max-h-[50dvh] overflow-y-auto rounded-3xl bg-noche-2/40 p-3 lg:max-h-[24dvh] lg:p-4">
         <BagChips entries={chips} busy={busy} onToggle={toggle} />
       </div>

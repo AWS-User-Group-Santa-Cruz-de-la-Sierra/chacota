@@ -1,4 +1,4 @@
-import { LEAD_MS, SCENES, SCENE_MS, WINNER_MS, type BagEntry, type Entry, type OutStep, type Round, type RifaState } from './model';
+import { LEAD_MS, SCENES, SCENE_MS, WINNER_MS, type BagEntry, type Entry, type OutStep, type Round, type RifaState, type WinnersItem } from './model';
 
 /** Integer in [0, max). */
 export type RandomInt = (max: number) => number;
@@ -36,13 +36,24 @@ export function drawRound(pool: Entry[], state: RifaState, now: number, randomIn
   };
 }
 
+/** The winners list's entry for a round. */
+export function winOf(round: Round): WinnersItem {
+  return { kind: 'win', round: round.n, entryId: round.winner.entryId, name: round.winner.name };
+}
+
+/** The winners list after a reset: a mark, unless the list is empty or already ends with one. */
+export function withResetMark(winners: WinnersItem[]): WinnersItem[] {
+  const last = winners[winners.length - 1];
+  return last === undefined || last.kind === 'reset' ? winners : [...winners, { kind: 'reset' }];
+}
+
 export function applyRound(state: RifaState, round: Round): RifaState {
   const discarded = round.onOverboard === 'discard' ? [...state.discarded, ...round.out.map((o) => o.entryId)] : state.discarded;
   return {
     ...state,
     won: [...state.won, round.winner.entryId],
     discarded,
-    winners: [...state.winners, { kind: 'win', round: round.n, entryId: round.winner.entryId, name: round.winner.name }],
+    winners: [...state.winners, winOf(round)],
     rounds: round.n,
     round,
   };
@@ -55,9 +66,7 @@ export function setStatus(state: RifaState, entryId: string, to: 'bag' | 'out'):
 }
 
 export function resetBag(state: RifaState): RifaState {
-  const last = state.winners[state.winners.length - 1];
-  const winners = last === undefined || last.kind === 'reset' ? state.winners : [...state.winners, { kind: 'reset' as const }];
-  return { ...state, discarded: [], won: [], winners };
+  return { ...state, discarded: [], won: [], winners: withResetMark(state.winners) };
 }
 
 export function isPlaying(state: Pick<RifaState, 'round'>, now: number): boolean {

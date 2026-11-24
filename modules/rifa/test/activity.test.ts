@@ -1,7 +1,7 @@
 import { useTestDb } from '@chacota/db/testing';
 import { channels, LiveError, LiveService, MemoryPublisher } from '@chacota/live';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { LEAD_MS, type BagEntry, type RifaState, type Round } from '../src/model';
+import { LEAD_MS, type BagEntry, type RifaState, type Round, type WinnersItem } from '../src/model';
 import { createRifaActivity } from '../src/server';
 
 const db = useTestDb();
@@ -168,6 +168,24 @@ describe('Rifa activity', () => {
     expect(entry?.extra.won).toBe('1');
     expect(results.standings.find((e) => e.nickname !== entry?.nickname)?.extra.won).toBeNull();
     expect(results.details).toEqual({ winners: (await state(session.id)).winners });
+  });
+
+  it('bag() also says the rounds, the winners and the choice, so a presenter screen can hide a round it has not seen', async () => {
+    const session = await listRifa(['Ana', 'Beto', 'Cata', 'Dani'], 1);
+    await action(session.id, 'setOnOverboard', { value: 'discard' });
+    await live.advance(session.id);
+    const r1 = rounds(session.id)[0]!;
+    type Reply = { version: number; entries: BagEntry[]; rounds: number; round: Round | null; winners: WinnersItem[]; onOverboard: string };
+    const reply = await action<Reply>(session.id, 'bag');
+    expect(reply).toMatchObject({
+      version: await version(session.id),
+      rounds: 1,
+      round: r1,
+      onOverboard: 'discard',
+      winners: [{ kind: 'win', round: 1, entryId: r1.winner.entryId, name: r1.winner.name }],
+    });
+    expect(reply.entries.find((e) => e.id === r1.winner.entryId)!.status).toBe('won');
+    expect(reply.entries.find((e) => e.id === r1.out[0]!.entryId)!.status).toBe('out');
   });
 
   it('snapshot resumes mid-round and finalSnapshot keeps the winners', async () => {
