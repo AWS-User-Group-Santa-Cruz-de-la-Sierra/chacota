@@ -52,3 +52,10 @@ describe('race title', () => {
     expect(() => parseConfig({ meter: true, track: 'normal', rounds: 1, maxPlayers: 10, title: 'x'.repeat(81) })).toThrow(new LiveError('not_playable'));
   });
 });
+
+describe('animal names', () => {
+  it('every critter has the name people read (the same in Spanish and English)', async () => {
+    const { ANIMALS, ANIMAL_NAMES } = await import('../src/model');
+    expect(ANIMALS.map((a) => ANIMAL_NAMES[a])).toEqual(['Jochi', 'Tatú', 'Ñandú', 'Capibara']);
+  });
+});

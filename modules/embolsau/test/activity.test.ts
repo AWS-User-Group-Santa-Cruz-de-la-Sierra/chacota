@@ -89,7 +89,7 @@ describe('Embolsau activity', () => {
     const results = (await live.getResults(ended))!;
     expect(results.columns.map((c) => c.key)).toEqual(['bestTime', 'meters', 'falls', 'animal']);
     expect(results.standings.map((s) => s.nickname)).toEqual(['Ana', 'Beto', 'Cata']);
-    expect(results.standings[0]!.extra).toMatchObject({ animal: 'jochi', falls: 0 });
+    expect(results.standings[0]!.extra).toMatchObject({ animal: 'Jochi', falls: 0 }); // the name people read, not the id
     expect(results.standings[0]!.extra.bestTime).toBeGreaterThan(0);
     expect((results.details as { rounds: unknown[] }).rounds).toHaveLength(2);
   });

@@ -3,6 +3,7 @@ import { strip } from '@chacota/db';
 import { channels, LiveError, sessionKeys, shardOf, type ActivityServer, type LiveService, type Player, type Session } from '@chacota/live';
 import { embolsauManifest } from '../manifest';
 import {
+  ANIMAL_NAMES,
   ANIMALS,
   CLOSING_MS,
   DEFAULT_TITLE,
@@ -271,7 +272,7 @@ export const embolsauActivity: ActivityServer<EmbolsauConfig, EmbolsauState> = {
             bestTime: (p.data?.bestTimeMs as number | undefined) ?? null,
             meters: Math.round(Number(p.data?.meters ?? 0)),
             falls: Number(p.data?.falls ?? 0),
-            animal: (p.data?.animal as string | undefined) ?? null,
+            animal: ANIMALS.includes(p.data?.animal as Animal) ? ANIMAL_NAMES[p.data!.animal as Animal] : null,
           },
         ]),
       ),

@@ -3,6 +3,8 @@
  */
 export const ANIMALS = ['jochi', 'tatu', 'nandu', 'capibara'] as const;
 export type Animal = (typeof ANIMALS)[number];
+/** The names people read; the same in Spanish and English (used where there is no locale, like results). */
+export const ANIMAL_NAMES: Record<Animal, string> = { jochi: 'Jochi', tatu: 'Tatú', nandu: 'Ñandú', capibara: 'Capibara' };
 
 export type Track = 'short' | 'normal' | 'long';
 export const TRACKS: readonly Track[] = ['short', 'normal', 'long'];
