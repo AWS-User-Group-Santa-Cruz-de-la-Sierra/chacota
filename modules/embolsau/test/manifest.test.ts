@@ -35,3 +35,20 @@ describe('embolsau manifest and config', () => {
     expect(TRACK_METERS).toEqual({ short: 120, normal: 160, long: 240 });
   });
 });
+
+describe('race title', () => {
+  it('the session is titled with the race name from the form, trimmed', async () => {
+    const { embolsauActivity } = await import('../src/server');
+    expect(embolsauActivity.prepare({ meter: true, track: 'normal', rounds: 1, maxPlayers: 10, title: '  Gran carrera  ' }).title).toBe('Gran carrera');
+  });
+
+  it('without a name it is a sack race, never just "Embolsau" (the screen already shows the activity)', async () => {
+    const { embolsauActivity } = await import('../src/server');
+    expect(embolsauActivity.prepare({ meter: true, track: 'normal', rounds: 1, maxPlayers: 10 }).title).toBe('Carrera de embolsados');
+    expect(embolsauActivity.prepare({ meter: true, track: 'normal', rounds: 1, maxPlayers: 10, title: '   ' }).title).toBe('Carrera de embolsados');
+  });
+
+  it('a name longer than 80 characters is refused', () => {
+    expect(() => parseConfig({ meter: true, track: 'normal', rounds: 1, maxPlayers: 10, title: 'x'.repeat(81) })).toThrow(new LiveError('not_playable'));
+  });
+});

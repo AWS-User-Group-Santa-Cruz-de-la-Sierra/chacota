@@ -24,6 +24,7 @@ export function NewRaceForm({ slug }: { slug: string }) {
           track: form.get('track') as Track,
           rounds: Number(form.get('rounds')) as EmbolsauConfig['rounds'],
           maxPlayers: Number(form.get('maxPlayers')),
+          title: String(form.get('title') ?? ''),
         };
         startTransition(async () => {
           setError(null);
@@ -33,6 +34,7 @@ export function NewRaceForm({ slug }: { slug: string }) {
       }}
     >
       <h3 className="font-display text-xl font-bold">{t('title')}</h3>
+      <Field label={t('name')} name="title" defaultValue={t('defaultName')} maxLength={80} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Select label={t('meter')} name="meter" defaultValue="on">
           <option value="on">{t('meterOn')}</option>

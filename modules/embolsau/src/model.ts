@@ -21,7 +21,12 @@ export interface EmbolsauConfig {
   track: Track;
   rounds: 1 | 2 | 3;
   maxPlayers: number;
+  /** The race's name, shown under the activity in the lobby and in the history. */
+  title?: string;
 }
+
+/** The session title when the form leaves the name empty. */
+export const DEFAULT_TITLE = 'Carrera de embolsados';
 
 export type Phase = 'picking' | 'countdown' | 'racing' | 'closing' | 'roundResults';
 

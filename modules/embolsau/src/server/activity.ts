@@ -5,6 +5,7 @@ import { embolsauManifest } from '../manifest';
 import {
   ANIMALS,
   CLOSING_MS,
+  DEFAULT_TITLE,
   COUNTDOWN_MS,
   PICK_MS,
   PODIUM_FINISHERS,
@@ -202,7 +203,7 @@ export const embolsauActivity: ActivityServer<EmbolsauConfig, EmbolsauState> = {
   prepare(content) {
     const config = parseConfig(content);
     return {
-      title: 'Embolsau',
+      title: config.title?.trim() || DEFAULT_TITLE,
       state: { config, phase: null, round: 0, phaseEndsAt: null, raceStartedAt: null },
       maxPlayers: config.maxPlayers,
     };

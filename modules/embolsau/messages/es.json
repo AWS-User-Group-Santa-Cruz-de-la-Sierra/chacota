@@ -20,7 +20,9 @@
     "maxPlayersHint": "Hasta 100.",
     "start": "Empezar carrera",
     "starting": "Preparando…",
-    "hostOnly": "Solo quienes pueden presentar arman carreras."
+    "hostOnly": "Solo quienes pueden presentar arman carreras.",
+    "name": "Nombre de la carrera",
+    "defaultName": "Carrera de embolsados"
   },
   "animals": {
     "jochi": "Jochi",

@@ -20,7 +20,9 @@
     "maxPlayersHint": "Up to 100.",
     "start": "Start race",
     "starting": "Getting ready…",
-    "hostOnly": "Only people who can present set up races."
+    "hostOnly": "Only people who can present set up races.",
+    "name": "Race name",
+    "defaultName": "Sack race"
   },
   "animals": {
     "jochi": "Jochi",
