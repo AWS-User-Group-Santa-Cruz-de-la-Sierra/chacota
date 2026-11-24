@@ -42,6 +42,13 @@ describe('participant API', () => {
     expect(await full.json()).toEqual({ error: 'session_full' });
   });
 
+  it('answers 404 when joining a session without phones', async () => {
+    const session = await live.createSession({ orgId: 'o', orgName: 'UG', hostUserId: 'h', module: 'echo', content: { rounds: 1, phones: false } });
+    const res = await post('/join', { pin: session.pin, nickname: 'Ana' });
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: 'session_not_found' });
+  });
+
   it('joins, mounts each activity under /m/<id> and serves the snapshot', async () => {
     const session = await live.createSession({ orgId: 'o', orgName: 'O', hostUserId: 'h', module: 'echo', content: { rounds: 1 } });
     const joined = await post('/join', { pin: session.pin, nickname: 'Ana' });

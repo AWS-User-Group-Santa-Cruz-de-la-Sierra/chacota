@@ -104,7 +104,7 @@ export class LiveService {
     content: unknown;
   }): Promise<Session> {
     const activity = this.requireActivity(input.module);
-    const { title, state, maxPlayers } = activity.prepare(input.content);
+    const { title, state, maxPlayers, phones } = activity.prepare(input.content);
 
     for (let attempt = 0; attempt < 10; attempt++) {
       const session: Session = {
@@ -117,10 +117,11 @@ export class LiveService {
         orgName: input.orgName,
         primaryColor: input.primaryColor,
         logoKey: input.logoKey,
-        status: 'lobby',
+        status: phones === false ? 'running' : 'lobby',
         version: 1,
         playerCount: 0,
         ...(maxPlayers !== undefined ? { maxPlayers } : {}),
+        ...(phones === false ? { phones } : {}),
         createdAt: new Date(this.now()).toISOString(),
         state,
       };
@@ -141,7 +142,7 @@ export class LiveService {
               {
                 Put: {
                   TableName: this.db.tableName,
-                  Item: { ...k.session(session.id), ...session, gsi1pk: k.orgSessions(session.orgId), gsi1sk: session.createdAt },
+                  Item: { ...k.session(session.id), ...session, gsi1pk: k.orgSessions(session.orgId), gsi1sk: session.createdAt, ...(phones === false ? { ttl: this.ttl() } : {}) },
                 },
               },
             ],
@@ -252,6 +253,7 @@ export class LiveService {
     const sessionId = await this.findSessionIdByPin(pin);
     const session = sessionId && (await this.getSession(sessionId));
     if (!session) throw new LiveError('session_not_found');
+    if (session.phones === false) throw new LiveError('session_not_found');
     if (session.status === 'ended') throw new LiveError('session_ended');
 
     // Reserve the place first, with a plain atomic ADD: hundreds of players join at once, and
@@ -387,7 +389,11 @@ export class LiveService {
         version: session.version,
       },
       player: player && { id: player.id, nickname: player.nickname, score: player.score },
-      module: activity && session.status !== 'ended' ? await activity.snapshot(this, session, playerId) : {},
+      module: !activity
+        ? {}
+        : session.status !== 'ended'
+          ? await activity.snapshot(this, session, playerId)
+          : ((await activity.finalSnapshot?.(this, session, playerId)) ?? {}),
       serverNow: this.now(),
     };
   }

@@ -19,6 +19,8 @@ export interface Session<TState = unknown> {
   playerCount: number;
   /** Set by the activity; joining past it fails with session_full. */
   maxPlayers?: number;
+  /** Set by the activity: no lobby, nobody can join, and the record expires with the live data. */
+  phones?: false;
   createdAt: string;
   endedAt?: string;
   /** Reserved for rooms that chain activities under one PIN. Always undefined for now. */

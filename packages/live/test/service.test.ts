@@ -1,6 +1,7 @@
 import { useTestDb } from '@chacota/db/testing';
+import { GetCommand } from '@aws-sdk/lib-dynamodb';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { LiveError, LiveService, MemoryPublisher, playerCode } from '../src';
+import { LiveError, LiveService, MemoryPublisher, playerCode, sessionKeys } from '../src';
 import { echoActivity } from '../src/testing/echo-activity';
 
 const db = useTestDb();
@@ -208,4 +209,40 @@ describe('concurrency', () => {
     expect(results!.standings).toHaveLength(n);
     expect(new Set(results!.standings.map((r) => r.nickname)).size).toBe(n);
   }, 60_000);
+});
+
+describe('sessions without phones', () => {
+  const create = (content: { rounds: number; phones?: false }) =>
+    live.createSession({ orgId: 'org1', orgName: 'UG', hostUserId: 'h', module: 'echo', content });
+  const item = async (id: string) =>
+    (await db().doc.send(new GetCommand({ TableName: db().tableName, Key: sessionKeys.session(id) }))).Item!;
+
+  it('a session without phones starts running, refuses joins and expires', async () => {
+    const s = await create({ rounds: 1, phones: false });
+    expect(s.status).toBe('running');
+    expect((await item(s.id)).ttl).toBeTypeOf('number');
+    await expect(live.join(s.pin, 'Ana')).rejects.toThrow(new LiveError('session_not_found'));
+    expect((await live.getSession(s.id))!.playerCount).toBe(0);
+  });
+
+  it('sessions keep their lobby and never expire by default', async () => {
+    const s = await create({ rounds: 1 });
+    expect(s.status).toBe('lobby');
+    expect((await item(s.id)).ttl).toBeUndefined();
+  });
+
+  it('an ended session returns the activity final snapshot', async () => {
+    const s = await create({ rounds: 1, phones: false });
+    await live.end(s.id);
+    expect((await live.snapshot(s.id)).module).toEqual({ rounds: 0 });
+  });
+
+  it('an ended session without finalSnapshot returns an empty module', async () => {
+    const bare = new LiveService(db(), publisher, [{ ...echoActivity, finalSnapshot: undefined }], { tokenSecret: 'test-secret', now: () => clock });
+    const s = await bare.createSession({ orgId: 'org1', orgName: 'UG', hostUserId: 'h', module: 'echo', content: { rounds: 1 } });
+    await bare.join(s.pin, 'Ana');
+    await bare.advance(s.id);
+    await bare.end(s.id);
+    expect((await bare.snapshot(s.id)).module).toEqual({});
+  });
 });
