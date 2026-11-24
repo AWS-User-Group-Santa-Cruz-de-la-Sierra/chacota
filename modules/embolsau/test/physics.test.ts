@@ -29,8 +29,8 @@ describe('physics', () => {
     expect(r.downUntil).toBeGreaterThan(1_500);
   });
 
-  it('never falls in the green zone, whatever the luck', () => {
-    const r = simulate(startRunner(0), every(50, 200), 10_000, 10_000, always);
+  it('standing still never falls, whatever the luck', () => {
+    const r = simulate(startRunner(0), [], 10_000, 10_000, always);
     expect(r.falls).toBe(0);
   });
 
@@ -51,12 +51,33 @@ describe('physics', () => {
     expect(twice.meters).toBeCloseTo(once.meters, 6);
   });
 
-  it('risk is zero up to the safe speed and grows past it', () => {
-    expect(tripRatePerSec(PHYSICS.safeSpeed)).toBe(0);
-    expect(tripRatePerSec(PHYSICS.safeSpeed + 2)).toBeGreaterThan(tripRatePerSec(PHYSICS.safeSpeed + 1));
+  it('chance of falling within one second at each speed, as agreed', () => {
+    const perSecond = (speed: number) => 1 - Math.exp(-tripRatePerSec(speed));
+    expect(perSecond(0)).toBe(0); // standing still
+    expect(perSecond(5)).toBeCloseTo(0.02, 2); // green
+    expect(perSecond(8)).toBeCloseTo(0.02, 2);
+    expect(perSecond(8.5)).toBeCloseTo(0.19, 2); // yellow
+    expect(perSecond(9)).toBeCloseTo(0.23, 2);
+    expect(perSecond(9.5)).toBeCloseTo(0.26, 2);
+    expect(perSecond(10)).toBeCloseTo(0.5, 2); // red
+    expect(perSecond(11)).toBeCloseTo(0.63, 2);
+    expect(perSecond(12)).toBeCloseTo(0.85, 2);
     expect(zone(PHYSICS.safeSpeed)).toBe('green');
     expect(zone(PHYSICS.safeSpeed + 0.5)).toBe('yellow');
     expect(zone(PHYSICS.redSpeed)).toBe('red');
+  });
+
+  it('even calm tapping in the green can trip, about 2 % of the seconds', () => {
+    let seconds = 0;
+    let falls = 0;
+    const rng = seeded(42);
+    for (let run = 0; run < 200; run++) {
+      const r = simulate(startRunner(0), every(50, 200), 10_000, 10_000, rng);
+      falls += r.falls;
+      seconds += 10;
+    }
+    expect(falls / seconds).toBeGreaterThan(0.01);
+    expect(falls / seconds).toBeLessThan(0.035);
   });
 
   it('limitTaps keeps at most 12 in any second', () => {

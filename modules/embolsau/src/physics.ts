@@ -13,8 +13,17 @@ export const PHYSICS = {
   safeSpeed: 8,
   /** From this speed on the risk is high (red); between both, yellow. */
   redSpeed: 10,
-  /** Trips per second = tripK · (speed − safeSpeed)². */
-  tripK: 0.08,
+  /**
+   * Trips per second in each zone (chance within one second = 1 − e^(−rate)):
+   * green ≈ 2 % once you're moving; yellow 19–26 %; red 50 % at the edge, 63 % at 11 m/s, 85 % at 12.
+   */
+  greenRate: 0.0202,
+  /** Below this speed (m/s) nobody trips: standing still or barely moving. */
+  movingSpeed: 1,
+  yellowBase: 0.17,
+  yellowSlope: 0.09,
+  redBase: 0.7,
+  redK: 0.3,
   fallMs: 1200,
   fallJitterMs: 600,
   maxTapsPerSec: 12,
@@ -44,8 +53,11 @@ export function zone(speed: number): Zone {
 }
 
 export function tripRatePerSec(speed: number): number {
-  const over = speed - PHYSICS.safeSpeed;
-  return over > 0 ? PHYSICS.tripK * over * over : 0;
+  if (speed < PHYSICS.movingSpeed) return 0;
+  if (speed <= PHYSICS.safeSpeed) return PHYSICS.greenRate;
+  if (speed < PHYSICS.redSpeed) return PHYSICS.yellowBase + PHYSICS.yellowSlope * (speed - PHYSICS.safeSpeed);
+  const over = speed - PHYSICS.redSpeed;
+  return PHYSICS.redBase + PHYSICS.redK * over * over;
 }
 
 /** Sorted taps, without those past `maxPerSec` in any 1000 ms window (a script tapping 50/s gains nothing). */

@@ -77,6 +77,10 @@ Las fases que dependen del tiempo (fin de la elección, de la cuenta regresiva y
 - El servidor valida los instantes contra su propio reloj: el lote no puede durar más que el tiempo real transcurrido desde el lote anterior (con un margen chico), los instantes van en orden y no se aceptan lotes repetidos ni del futuro. Con eso reproduce los toques en orden, integra la física y sortea las caídas. El celular informa qué hizo el dedo, y el servidor decide qué pasa.
 - Física: cada toque suma velocidad, la bolsa frena con el tiempo y la posición avanza.
 - **Tropiezo:** por encima de un umbral de velocidad, la probabilidad de caerse crece con lo que se pasa (zona amarilla: poco riesgo; zona roja: mucho). El sorteo se hace en el servidor con un generador aleatorio seguro. Caerse frena al jugador del todo durante algo más de un segundo, con algo de variación.
+  - Probabilidad de caerte si te quedás un segundo en cada zona, decidida por el maintainer:
+    - **Verde:** 2 %, en cuanto te movés. Quieto no te caés.
+    - **Amarillo:** de 19 % a 26 % (19 % a 8,5 m/s, 23 % a 9 m/s, 26 % a 9,5 m/s).
+    - **Rojo:** 50 % al entrar, 63 % a 11 m/s y 85 % a 12 m/s.
 - **Anti-trampa:** se limita la cantidad de toques por segundo que se aceptan (un valor humano, alrededor de 12). Con más que eso igual se cae, porque queda en rojo. *Decisión del diseñador:* un bot que toca a un ritmo justo y parejo no se detecta en esta versión. Los premios de un meetup son chicos, el medidor deja que cualquier persona apunte al mismo ritmo, y el código de 4 letras más la mirada del presentador ya sirven de control. Si hiciera falta, después se puede detectar un ritmo demasiado regular a partir de los instantes de cada toque.
 - La función de física y de riesgo es pura y se comparte entre el servidor (que decide) y el celular (que solo la usa para dibujar el medidor). Las constantes se ajustan jugando.
 - Cada jugador tiene un registro propio en su partición con posición, velocidad, `downUntil`, caídas, `finishedAt` y animalito. Lo escribe solo su propio `push`, así que no hay choques.
