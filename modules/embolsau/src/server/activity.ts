@@ -87,14 +87,26 @@ async function lineUp(live: LiveService, s: S, round: number, raceStartedAt: num
 async function startCountdown(live: LiveService, s: S, round: number): Promise<S> {
   const raceStartedAt = live.now() + COUNTDOWN_MS;
   await lineUp(live, s, round, raceStartedAt);
-  return moveTo(live, s, 'countdown', { round, phaseEndsAt: raceStartedAt, raceStartedAt });
+  return moveTo(live, s, 'countdown', { round, phaseEndsAt: raceStartedAt, raceStartedAt, closedAt: null });
 }
 
 const eligibleOf = (players: Player[], s: S) => players.filter((p) => p.joinedAt <= s.state.raceStartedAt!);
 
-async function closeRound(live: LiveService, s: S): Promise<S> {
+/**
+ * The race is over: taps stop counting and the final positions stay on the big screen until the
+ * presenter asks for the results (closeRound).
+ */
+async function finishRace(live: LiveService, s: S): Promise<S> {
   const closedAt = Math.min(live.now(), roundCutoff(s.state));
-  // The transition is the lock: only one caller (tick or button) gets past it and adds the points.
+  const finished = await moveTo(live, s, 'finished', { phaseEndsAt: null, closedAt });
+  // Where everybody ended up, so the screen settles on it.
+  await publishStandings(live, finished, closedAt, true);
+  return finished;
+}
+
+async function closeRound(live: LiveService, s: S): Promise<S> {
+  const closedAt = s.state.closedAt ?? Math.min(live.now(), roundCutoff(s.state));
+  // The transition is the lock: only one press of the button gets past it and adds the points.
   const updated = await live.transition(s, { state: { ...s.state, phase: 'roundResults', phaseEndsAt: null } });
   const [runners, players] = await Promise.all([listRunners(live, s.id, s.state.round), live.listPlayers(s.id)]);
   const trackMeters = TRACK_METERS[s.state.config.track];
@@ -149,7 +161,7 @@ async function publishPicks(live: LiveService, s: S): Promise<void> {
 }
 
 /** Ranks the runners at `now`, tells the presenter's screen, and stores each place for the phones. */
-async function publishStandings(live: LiveService, s: S, now: number): Promise<StoredRunner[]> {
+async function publishStandings(live: LiveService, s: S, now: number, final = false): Promise<StoredRunner[]> {
   const trackMeters = TRACK_METERS[s.state.config.track];
   const runners = sortRunners((await listRunners(live, s.id, s.state.round)).map((r) => project(r, now, trackMeters)));
   const places = Object.fromEntries(runners.map((r, i) => [r.playerId, i + 1]));
@@ -167,7 +179,8 @@ async function publishStandings(live: LiveService, s: S, now: number): Promise<S
           animal: r.animal,
           bag: r.bag,
           meters: r.meters,
-          speed: r.speed,
+          // The final positions stand still: the screen doesn't glide anyone past where they stopped.
+          speed: final ? 0 : r.speed,
           down: now < r.downUntil,
           place: i + 1,
           finished: r.finishedAt !== null,
@@ -181,14 +194,14 @@ async function publishStandings(live: LiveService, s: S, now: number): Promise<S
 
 async function race(live: LiveService, s: S): Promise<S> {
   const now = live.now();
-  if (now >= roundCutoff(s.state)) return closeRound(live, s);
+  if (now >= roundCutoff(s.state)) return finishRace(live, s);
   const runners = await publishStandings(live, s, now);
 
   const finished = runners.filter((r) => r.finishedAt !== null).length;
   if (finished === 0) return s;
   const eligible = eligibleOf(await live.listPlayers(s.id), s).length;
   // Everybody is in: no need to wait for the rest of the closing.
-  if (finished >= eligible) return closeRound(live, s);
+  if (finished >= eligible) return finishRace(live, s);
   if (s.state.phase === 'racing' && finished >= PODIUM_FINISHERS) return moveTo(live, s, 'closing', { phaseEndsAt: now + CLOSING_MS });
   return s;
 }
@@ -210,7 +223,7 @@ async function tick(live: LiveService, session: S): Promise<{ phase: Phase | nul
     } else if (phase === 'racing') {
       s = await race(live, s);
     } else if (phase === 'closing') {
-      s = phaseEndsAt !== null && now >= phaseEndsAt ? await closeRound(live, s) : await race(live, s);
+      s = phaseEndsAt !== null && now >= phaseEndsAt ? await finishRace(live, s) : await race(live, s);
     }
   } catch (error) {
     // Another tick or the presenter's button moved the session first: nothing to do.
@@ -250,6 +263,8 @@ export const embolsauActivity: ActivityServer<EmbolsauConfig, EmbolsauState> = {
         return s;
       case 'racing':
       case 'closing':
+        return finishRace(live, s);
+      case 'finished':
         return closeRound(live, s);
       case 'roundResults':
         return s.state.round < s.state.config.rounds ? startCountdown(live, s, s.state.round + 1) : live.end<EmbolsauState>(s.id);

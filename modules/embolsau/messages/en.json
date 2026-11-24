@@ -36,7 +36,8 @@
       "countdown": "Get ready!",
       "racing": "Run!",
       "closing": "Last seconds!",
-      "roundResults": "Race results"
+      "roundResults": "Race results",
+      "finished": "The race is over!"
     },
     "animals": {
       "jochi": "Jochi",
@@ -52,7 +53,8 @@
       "starting": "Starting…",
       "endRound": "End race",
       "nextRound": "Next race",
-      "podium": "Show podium"
+      "podium": "Show podium",
+      "results": "See results"
     },
     "roundTitle": "Race {round}",
     "table": {
@@ -99,6 +101,7 @@
       "green": "Easy",
       "yellow": "Careful",
       "red": "You'll trip!"
-    }
+    },
+    "raceOver": "The race is over!"
   }
 }
