@@ -1,12 +1,13 @@
 import type { Animal } from '../model';
 import { BAGS } from './art';
+import { feetOf } from './sprite-feet';
 import { behindCount, cameraX, interpolate, laneOf, VIEW_METERS, type RunnerView } from './camera';
 
 /** The drawing works in a 1280×720 frame; the canvas scales it to its real size. */
 export const FRAME = { width: 1280, height: 720 };
 /** Base sprite size, chosen with the mockups (about 75 m in view). */
 const SIZE = 28;
-/** The square picture is this many times SIZE wide, and its feet are this far down it. */
+/** The square picture is this many times SIZE wide; FEET is where its feet are until it is measured. */
 const ART_SCALE = 3;
 const FEET = 0.96;
 
@@ -80,7 +81,8 @@ export function drawRace(
     // The critter with its sack; the fallen picture is already drawn lying down.
     const img = r.down ? sprites[r.animal].down : sprites[r.animal].run;
     const box = s * ART_SCALE;
-    if (img.complete) ctx.drawImage(img, x - box / 2, y - hop - box * FEET, box, box);
+    const feet = feetOf(img, FEET);
+    if (img.complete) ctx.drawImage(img, x - box / 2, y - hop - box * feet, box, box);
     if (r.down) {
       ctx.fillStyle = COLORS.sol;
       ctx.font = `bold ${Math.round(s * 0.8)}px sans-serif`;
@@ -90,7 +92,7 @@ export function drawRace(
       ctx.fillStyle = COLORS.blanco;
       ctx.font = `bold ${Math.round(Math.max(16, s * 0.7))}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(r.nickname, x, y - hop - box * FEET - 4);
+      ctx.fillText(r.nickname, x, y - hop - box * feetOf(img, FEET) - 4);
       ctx.textAlign = 'left';
     }
   }
