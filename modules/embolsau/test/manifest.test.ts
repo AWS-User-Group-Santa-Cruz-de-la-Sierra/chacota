@@ -8,7 +8,7 @@ import { parseConfig } from '../src/server/config';
 describe('embolsau manifest and config', () => {
   it('reads white on the Embolsau color', () => {
     expect(contrastRatio(embolsauManifest.color, '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
-    expect(embolsauManifest).toMatchObject({ id: 'embolsau', status: 'experimental', usesPhones: true });
+    expect(embolsauManifest).toMatchObject({ id: 'embolsau', status: 'stable', usesPhones: true });
   });
 
   it('parseConfig enforces the hard cap of 100', () => {
