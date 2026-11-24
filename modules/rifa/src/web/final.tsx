@@ -17,6 +17,8 @@ export function RifaFinal({ snapshot }: { snapshot: Record<string, unknown> }) {
         <span aria-hidden="true">👑 </span>
         {t('title')}
       </h2>
+      {/* No winners at all means the final data could not be loaded, not a rifa without winners. */}
+      {!winners && <p className="text-2xl text-[#ff9cc0]">{t('failed')}</p>}
       {winners && wins === 0 && <p className="text-2xl text-niebla">{t('none')}</p>}
       {winners && wins > 0 && (
         <ol className={`grid w-full gap-3 text-left ${layout}`}>

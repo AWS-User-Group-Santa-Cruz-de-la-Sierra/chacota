@@ -65,13 +65,14 @@ export function applyHostEvent(d: HostData, e: RifaEvent): HostData {
 /**
  * Folds a `bag()` reply into the screen's data. The bag is the server's, plus the events that
  * arrived while the fetch was in flight (`missed`). A reply with a round this screen has not had an
- * event for yet (the event is still on its way) brings that round and its winner, so the result
- * stays hidden until its step, and the late event is skipped as already applied.
+ * event for yet (the event is still on its way) was read after every event this screen has, so it
+ * is taken as it is, with that round and its winner: the result stays hidden until its step, and
+ * the late event is skipped as already applied. Replaying older events over it would undo the
+ * round's marks. A hand change made right after the draw heals on the next fetch.
  */
 export function applyBagReply(d: HostData, reply: Pick<BagReply, 'entries' | 'rounds' | 'round' | 'winners'>, missed: RifaEvent[]): HostData {
-  const entries = missed.reduce(applyEntriesEvent, reply.entries);
-  if (reply.rounds > d.rounds) return { entries, winners: reply.winners, rounds: reply.rounds, round: reply.round };
-  return { ...d, entries };
+  if (reply.rounds > d.rounds) return { entries: reply.entries, winners: reply.winners, rounds: reply.rounds, round: reply.round };
+  return { ...d, entries: missed.reduce(applyEntriesEvent, reply.entries) };
 }
 
 /**

@@ -8,8 +8,10 @@
     "modes": { "list": "I type the names", "qr": "They sign up with the QR" },
     "overboard": "Overboard per round",
     "names": "One name per line",
-    "count": "{count, plural, =0 {No names yet} one {# name} other {# names}}. Enter at least 2.",
+    "count": "{count, plural, =0 {No names yet} one {# name} other {# names}}.",
+    "min": "Enter at least {min}.",
     "tooMany": "Too many names: the limit is {max}.",
+    "tooLong": "{count, plural, one {This name is longer than {max} characters: {names}. Shorten it to start.} other {These # names are longer than {max} characters: {names}. Shorten them to start.}}",
     "duplicates": "Some names are repeated: they count as separate tickets.",
     "start": "Start raffle",
     "starting": "Getting ready…",
@@ -45,6 +47,7 @@
   "final": {
     "title": "Winners",
     "none": "This raffle ended without winners.",
+    "failed": "Couldn't load the winners. Reload the page.",
     "round": "Round {round}",
     "reset": "Reset"
   },

@@ -2,7 +2,7 @@
 
 import type { HostScreenProps } from '@chacota/live/web';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import type { BagEntry, BagReply, HostSnapshot, OnOverboard, RifaEvent, Round } from '../model';
 import { stepAt } from '../timeline';
 import { BagChips } from './bag-chips';
@@ -59,11 +59,13 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Sort key that ignores case and accents and is the same on the server and in every browser. */
 const nameKey = (name: string) => name.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
-const byName = (a: BagEntry, b: BagEntry) => {
-  const x = nameKey(a.name);
-  const y = nameKey(b.name);
-  return x < y ? -1 : x > y ? 1 : a.id < b.id ? -1 : 1;
-};
+/** Alphabetical by `nameKey`, each key worked out once. */
+function byName(entries: BagEntry[]): BagEntry[] {
+  return entries
+    .map((entry) => ({ entry, key: nameKey(entry.name) }))
+    .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : a.entry.id < b.entry.id ? -1 : 1))
+    .map((x) => x.entry);
+}
 
 /** The short line over the stage, and what a screen reader hears, for the step playing now. */
 function useCaption(round: Round | null, now: number): { caption: string | null; announce: string } {
@@ -167,6 +169,9 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
           failures = 0;
           setBagFailed(false);
           setData((d) => applyBagReply(d, reply, missed));
+          // A reply with a round no event has brought yet is taken without the events that came
+          // meanwhile: one more fetch brings a hand change made right after the draw.
+          if (reply.rounds > latestRound.current) again.current = true;
           const current = reply.rounds >= latestRound.current;
           latestRound.current = Math.max(latestRound.current, reply.rounds);
           if (current && reply.onOverboard && toggles.current === toggled && saving.current === 0) setOnOverboard(reply.onOverboard);
@@ -244,9 +249,11 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
   // Until then time stands before the round: nothing of it is revealed, on the server or while hydrating.
   const now = ready ? clock.now() : Number.NEGATIVE_INFINITY;
   const playing = data.round !== null && now < data.round.endsAt;
-  const shown = visibleEntries(data.entries, data.round, now);
-  // QR players come in no useful order: alphabetical, so the presenter can find a name.
-  const chips = mode === 'qr' ? [...shown].sort(byName) : shown;
+  // QR players come in no useful order: alphabetical, so the presenter can find a name. Sorted only
+  // when the bag changes, not on each render (with 1000 players, every join renders again).
+  const ordered = useMemo(() => (mode === 'qr' ? byName(data.entries) : data.entries), [mode, data.entries]);
+  // Masking keeps the order, so the chips are the sorted bag as the audience may see it.
+  const shown = visibleEntries(ordered, data.round, now);
   const inBag = shown.filter((e) => e.status === 'bag').length;
   const winners = visibleWinners(data.winners, data.round, now);
   const advance = advanceState({ opened, round: data.round, inBag }, now);
@@ -309,7 +316,7 @@ export function RifaHost({ snapshot, clock, playerCount, subscribe, hostAction, 
         </div>
       )}
       <div className="max-h-[50dvh] overflow-y-auto rounded-3xl bg-noche-2/40 p-3 lg:max-h-[24dvh] lg:p-4">
-        <BagChips entries={chips} busy={busy} onToggle={toggle} />
+        <BagChips entries={shown} busy={busy} onToggle={toggle} />
       </div>
       <Controls
         onOverboard={onOverboard}

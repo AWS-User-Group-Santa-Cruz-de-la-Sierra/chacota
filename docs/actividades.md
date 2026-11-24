@@ -76,7 +76,7 @@ Reglas:
 - **Eventos:** llevan el prefijo de tu id, por ejemplo `{ type: 'ruleta.spin', ... }`. Los eventos `player_joined`, `started` y `ended` son de la plataforma.
 - **Puntaje:** el puntaje de cada jugador va en `player.score`. `live.addScore` suma puntos; para algo más complejo podés usar una transacción, como hace Tiluchi al responder. Los datos propios de cada jugador van en `player.data`.
 - **Tope de jugadores:** si `prepare` devuelve `maxPlayers`, la plataforma no deja entrar a nadie más cuando se llena (`session_full`, "Este juego ya está lleno"). Sin `maxPlayers` no hay tope.
-- **Sin celulares:** si `prepare` devuelve `phones: false`, la sesión nace en `running`, nadie puede unirse (`join` responde `session_not_found`) y el presentador no muestra PIN ni QR. Esas sesiones no guardan resultados, así que tampoco hay link "Resultados".
+- **Sin celulares:** si `prepare` devuelve `phones: false`, la sesión nace en `running`, nadie puede unirse (`join` responde `session_not_found`) y el presentador no muestra PIN ni QR. Esas sesiones no guardan resultados, así que tampoco hay link "Resultados". Además, su registro vence con los datos en vivo (48 h): pasado ese plazo, la sesión y su pantalla final ya no existen.
 - **Datos finales:** `finalSnapshot` es lo que ve `Final` (presentador) y `PlayFinal` (celular) cuando la sesión terminó. Llega como `snapshot().module` en vez de lo que devuelve `snapshot`.
 - **Terminar:** llamá a `live.end(session.id)`. La plataforma guarda los resultados, publica `ended` y muestra el podio (o tu `Final`, si la definiste). Las sesiones sin celulares no guardan resultados.
 - **Tiempos:** se miden con el reloj del servidor (`live.now()`), nunca con el del celular.

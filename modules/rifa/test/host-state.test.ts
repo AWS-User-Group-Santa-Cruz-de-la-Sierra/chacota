@@ -121,6 +121,22 @@ describe('applyBagReply', () => {
     expect(replied.winners).toBe(d.winners);
     expect(statusOf(replied.entries)).toMatchObject({ L0: 'won', L1: 'out', L3: 'out', L6: 'bag' });
   });
+
+  it('a reply with a newer round is newer than the events that arrived meanwhile: they are not replayed over it', () => {
+    const r1 = draw('return');
+    const d = applyHostEvent(empty, { type: 'rifa.round', round: r1 });
+    const reset: RifaEvent = { type: 'rifa.bag', reset: true };
+    // On the server: the reset, then round 2. The reply reads both; the reset event arrived during the fetch.
+    const afterReset = applyHostEvent(d, reset);
+    const r2 = draw('discard', 1);
+    const server = applyHostEvent(afterReset, { type: 'rifa.round', round: r2 });
+    expect(statusOf(server.entries)[r2.winner.entryId]).toBe('won');
+    const replied = applyBagReply(afterReset, { entries: server.entries, rounds: 2, round: r2, winners: server.winners }, [reset]);
+    expect(statusOf(replied.entries)[r2.winner.entryId]).toBe('won');
+    expect(replied).toEqual(server);
+    // The round's own event comes late: already applied.
+    expect(applyHostEvent(replied, { type: 'rifa.round', round: r2 })).toBe(replied);
+  });
 });
 
 describe('visibleEntries (no spoilers)', () => {

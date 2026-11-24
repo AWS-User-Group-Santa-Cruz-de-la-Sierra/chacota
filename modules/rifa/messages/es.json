@@ -8,8 +8,10 @@
     "modes": { "list": "Escribo los nombres", "qr": "Se anotan con el QR" },
     "overboard": "Al agua por ronda",
     "names": "Un nombre por línea",
-    "count": "{count, plural, =0 {Ningún nombre todavía} one {# nombre} other {# nombres}}. Escribí al menos 2.",
+    "count": "{count, plural, =0 {Ningún nombre todavía} one {# nombre} other {# nombres}}.",
+    "min": "Escribí al menos {min}.",
     "tooMany": "Hay demasiados nombres: el máximo es {max}.",
+    "tooLong": "{count, plural, one {Este nombre tiene más de {max} caracteres: {names}. Acortalo para poder empezar.} other {Estos # nombres tienen más de {max} caracteres: {names}. Acortalos para poder empezar.}}",
     "duplicates": "Hay nombres repetidos: cuentan como boletos separados.",
     "start": "Empezar rifa",
     "starting": "Preparando…",
@@ -45,6 +47,7 @@
   "final": {
     "title": "Ganadores",
     "none": "Esta rifa terminó sin ganadores.",
+    "failed": "No se pudieron cargar los ganadores. Recargá la página.",
     "round": "Ronda {round}",
     "reset": "Reinicio"
   },

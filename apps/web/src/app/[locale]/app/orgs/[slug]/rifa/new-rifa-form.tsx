@@ -1,10 +1,18 @@
 'use client';
 
-import { DEFAULT_OVERBOARD, duplicateNames, MAX_NAMES, MAX_OVERBOARD, MIN_NAMES, parseNames, type Mode, type RifaConfig } from '@chacota/rifa/model';
+import { DEFAULT_OVERBOARD, duplicateNames, MAX_NAMES, MAX_OVERBOARD, MIN_NAMES, NAME_MAX, parseNames, type Mode, type RifaConfig } from '@chacota/rifa/model';
 import { useTranslations } from 'next-intl';
 import { useState, useTransition } from 'react';
 import { buttonClass, Field, Select } from '@/components/ui';
 import { startRifaAction } from './actions';
+
+/** How many of the too-long names the form lists, and how much of each it shows. */
+const LONG_SHOWN = 3;
+const LONG_CUT = NAME_MAX + 10;
+const cut = (name: string) => {
+  const chars = [...name];
+  return chars.length > LONG_CUT ? `${chars.slice(0, LONG_CUT - 1).join('')}…` : name;
+};
 
 /** "Nueva rifa": name, how people sign up, how many go overboard per round, then straight to the presenter's screen. */
 export function NewRifaForm({ slug }: { slug: string }) {
@@ -18,6 +26,9 @@ export function NewRifaForm({ slug }: { slug: string }) {
   const repeated = duplicateNames(names);
   const tooFew = mode === 'list' && names.length < MIN_NAMES;
   const tooMany = mode === 'list' && names.length > MAX_NAMES;
+  // `.length`, the same count the server checks.
+  const tooLong = mode === 'list' ? names.filter((n) => n.length > NAME_MAX) : [];
+  const longShown = tooLong.slice(0, LONG_SHOWN).map((n) => `“${cut(n)}”`).join(', ') + (tooLong.length > LONG_SHOWN ? ', …' : '');
 
   return (
     <form
@@ -69,11 +80,17 @@ export function NewRifaForm({ slug }: { slug: string }) {
             onChange={(e) => setText(e.target.value)}
             className="w-full rounded-xl border border-noche-3 bg-noche px-3 py-2 text-blanco placeholder:text-niebla/60 focus:border-morado-claro focus:outline-none"
           />
-          <p className="text-sm text-niebla" aria-live="polite">
-            {t('count', { count: names.length })}
-          </p>
-          {tooMany && <p className="text-sm text-[#ff9cc0]">{t('tooMany', { max: MAX_NAMES })}</p>}
-          {repeated.length > 0 && <p className="text-sm text-sol">{t('duplicates')}</p>}
+          <div className="flex flex-col gap-1.5 text-sm" aria-live="polite">
+            <p className="text-niebla">
+              {t('count', { count: names.length })}
+              {tooFew && ` ${t('min', { min: MIN_NAMES })}`}
+            </p>
+            {tooMany && <p className="text-[#ff9cc0]">{t('tooMany', { max: MAX_NAMES })}</p>}
+            {tooLong.length > 0 && (
+              <p className="break-words text-[#ff9cc0]">{t('tooLong', { count: tooLong.length, max: NAME_MAX, names: longShown })}</p>
+            )}
+            {repeated.length > 0 && <p className="text-sol">{t('duplicates')}</p>}
+          </div>
         </div>
       )}
       {error && (
@@ -82,7 +99,7 @@ export function NewRifaForm({ slug }: { slug: string }) {
         </p>
       )}
       <div>
-        <button type="submit" disabled={pending || tooFew || tooMany} className={buttonClass('primary')}>
+        <button type="submit" disabled={pending || tooFew || tooMany || tooLong.length > 0} className={buttonClass('primary')}>
           ▶ {pending ? t('starting') : t('start')}
         </button>
       </div>

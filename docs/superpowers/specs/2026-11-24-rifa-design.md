@@ -69,7 +69,7 @@ Al enviar, el admin va directo a `/host/<sessionId>`, como en las otras activida
 
 ### Flujo de una sesión
 
-- **Modo QR:** lobby de la plataforma (PIN, QR, apodos). El primer "Empezar" abre la rifa y muestra la bolsa, sin sortear todavía. Desde ahí, cada vez que el admin aprieta el botón principal ("Sortear ronda"), o usa el clicker o el teclado, se sortea una ronda.
+- **Modo QR:** lobby de la plataforma (PIN, QR, apodos). El "Empezar" del lobby abre la rifa y muestra la bolsa, sin sortear todavía. No hay un paso aparte para "Abrir la rifa": el mismo `advance` que saca a la sesión del lobby la abre. Desde ahí, cada vez que el admin aprieta el botón principal ("Sortear ronda"), o usa el clicker o el teclado, se sortea una ronda.
 - **Modo lista:** sin lobby. La pantalla del admin abre directo en la rifa con la bolsa llena.
 - Quien se une con el QR después de empezar entra directo a la bolsa *(confirmado)*.
 - El botón "Terminar" de la plataforma cierra la rifa y muestra la pantalla final con la lista de ganadores (ver "Cambio de plataforma").
@@ -79,20 +79,20 @@ Al enviar, el admin va directo a `/host/<sessionId>`, como en las otras activida
 Cada inscrito (jugador de la plataforma en el modo QR, o nombre de la lista en el modo lista) está en uno de tres estados: **en la bolsa**, **descartado** o **ganador**.
 
 - **Antes de disparar una ronda**, el admin elige qué pasa con los que salgan al agua: **descartarlos** o que **vuelvan a la bolsa**. El selector queda junto al botón principal y se guarda en el estado de la sesión, así el botón, el clicker y el teclado sortean con esa opción.
-- **Una ronda** se sortea entre los que están en la bolsa. Con `n` en la bolsa salen `k = min(X, n − 1)` al agua, uno por uno, y después 1 ganador. Esto cubre el caso de pocos en la bolsa: si quedan X o menos, todos menos uno van al agua y el último gana. Si queda uno solo, gana directo, solo con la animación del ganador. Con la bolsa vacía no se puede sortear: el botón se apaga y el servidor responde `empty_bag`.
+- **Una ronda** se sortea entre los que están en la bolsa. Con `n` en la bolsa salen `k = min(X, n − 1)` al agua, uno por uno, y después 1 ganador. Esto cubre el caso de pocos en la bolsa: si quedan X o menos, todos menos uno van al agua y el último gana. Si queda uno solo, gana directo, solo con la animación del ganador. Con la bolsa vacía no se puede sortear: el botón se apaga y, si igual llega un `advance`, no hace nada. No hay un error `empty_bag`.
 - **El ganador** sale de la bolsa y pasa a la lista de ganadores. No puede volver a ganar hasta un reinicio *(confirmado)*.
 - **A mano:** el admin puede descartar a cualquiera que esté en la bolsa y devolver a la bolsa a cualquier descartado.
 - **Reiniciar:** todos los inscritos vuelven a la bolsa, incluidos los descartados y los ganadores. La lista de ganadores **no se borra**: queda una marca de "reinicio" en la lista, porque es el único registro *(confirmado)*.
-- Mientras se reproduce una ronda no se puede sortear otra ni reiniciar: el servidor lo rechaza hasta que termina la reproducción, y el botón queda apagado *(decisión mía)*. Descartar y devolver sí se puede, y vale para la ronda siguiente.
+- Mientras se reproduce una ronda no se puede sortear otra ni reiniciar: hasta que termina la reproducción el servidor no hace nada (sin error), y el botón queda apagado *(decisión mía)*. Descartar y devolver sí se puede, y vale para la ronda siguiente.
 - La plataforma no se entera de cuándo alguien se va de la sala. Quien se fue sigue en la bolsa hasta que el admin lo descarte.
 - En el modo QR, una persona puede anotarse más de una vez (con otro apodo, desde una ventana privada) y cada ingreso cuenta como un boleto. Se acepta: el admin ve todos los apodos y descarta a mano los sospechosos. No hay control por dispositivo *(confirmado)*.
 
 ### Sorteo (servidor)
 
 - El sorteo vive en `ActivityServer.advance`, que es el botón principal. Lee la bolsa, sortea con `crypto.randomInt` los `k` al agua y el ganador, y elige al azar una de las cuatro escenas para cada al agua. Después guarda todo con `live.transition` (protegida por versión) y publica `rifa.round` con la secuencia y `startsAt = live.now() + 1500 ms`, para que el evento llegue a todos antes de arrancar.
-- Si el estado es "recién empezada" (el primer `advance` después del lobby), `advance` solo abre la rifa, sin sortear.
-- La duración de la reproducción la calcula el servidor con las duraciones fijas de cada escena (unos 6 a 8 s por cada al agua y unos 6 s el ganador). Así sabe hasta cuándo rechazar otra ronda (`roundEndsAt`).
-- Las acciones del admin son `hostActions`: `setOverboard` (descartar o volver), `discard`, `restore` y `reset`. Cada una transiciona con versión y devuelve la nueva `version`, así el botón principal queda sincronizado.
+- Si la rifa todavía no está abierta (el `advance` que saca a la sesión del lobby en el modo QR), `advance` solo la abre, sin sortear. En el modo lista la rifa nace abierta.
+- La duración de la reproducción la calcula el servidor con las duraciones fijas de cada escena (unos 6 a 8 s por cada al agua y unos 6 s el ganador). Así sabe hasta cuándo ignorar otra ronda (`round.endsAt`).
+- Las acciones del admin son `hostActions`: `setOnOverboard` (descartar o volver), `discard`, `restore` y `reset`. Cada una transiciona con versión y devuelve la nueva `version`, así el botón principal queda sincronizado. Hay una más, `bag()`, que solo lee (ver "Pantalla del admin").
 - Cada cambio de la bolsa publica un evento corto (`rifa.bag`) con los ids que cambiaron de estado, para que cada celular sepa si quedó descartado, devuelto o reiniciado.
 - El generador aleatorio se puede inyectar, para que los tests sean deterministas.
 
@@ -116,9 +116,9 @@ Validada con bocetos en esta conversación: la **opción B, "la bolsa a la vista
 
 - Escenario arriba y lista de ganadores por ronda a la derecha (con las marcas de reinicio).
 - Abajo, todos los inscritos como cartelitos. En la bolsa se ven normales, los descartados con 💧 y tachados, y los ganadores con 👑 en dorado. El estado no depende solo del color. Tocar un cartelito lo descarta o lo devuelve, y un ganador no se puede tocar. Con muchos inscritos, los cartelitos se achican y la zona se desplaza.
-- El selector "Al agua: descartar / vuelven a la bolsa" y "↺ Reiniciar" van en la pantalla de la actividad. "Terminar" y el botón principal son de la plataforma, y el texto del botón lo pone la actividad (`setAdvanceLabel`: "Abrir la rifa", "Sortear ronda", "Sorteando…").
+- El selector "Al agua: descartar / vuelven a la bolsa" y "↺ Reiniciar" van en la pantalla de la actividad. "Terminar" y el botón principal son de la plataforma, y el texto del botón lo pone la actividad (`setAdvanceLabel`: "Sortear ronda", "Sorteando…"). Con la bolsa vacía o una ronda en curso, la actividad lo apaga (`setAdvanceDisabled`).
 - El subtítulo del encabezado muestra el progreso (`setSubtitle`), por ejemplo "Ronda 3 · 23 en la bolsa".
-- En el modo QR, la lista de cartelitos se actualiza cuando entra alguien: cuando cambia `playerCount`, la pantalla vuelve a pedir la bolsa con una acción.
+- En el modo QR, la lista de cartelitos se actualiza cuando entra alguien: cuando cambia `playerCount`, la pantalla vuelve a pedir la bolsa con la acción `bag()`. Devuelve `{ version, entries, rounds, round, winners, onOverboard }`: con la ronda y los ganadores, si la respuesta llega antes que el evento `rifa.round`, la pantalla igual tapa el resultado hasta su paso y no adelanta nada de esa ronda.
 - En un celular (admin en el teléfono) se apila: escenario, ganadores, cartelitos y controles. Todo se maneja desde esta pantalla *(confirmado)*.
 - La pantalla del admin reproduce cada ronda a partir del evento `rifa.round`, igual que los celulares. Así, dos pestañas del admin (por ejemplo, el celular como control y la laptop en el proyector) muestran las mismas rondas. En el modo lista no se conecta ningún celular: el evento solo lo escucha la pantalla del admin, por la misma conexión en tiempo real que el marco de la plataforma ya usa en todas las sesiones *(decisión mía, después de la revisión: hoy el botón principal del marco no le devuelve a la actividad el resultado de `advance`)*.
 
@@ -129,6 +129,7 @@ Validada con bocetos en esta conversación: la **opción B, "la bolsa a la vista
 - Al que **se va al agua**: después de su escena se le inunda la pantalla. Sube el agua con olas y burbujas, su cartel queda flotando arriba y abajo dice "Volvés a la bolsa" o "Quedaste descartado", según lo que eligió el admin.
 - Al que **gana**: su nombre en neón (titila al prenderse), una corona dorada que cae y rebota, lluvia de oro y "¡Ganaste!".
 - Quien se reconecta a mitad de una ronda la retoma donde va, a partir de `startsAt` y del `snapshot`.
+- Justo después de un reinicio, el `snapshot` del celular trae `round: null`: el celular espera la ronda siguiente en vez de volver a la última, igual que uno que vio el reinicio en vivo.
 
 ### Escenas
 
@@ -151,11 +152,11 @@ Al apretar "Terminar", la pantalla grande muestra la lista de ganadores por rond
 ### Resultados
 
 - **Modo lista:** no hay jugadores de la plataforma, así que no se guarda nada (la plataforma no guarda sesiones sin jugadores).
-- **Modo QR:** la plataforma guarda los resultados de siempre. Para que tengan sentido, cada victoria suma 1 punto al jugador, y `results` agrega la columna "Ganó en" (por ejemplo "Ronda 1, Ronda 4") *(decisión mía; el historial no es un objetivo)*.
+- **Modo QR:** la plataforma guarda los resultados de siempre. Para que tengan sentido, cada victoria suma 1 punto al jugador, y `results` agrega la columna "Ganó en" con los números de ronda (por ejemplo "1, 4") *(decisión mía; el historial no es un objetivo)*.
 
 ### Datos
 
-- El estado de la sesión (`RifaState`) guarda el modo, X, la opción "descartar o volver", la fase (`null` antes de abrir, `ready`, `playing`), los ids descartados y ganadores, la lista de ganadores con sus marcas de reinicio y la ronda en curso (secuencia, `startsAt`, `roundEndsAt`). En el modo lista también guarda los nombres, cada uno con un id propio. Con 1000 inscritos esto entra con holgura en un ítem de DynamoDB.
+- El estado de la sesión (`RifaState`) guarda el modo, X, la opción "descartar o volver", si la rifa ya está abierta (`opened`), los ids descartados y ganadores, la lista de ganadores con sus marcas de reinicio, cuántas rondas van y la última ronda (secuencia, `startsAt` de cada paso, `endsAt`). En el modo lista también guarda los nombres, cada uno con un id propio. Con 1000 inscritos esto entra con holgura en un ítem de DynamoDB.
 - Todo cambio va por `live.transition`. Solo escribe el admin, así que no hay escrituras concurrentes de muchos celulares ni hace falta repartir en particiones.
 - **Cuánto duran los datos:**
   - **Modo lista:** el registro de la sesión, con los nombres escritos, se borra a las 48 h *(confirmado)*.
@@ -182,7 +183,7 @@ Va en su propio commit, con sus tests en `packages/live` y en `apps/web`, antes 
 ## Lo que queda para el builder
 
 - El mecanismo exacto del cambio de plataforma (nombres de campos y props, cómo llega la pantalla final a los datos después de terminar).
-- Cómo la actividad apaga el botón principal del marco (bolsa vacía o ronda en curso), y que un sorteo rechazado (`empty_bag`, ronda en curso) no rompa el botón sino que no haga nada. Hoy `advanceSessionAction` solo atrapa `invalid_transition` y `session_ended`.
+- Cómo la actividad apaga el botón principal del marco (bolsa vacía o ronda en curso), y que un sorteo que no corresponde (bolsa vacía, ronda en curso) no rompa el botón. Resuelto: `advance` no hace nada y devuelve la sesión como estaba, sin error, porque `advanceSessionAction` solo atrapa `invalid_transition` y `session_ended`.
 - El arte fino de las escenas y del duende a partir de los bocetos, y las duraciones exactas de cada escena.
 - Qué muestra el cartel con nombres muy largos y cuánto se achican los cartelitos con cientos de inscritos.
 - Los textos finales en español (voseo) y en inglés.
