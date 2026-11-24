@@ -262,9 +262,13 @@ describe('Embolsau activity', () => {
     await toRace(session.id);
     await runSeconds(session.id, 2, [{ p: ana, rate: 6 }], new Map());
     clock += ROUND_MAX_MS.short;
-    await Promise.allSettled([tick(session.id), tick(session.id), live.advance(session.id)]);
+    // The presenter's button sends the version its screen shows, so a press that arrives after a
+    // tick ended the race is refused instead of skipping the finished screen.
+    const racing = (await state(session.id)).version;
+    await Promise.allSettled([tick(session.id), tick(session.id), live.advance(session.id, racing)]);
     expect((await state(session.id)).state.phase).toBe('finished');
-    await Promise.allSettled([live.advance(session.id), live.advance(session.id)]);
+    const finished = (await state(session.id)).version;
+    await Promise.allSettled([live.advance(session.id, finished), live.advance(session.id, finished)]);
     expect(publisher.events.filter((e) => e.event.type === 'ended')).toHaveLength(1);
     expect(publisher.events.filter((e) => e.event.type === 'embolsau.roundResults')).toHaveLength(0);
     const player = (await live.getPlayer(session.id, ana.player.id))!;
