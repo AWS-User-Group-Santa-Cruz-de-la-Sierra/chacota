@@ -67,7 +67,7 @@ En `/app/orgs/<slug>/embolsau` hay un botón "Nueva carrera" con un formulario c
 2. El presentador da "Empezar" y empieza la etapa **Elegí tu animalito** (unos 15 s). Cada celular muestra el set de animalitos y la pantalla grande cuántos eligió cada uno. Al que no elige se le asigna uno al azar.
 3. **Cuenta regresiva** de 3-2-1 en la pantalla grande y en los celulares.
 4. **Carrera.** Termina cuando cruzan la meta los 3 primeros: ahí se abre una cuenta de 10 segundos y después se corta. Si nadie llega, hay un tiempo máximo (lo define el builder según el largo de la pista).
-5. **Resultado de la ronda:** tabla de posiciones de la ronda y del acumulado. El presentador da "Siguiente carrera" (vuelve al paso 3 con el mismo animalito) o, en la última ronda, la actividad llama a `live.end()` y la plataforma muestra el podio y el código de 4 letras.
+5. **Resultado de la ronda:** en las carreras intermedias, tabla de posiciones de la ronda y del acumulado; el presentador da "Siguiente carrera" (vuelve al paso 3 con el mismo animalito). **La última carrera (o la única) va directo al podio**, como la última pregunta de Tiluchi: una tabla antes le adelantaría el ganador al público. La ronda igual se guarda para el historial, y la plataforma muestra el podio y el código de 4 letras.
 
 Las fases que dependen del tiempo (fin de la elección, de la cuenta regresiva y de la ronda) las mueve `tick` cuando el reloj del servidor dice que ya pasaron, con `live.transition` protegida por versión. Los botones del presentador usan `advance`.
 

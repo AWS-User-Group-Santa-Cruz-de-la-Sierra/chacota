@@ -113,6 +113,9 @@ async function closeRound(live: LiveService, s: S): Promise<S> {
   await live.db.doc.send(
     new PutCommand({ TableName: live.db.tableName, Item: { pk: roundsPk(s.id), sk: roundSk(s.state.round), ...record, ttl: live.ttl() } }),
   );
+  // The last race goes straight to the podium, like Tiluchi's last question: a round ranking
+  // first would give the winner away. The round is still kept for the history.
+  if (s.state.round >= s.state.config.rounds) return live.end<EmbolsauState>(s.id);
   await live.publish(s.id, { type: 'embolsau.roundResults', rounds: s.state.config.rounds, ...record });
   return publishPhase(live, updated);
 }

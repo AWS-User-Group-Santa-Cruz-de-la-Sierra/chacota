@@ -1,6 +1,6 @@
 /**
  * An Embolsau race in Chrome: the "Nueva carrera" form, a full session (third phone refused),
- * picking critters, pushing at different paces, podium, verification code and the history columns.
+ * picking critters, pushing at different paces, straight to the podium, verification code and the history columns.
  * Needs the local services running (see e2e/README.md).
  */
 import { mkdirSync } from 'node:fs';
@@ -95,17 +95,13 @@ try {
   await shot(ana, '3-player-race');
   if (!/\d+°/.test((await ana.locator('body').textContent()) ?? '')) fail('The phone does not show its place during the race');
   step('the race runs and each phone shows its place');
-  await host.getByRole('heading', { name: 'Carrera 1' }).waitFor({ timeout: 45000 });
+  // The only (so last) race goes straight to the podium: no round ranking to spoil it.
+  await host.getByText('¡Felicidades!').waitFor({ timeout: 45000 });
   await stopTapping(ana);
   await stopTapping(beto);
-  await ana.getByText(/puntos/).waitFor({ timeout: 5000 });
-  await shot(host, '4-host-round');
-  await shot(ana, '4-player-round');
-  step('the round closed by itself: results on the big screen and points on the phone');
-
-  // Podium, code and history.
-  await host.getByRole('button', { name: 'Ver podio' }).click();
-  await host.getByText('¡Felicidades!').waitFor({ timeout: 8000 });
+  if (await host.getByRole('heading', { name: 'Carrera 1' }).count()) fail('A round ranking was shown before the podium');
+  await ana.locator('span.font-mono').waitFor({ timeout: 8000 });
+  step('the race closed by itself and went straight to the podium');
   const code = ((await ana.locator('span.font-mono').textContent()) ?? '').trim();
   if (!/^[A-Z2-9]{4}$/.test(code)) fail(`Bad player code ${code}`);
   await shot(host, '5-host-podium');
