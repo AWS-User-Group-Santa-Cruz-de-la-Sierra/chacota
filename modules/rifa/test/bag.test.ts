@@ -53,4 +53,21 @@ describe('bag', () => {
     expect(resetBag(z).winners).toEqual(z.winners);
     expect(resetBag(base).winners).toEqual([]);
   });
+
+  it('partial Fisher–Yates with non-trivial picks gives the exact order', () => {
+    // picks 2, 0, 1 → swaps at i + pick: [A,B,C,D] → [C,B,A,D] → same → [C,B,D,A]; scenes 3 (micro72), 0 (retrete)
+    const r = drawRound(entries, base, 0, seq(2, 0, 1, 3, 0))!;
+    expect(r.out.map((o) => o.name)).toEqual(['Cata', 'Beto']);
+    expect(r.winner.name).toBe('Dani');
+    expect(new Set([...r.out.map((o) => o.entryId), r.winner.entryId]).size).toBe(3);
+  });
+
+  it('chains with each scene duration (micro72 lasts 9 000 ms)', () => {
+    const r = drawRound(entries, base, 0, seq(2, 0, 1, 3, 0))!;
+    expect(r.out.map((o) => o.scene)).toEqual(['micro72', 'retrete']);
+    expect(r.out[0]!.startsAt).toBe(1_500);
+    expect(r.out[1]!.startsAt).toBe(10_500);
+    expect(r.winner.startsAt).toBe(17_500);
+    expect(r.endsAt).toBe(23_500);
+  });
 });

@@ -20,4 +20,12 @@ describe('timeline', () => {
     expect(stepAt(solo, solo.winner.startsAt)).toEqual({ kind: 'winner', elapsed: 0 });
     expect(stepAt(solo, 0).kind).toBe('waiting');
   });
+
+  it('stepAt follows uneven scene durations', () => {
+    const seq = (...xs: number[]) => { let i = 0; return (max: number) => xs[i++ % xs.length]! % max; };
+    const u = drawRound(entries, base, 0, seq(2, 0, 1, 3, 0))!;
+    expect(stepAt(u, 10_499)).toEqual({ kind: 'out', index: 0, elapsed: 8_999 });
+    expect(stepAt(u, 10_500)).toEqual({ kind: 'out', index: 1, elapsed: 0 });
+    expect(stepAt(u, 17_500)).toEqual({ kind: 'winner', elapsed: 0 });
+  });
 });

@@ -11,7 +11,7 @@ const bad = new LiveError('not_playable');
 describe('rifa manifest and config', () => {
   it('reads white on the rifa color', () => {
     expect(contrastRatio(rifaManifest.color, '#FFFFFF')).toBeGreaterThanOrEqual(4.5);
-    expect(rifaManifest).toMatchObject({ id: 'rifa', usesPhones: true });
+    expect(rifaManifest).toMatchObject({ id: 'rifa', status: 'experimental', color: '#C2185B', usesPhones: true });
   });
 
   it('parseConfig enforces names, overboard and title', () => {
