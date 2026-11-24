@@ -12,20 +12,21 @@ export const PHYSICS = {
   /** Up to this speed there is no risk (green). */
   safeSpeed: 8,
   /** From this speed on the risk is high (red); between both, yellow. */
-  redSpeed: 10,
+  redSpeed: 13,
   /**
-   * Trips per second in each zone (chance within one second = 1 − e^(−rate)):
-   * green ≈ 2 % once you're moving; yellow 19–26 %; red 50 % at the edge, 63 % at 11 m/s, 85 % at 12.
+   * Trips per second in each zone (chance within one second = 1 − e^(−rate)), tuned so that
+   * risk pays: green ≈ 2 % once moving; yellow 5 % → 15 % (the best bet on average); red 26 % at
+   * 13 m/s → 57 % at 16 (a gamble that can win or sink the race). Simulated with 2000 races per pace.
    */
   greenRate: 0.0202,
   /** Below this speed (m/s) nobody trips: standing still or barely moving. */
   movingSpeed: 1,
-  yellowBase: 0.17,
-  yellowSlope: 0.09,
-  redBase: 0.7,
-  redK: 0.3,
-  fallMs: 1200,
-  fallJitterMs: 600,
+  yellowBase: 0.04,
+  yellowSlope: 0.025,
+  redBase: 0.3,
+  redK: 0.06,
+  fallMs: 1000,
+  fallJitterMs: 400,
   maxTapsPerSec: 12,
 } as const;
 

@@ -10,9 +10,9 @@
     "meterOff": "Blind: guess the pace",
     "track": "Track length",
     "tracks": {
-      "short": "Short (about 20 s)",
-      "normal": "Normal (about 30 s)",
-      "long": "Long (about 45 s)"
+      "short": "Short (about 15 s)",
+      "normal": "Normal (about 20 s)",
+      "long": "Long (about 30 s)"
     },
     "rounds": "Races",
     "roundsValue": "{n, plural, one {# race} other {# races, scores add up}}",

@@ -6,8 +6,8 @@ export type Animal = (typeof ANIMALS)[number];
 
 export type Track = 'short' | 'normal' | 'long';
 export const TRACKS: readonly Track[] = ['short', 'normal', 'long'];
-export const TRACK_METERS: Record<Track, number> = { short: 160, normal: 240, long: 360 };
-export const ROUND_MAX_MS: Record<Track, number> = { short: 40_000, normal: 60_000, long: 90_000 };
+export const TRACK_METERS: Record<Track, number> = { short: 120, normal: 160, long: 240 };
+export const ROUND_MAX_MS: Record<Track, number> = { short: 30_000, normal: 40_000, long: 60_000 };
 
 export const PICK_MS = 15_000;
 export const COUNTDOWN_MS = 3_000;

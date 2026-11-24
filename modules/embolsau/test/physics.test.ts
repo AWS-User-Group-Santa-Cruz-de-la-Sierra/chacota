@@ -56,12 +56,14 @@ describe('physics', () => {
     expect(perSecond(0)).toBe(0); // standing still
     expect(perSecond(5)).toBeCloseTo(0.02, 2); // green
     expect(perSecond(8)).toBeCloseTo(0.02, 2);
-    expect(perSecond(8.5)).toBeCloseTo(0.19, 2); // yellow
-    expect(perSecond(9)).toBeCloseTo(0.23, 2);
-    expect(perSecond(9.5)).toBeCloseTo(0.26, 2);
-    expect(perSecond(10)).toBeCloseTo(0.5, 2); // red
-    expect(perSecond(11)).toBeCloseTo(0.63, 2);
-    expect(perSecond(12)).toBeCloseTo(0.85, 2);
+    expect(perSecond(8.5)).toBeCloseTo(0.051, 2); // yellow: a small risk…
+    expect(perSecond(10)).toBeCloseTo(0.086, 2);
+    expect(perSecond(12)).toBeCloseTo(0.131, 2); // …that grows toward the red
+    expect(perSecond(13)).toBeCloseTo(0.26, 2); // red
+    expect(perSecond(14)).toBeCloseTo(0.30, 2);
+    expect(perSecond(15)).toBeCloseTo(0.42, 2);
+    expect(perSecond(16)).toBeCloseTo(0.57, 2);
+    expect(PHYSICS.redSpeed).toBe(13);
     expect(zone(PHYSICS.safeSpeed)).toBe('green');
     expect(zone(PHYSICS.safeSpeed + 0.5)).toBe('yellow');
     expect(zone(PHYSICS.redSpeed)).toBe('red');

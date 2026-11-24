@@ -1,7 +1,7 @@
 import { useTestDb } from '@chacota/db/testing';
 import { channels, LiveError, LiveService, MemoryPublisher, type JoinResult } from '@chacota/live';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CLOSING_MS, COUNTDOWN_MS, PICK_MS, ROUND_MAX_MS, type EmbolsauConfig } from '../src/model';
+import { CLOSING_MS, COUNTDOWN_MS, PICK_MS, ROUND_MAX_MS, TRACK_METERS, type EmbolsauConfig } from '../src/model';
 import { embolsauActivity, pick, pointsFor, push } from '../src/server';
 import { never } from './helpers';
 
@@ -196,8 +196,8 @@ describe('Embolsau activity', () => {
     await Promise.allSettled([tick(session.id), tick(session.id), live.advance(session.id)]);
     expect(publisher.events.filter((e) => e.event.type === 'embolsau.roundResults')).toHaveLength(1);
     const player = (await live.getPlayer(session.id, ana.player.id))!;
-    // Alone and not finished: 300 × meters / 160, added once.
-    expect(player.score).toBe(pointsFor({ timeMs: null, meters: player.data!.meters as number }, { winnerMs: null, closedAtMs: ROUND_MAX_MS.short, trackMeters: 160 }));
+    // Alone and not finished: 300 × meters / track, added once.
+    expect(player.score).toBe(pointsFor({ timeMs: null, meters: player.data!.meters as number }, { winnerMs: null, closedAtMs: ROUND_MAX_MS.short, trackMeters: TRACK_METERS.short }));
   });
 
   it('pointsFor: 1000 to the winner, by time gap for finishers, by meters for the rest', () => {

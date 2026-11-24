@@ -10,9 +10,9 @@
     "meterOff": "A ciegas: hay que adivinar el ritmo",
     "track": "Largo de la pista",
     "tracks": {
-      "short": "Corta (unos 20 s)",
-      "normal": "Normal (unos 30 s)",
-      "long": "Larga (unos 45 s)"
+      "short": "Corta (unos 15 s)",
+      "normal": "Normal (unos 20 s)",
+      "long": "Larga (unos 30 s)"
     },
     "rounds": "Carreras",
     "roundsValue": "{n, plural, one {# carrera} other {# carreras con puntaje acumulado}}",

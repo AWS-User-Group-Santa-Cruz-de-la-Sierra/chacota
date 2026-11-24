@@ -2,7 +2,7 @@ import { contrastRatio } from '@chacota/core';
 import { LiveError } from '@chacota/live';
 import { describe, expect, it } from 'vitest';
 import { embolsauManifest } from '../src/manifest';
-import { bagOf, laneOf } from '../src/model';
+import { bagOf, laneOf, TRACK_METERS } from '../src/model';
 import { parseConfig } from '../src/server/config';
 
 describe('embolsau manifest and config', () => {
@@ -29,5 +29,9 @@ describe('embolsau manifest and config', () => {
     expect(laneOf('p1')).toBe(laneOf('p1'));
     expect(laneOf('p1')).toBeGreaterThanOrEqual(0);
     expect(laneOf('p1')).toBeLessThan(1);
+  });
+
+  it('tracks: 120, 160 and 240 m', () => {
+    expect(TRACK_METERS).toEqual({ short: 120, normal: 160, long: 240 });
   });
 });
