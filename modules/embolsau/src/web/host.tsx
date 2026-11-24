@@ -199,14 +199,14 @@ function RaceView({
     let frame = 0;
     const camera = { x: 0, at: 0 };
     const draw = () => {
-      // As big as fits in the space the frame leaves (width and height), keeping 16:9, so the
+      // The whole width of the space the frame leaves, getting shorter rather than smaller, so the
       // strip at the bottom never falls off the screen.
       const css = fitFrame(area.clientWidth, area.clientHeight);
       if (el.style.width !== `${css.width}px` || el.style.height !== `${css.height}px`) {
         el.style.width = `${css.width}px`;
         el.style.height = `${css.height}px`;
       }
-      // Draw at the canvas's real resolution, in the 1280×720 frame's coordinates.
+      // Draw at the canvas's real resolution, in the frame's coordinates (1280 units wide).
       const ratio = window.devicePixelRatio || 1;
       const width = Math.round(css.width * ratio);
       const height = Math.round(css.height * ratio);
@@ -214,11 +214,12 @@ function RaceView({
         el.width = width;
         el.height = height;
       }
-      ctx.setTransform(width / FRAME.width, 0, 0, height / FRAME.height, 0, 0);
+      ctx.setTransform(width / FRAME.width, 0, 0, height / css.frameHeight, 0, 0);
       const at = now();
       drawRace(ctx, {
         history: runners.current,
         camera,
+        height: css.frameHeight,
         now: at,
         trackMeters,
         closingLeftMs: closing.current === null ? null : Math.max(0, closing.current - at),

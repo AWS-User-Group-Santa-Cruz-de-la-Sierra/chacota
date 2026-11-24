@@ -6,11 +6,20 @@ import { behindCount, cameraX, laneOf, RENDER_DELAY_MS, sampleAt, smoothCamera, 
 /** The drawing works in a 1280×720 frame; the canvas scales it to its real size. */
 export const FRAME = { width: 1280, height: 720 };
 
-/** The largest 16:9 size (CSS px, whole) that fits in a `width` × `height` box. */
-export function fitFrame(width: number, height: number): { width: number; height: number } {
-  const w = Math.max(0, Math.floor(Math.min(width, (height * FRAME.width) / FRAME.height)));
-  return { width: w, height: Math.floor((w * FRAME.height) / FRAME.width) };
+/** The drawing gets no shorter than this (frame units): below it the track would be too thin. */
+export const MIN_FRAME_HEIGHT = 540;
+
+/**
+ * How the race fills a `width` × `height` box (CSS px). The drawing is always 1280 units wide; on a
+ * box wider than 16:9 it gets shorter instead of smaller (the track gives up some height, the
+ * critters keep their size), down to MIN_FRAME_HEIGHT; past that it shrinks to fit.
+ */
+export function fitFrame(width: number, height: number): { width: number; height: number; frameHeight: number } {
+  const frameHeight = width > 0 ? Math.max(MIN_FRAME_HEIGHT, Math.min(FRAME.height, (height * FRAME.width) / width)) : FRAME.height;
+  const scale = Math.max(0, Math.min(width / FRAME.width, height / frameHeight));
+  return { width: Math.round(FRAME.width * scale), height: Math.round(frameHeight * scale), frameHeight };
 }
+
 /** Base sprite size, chosen with the mockups (about 75 m in view). */
 const SIZE = 28;
 /** The square picture is this many times SIZE wide; FEET is where its feet are until it is measured. */
@@ -119,9 +128,12 @@ export function drawRace(
     labels: RaceLabels;
     /** Camera state kept between frames, so it follows smoothly. */
     camera: { x: number; at: number };
+    /** Height of the drawing in frame units (see fitFrame); 720 when left out. */
+    height?: number;
   },
 ) {
-  const { width: w, height: h } = FRAME;
+  const w = FRAME.width;
+  const h = input.height ?? FRAME.height;
   const { now, trackMeters, sprites, labels } = input;
   const runners = sampleAt(input.history, now - RENDER_DELAY_MS, trackMeters).map((r) => ({ ...r, meters: drawnMeters(r, trackMeters) }));
   ctx.clearRect(0, 0, w, h);
