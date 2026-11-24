@@ -4,6 +4,7 @@ import { RifaHost } from './host';
 import { RifaIcon } from './icon';
 import { RifaLobbySummary } from './lobby-summary';
 import { RifaPlay } from './play';
+import { RifaPlayFinal } from './play-final';
 
 export const rifaWeb: ActivityWeb = {
   id: 'rifa',
@@ -12,6 +13,7 @@ export const rifaWeb: ActivityWeb = {
   Play: RifaPlay,
   LobbySummary: RifaLobbySummary,
   Final: RifaFinal,
+  PlayFinal: RifaPlayFinal,
 };
 
 export { RifaIcon };

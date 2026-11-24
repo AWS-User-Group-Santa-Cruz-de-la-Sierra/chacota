@@ -47,7 +47,13 @@
     "reset": "Reset"
   },
   "play": {
-    "status": { "bag": "You are in the bag. Good luck!", "out": "You went overboard.", "won": "You won!" }
+    "idle": { "bag": "You are in the bag", "out": "You were discarded", "won": "You won round {round}!" },
+    "hint": { "bag": "Good luck! Watch the screen.", "out": "The raffle goes on on the screen.", "won": "The raffle goes on on the screen." },
+    "round": "Round {round}",
+    "announce": { "out": "{name} goes overboard.", "winner": "{name} wins!" },
+    "flood": { "oops": "Oops!", "title": "You went overboard", "return": "You go back in the bag", "discard": "You were discarded" },
+    "won": { "title": "You won!", "announce": "You won round {round}!" },
+    "final": "{count, plural, one {You won round {rounds}} other {You won rounds {rounds}}}"
   },
   "scenes": {
     "alAgua": "Overboard!",

@@ -47,7 +47,13 @@
     "reset": "Reinicio"
   },
   "play": {
-    "status": { "bag": "Estás en la bolsa. ¡Suerte!", "out": "Te fuiste al agua.", "won": "¡Ganaste!" }
+    "idle": { "bag": "Estás en la bolsa", "out": "Quedaste descartado", "won": "¡Ganaste en la ronda {round}!" },
+    "hint": { "bag": "¡Suerte! Mirá la pantalla.", "out": "La rifa sigue en la pantalla.", "won": "La rifa sigue en la pantalla." },
+    "round": "Ronda {round}",
+    "announce": { "out": "{name} se va al agua.", "winner": "¡Ganó {name}!" },
+    "flood": { "oops": "¡Uy!", "title": "Te fuiste al agua", "return": "Volvés a la bolsa", "discard": "Quedaste descartado" },
+    "won": { "title": "¡Ganaste!", "announce": "¡Ganaste en la ronda {round}!" },
+    "final": "{count, plural, one {Ganaste en la ronda {rounds}} other {Ganaste en las rondas {rounds}}}"
   },
   "scenes": {
     "alAgua": "¡Al agua!",
