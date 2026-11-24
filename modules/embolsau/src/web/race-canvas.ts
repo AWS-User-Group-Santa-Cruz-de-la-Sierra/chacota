@@ -1,6 +1,6 @@
 import type { Animal } from '../model';
 import { BAGS } from './art';
-import { feetOf } from './sprite-feet';
+import { feetOf, headOf } from './sprite-feet';
 import { behindCount, cameraX, laneOf, RENDER_DELAY_MS, sampleAt, smoothCamera, VIEW_METERS, type Snapshot } from './camera';
 
 /** The drawing works in a 1280×720 frame; the canvas scales it to its real size. */
@@ -9,6 +9,44 @@ export const FRAME = { width: 1280, height: 720 };
 const SIZE = 28;
 /** The square picture is this many times SIZE wide; FEET is where its feet are until it is measured. */
 const ART_SCALE = 3;
+/** Runners whose names show over their heads. */
+const NAMED_PLACES = 10;
+const PODIUM = 3;
+
+/** Whether a place shows its name over the runner, and whether it is a podium place. */
+export function nameTag(place: number): { podium: boolean } | null {
+  return place <= NAMED_PLACES ? { podium: place <= PODIUM } : null;
+}
+
+/** A name tag's box: (x, y) is its top-left corner. */
+export interface TagBox {
+  place: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+const overlaps = (a: TagBox, b: TagBox) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+/**
+ * Lays out name tags so they don't cover each other: better places first; a tag that would land
+ * on another moves up a notch (twice at most); if there is still no room, a podium tag shows anyway
+ * and any other is left out for this frame.
+ */
+export function placeTags(tags: TagBox[]): TagBox[] {
+  const placed: TagBox[] = [];
+  for (const tag of [...tags].sort((a, b) => a.place - b.place)) {
+    let spot: TagBox | null = null;
+    for (let notch = 0; notch <= 2 && !spot; notch++) {
+      const candidate = { ...tag, y: tag.y - notch * tag.h };
+      if (!placed.some((p) => overlaps(p, candidate))) spot = candidate;
+    }
+    if (spot) placed.push(spot);
+    else if (tag.place <= PODIUM) placed.push(tag);
+  }
+  return placed;
+}
 const FEET = 0.96;
 
 export interface RaceLabels {
@@ -79,6 +117,7 @@ export function drawRace(
 
   // Runners, from the back of the crowd to the front.
   const visible = runners.filter((r) => toX(r.meters) > -SIZE * 2).sort((a, b) => laneOf(a.id) - laneOf(b.id));
+  const names: { text: string; x: number; y: number; podium: boolean; s: number; place: number }[] = [];
   for (const r of visible) {
     const lane = laneOf(r.id);
     const s = SIZE * (0.7 + 0.45 * lane);
@@ -102,14 +141,34 @@ export function drawRace(
       ctx.font = `bold ${Math.round(s * 0.8)}px sans-serif`;
       ctx.fillText(labels.bump, x + s * 0.8, y - box * 0.7);
     }
-    if (r.place <= 3) {
-      ctx.fillStyle = COLORS.blanco;
-      ctx.font = `bold ${Math.round(Math.max(16, s * 0.7))}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(r.nickname, x, y - hop - box * feetOf(img, FEET) - 4);
-      ctx.textAlign = 'left';
-    }
+    const tag = nameTag(r.place);
+    if (tag) names.push({ text: r.nickname, x, y: y - hop - box * (feet - headOf(img, 0)) - 6, podium: tag.podium, s, place: r.place });
   }
+
+  // Names of the top 10, over everybody, on a dark tag so they read in the crowd; the podium on top.
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'bottom';
+  const fontOf = (n: (typeof names)[number]) => Math.round(Math.max(n.podium ? 18 : 14, n.s * (n.podium ? 0.75 : 0.6)));
+  const boxes = names.map((n, i) => {
+    const size = fontOf(n);
+    ctx.font = `bold ${size}px sans-serif`;
+    const w = ctx.measureText(n.text).width + 12;
+    return { place: n.place, x: n.x - w / 2, y: n.y - size - 6, w, h: size + 8, i };
+  });
+  // Podium drawn last so it stays on top of the rest.
+  for (const box of placeTags(boxes).reverse()) {
+    const n = names[(box as (typeof boxes)[number]).i]!;
+    const size = fontOf(n);
+    ctx.font = `bold ${size}px sans-serif`;
+    ctx.fillStyle = 'rgba(26,14,46,0.75)';
+    ctx.beginPath();
+    ctx.roundRect(box.x, box.y, box.w, box.h, 6);
+    ctx.fill();
+    ctx.fillStyle = n.podium ? COLORS.sol : COLORS.blanco;
+    ctx.fillText(n.text, box.x + box.w / 2, box.y + box.h - 2);
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 
   // Who fell behind the view.
   const behind = behindCount(runners, camX - (SIZE * 2 * VIEW_METERS) / w);
@@ -123,18 +182,24 @@ export function drawRace(
     ctx.fillText(`← ${labels.behind(behind)}`, 32, 52);
   }
 
-  // Leaders.
+  // Leaders: one line in the top band, so the box never hides runners (or the leader's name).
   const top3 = [...runners].sort((a, b) => a.place - b.place).slice(0, 3);
+  const short = (name: string) => (name.length > 12 ? `${name.slice(0, 11)}…` : name);
+  const leadersText = top3.map((r) => `${r.place}. ${short(r.nickname)}`).join('   ');
+  ctx.font = '22px sans-serif';
+  const listWidth = ctx.measureText(leadersText).width;
+  ctx.font = 'bold 22px sans-serif';
+  const titleWidth = ctx.measureText(labels.leaders).width;
+  const boxWidth = titleWidth + listWidth + 52;
   ctx.fillStyle = 'rgba(26,14,46,0.88)';
   ctx.beginPath();
-  ctx.roundRect(w - 300, 14, 284, 34 + top3.length * 30, 12);
+  ctx.roundRect(w - 16 - boxWidth, 20, boxWidth, 48, 12);
   ctx.fill();
   ctx.fillStyle = COLORS.sol;
-  ctx.font = 'bold 22px sans-serif';
-  ctx.fillText(labels.leaders, w - 284, 42);
+  ctx.fillText(labels.leaders, w - boxWidth, 52);
   ctx.fillStyle = COLORS.blanco;
-  ctx.font = '20px sans-serif';
-  top3.forEach((r, i) => ctx.fillText(`${r.place}. ${r.nickname}`, w - 284, 72 + i * 30));
+  ctx.font = '22px sans-serif';
+  ctx.fillText(leadersText, w - boxWidth + titleWidth + 20, 52);
 
   const closing = input.closingLeftMs === null ? null : labels.closing(Math.ceil(input.closingLeftMs / 1000));
   if (closing) {

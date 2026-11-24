@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { visibleBottom } from '../src/web/sprite-feet';
+import { visibleBottom, visibleTop } from '../src/web/sprite-feet';
 
 /** RGBA pixels of a w×h image with the given rows opaque. */
 function image(w: number, h: number, opaqueRows: number[]) {
@@ -25,5 +25,12 @@ describe('visibleBottom', () => {
 
   it('an empty image has no bottom', () => {
     expect(visibleBottom(new Uint8ClampedArray(4 * 10 * 4), 4, 10)).toBeNull();
+  });
+});
+
+describe('visibleTop', () => {
+  it('finds where the drawing starts, as a fraction of the height', () => {
+    expect(visibleTop(image(4, 10, [2, 3, 4]), 4, 10)).toBeCloseTo(0.2);
+    expect(visibleTop(new Uint8ClampedArray(4 * 10 * 4), 4, 10)).toBeNull();
   });
 });
