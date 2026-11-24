@@ -30,7 +30,11 @@ export interface EmbolsauConfig {
 /** The session title when the form leaves the name empty. */
 export const DEFAULT_TITLE = 'Carrera de embolsados';
 
-export type Phase = 'picking' | 'countdown' | 'racing' | 'closing' | 'roundResults';
+/**
+ * `finished`: the race is over (everybody crossed, the closing or the time ran out) and stays on the
+ * big screen until the presenter moves on to the results.
+ */
+export type Phase = 'picking' | 'countdown' | 'racing' | 'closing' | 'finished' | 'roundResults';
 
 export interface EmbolsauState {
   config: EmbolsauConfig;
@@ -38,6 +42,8 @@ export interface EmbolsauState {
   round: number;
   phaseEndsAt: number | null;
   raceStartedAt: number | null;
+  /** When the race stopped taking taps (server time); set in `finished`, cleared at each start. */
+  closedAt?: number | null;
 }
 
 // FNV-1a, the same hash the platform shards with; kept here so screens don't import the server package.

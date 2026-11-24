@@ -23,6 +23,11 @@ const tick = (id: string) => live.hostAction(id, 'tick', undefined) as Promise<{
 const state = async (id: string) => (await live.getSession<{ phase: string; round: number; phaseEndsAt: number | null }>(id))!;
 
 const ended = async (id: string) => (await state(id)).status === 'ended';
+/** The race is over and waits on the big screen; the presenter's button moves on. */
+async function finishedThenNext(id: string) {
+  expect((await state(id)).state.phase).toBe('finished');
+  await live.advance(id);
+}
 /** The order of the last round, from the history (the last round goes straight to the podium). */
 async function lastRoundTop(id: string) {
   const results = (await live.getResults((await live.getSession(id))!))!;
@@ -77,6 +82,7 @@ describe('Embolsau activity', () => {
 
     const seqs = new Map<string, number>();
     await runSeconds(session.id, 45, [{ p: ana, rate: 6 }, { p: beto, rate: 4 }], seqs);
+    await finishedThenNext(session.id);
     expect((await state(session.id)).state.phase).toBe('roundResults');
     const r1 = publisher.last('embolsau.roundResults')!;
     const ranks = r1.ranks as Record<string, { place: number; points: number; total: number }>;
@@ -90,6 +96,7 @@ describe('Embolsau activity', () => {
     clock += COUNTDOWN_MS;
     await tick(session.id);
     await runSeconds(session.id, 45, [{ p: beto, rate: 6 }, { p: ana, rate: 5 }], seqs);
+    await finishedThenNext(session.id);
     // The last race goes straight to the podium: no round ranking to spoil it.
     expect(await ended(session.id)).toBe(true);
     expect(publisher.events.filter((e) => e.event.type === 'embolsau.roundResults')).toHaveLength(1); // only the first race
@@ -147,6 +154,7 @@ describe('Embolsau activity', () => {
     expect(s.phaseEndsAt).toBe(clock + CLOSING_MS);
     clock += CLOSING_MS;
     await tick(session.id);
+    await finishedThenNext(session.id);
     expect(await ended(session.id)).toBe(true);
   });
 
@@ -158,6 +166,7 @@ describe('Embolsau activity', () => {
     await runSeconds(session.id, 3, [{ p: ana, rate: 5 }, { p: beto, rate: 3 }], new Map());
     clock += ROUND_MAX_MS.short;
     await tick(session.id);
+    await finishedThenNext(session.id);
     expect(await ended(session.id)).toBe(true);
     const top = await lastRoundTop(session.id);
     expect(placeOf(top, ana.player.id).place).toBe(1);
@@ -174,6 +183,7 @@ describe('Embolsau activity', () => {
     await runSeconds(session.id, 2, [{ p: ana, rate: 6 }], new Map());
     clock += ROUND_MAX_MS.short;
     await tick(session.id);
+    await finishedThenNext(session.id);
     const r1 = publisher.last('embolsau.roundResults')!.ranks as Record<string, unknown>;
     expect(r1[late.player.id]).toBeUndefined();
     await live.advance(session.id);
@@ -189,12 +199,13 @@ describe('Embolsau activity', () => {
     await toRace(session.id);
     const seqs = new Map<string, number>();
     const all = players.map((p, i) => ({ p, rate: i < 3 ? 6 : 5 }));
-    for (let s = 0; s < 40 && !(await ended(session.id)); s++) await runSeconds(session.id, 1, all, seqs);
+    for (let s = 0; s < 40 && (await state(session.id)).state.phase !== 'finished'; s++) await runSeconds(session.id, 1, all, seqs);
     // D (5 taps/s) arrives a few seconds after the third: well before the 10 s closing ends.
+    await finishedThenNext(session.id);
     expect(await ended(session.id)).toBe(true);
     expect(placeOf(await lastRoundTop(session.id), players[3]!.player.id).place).toBe(4);
     const closingAt = publisher.events.findIndex((e) => e.event.type === 'embolsau.phase' && e.event.phase === 'closing');
-    const resultsAt = publisher.events.findIndex((e) => e.event.type === 'ended');
+    const resultsAt = publisher.events.findIndex((e) => e.event.type === 'embolsau.phase' && e.event.phase === 'finished');
     const ticksBetween = publisher.events.slice(closingAt, resultsAt).filter((e) => e.event.type === 'embolsau.standings').length;
     expect(ticksBetween).toBeLessThan(7); // the full closing would be 9 ticks
   });
@@ -210,6 +221,7 @@ describe('Embolsau activity', () => {
     expect(r.animal).toBe((await live.getPlayer(session.id, ana.player.id))!.data!.animal);
     clock += ROUND_MAX_MS.short;
     await tick(session.id);
+    await finishedThenNext(session.id);
     await live.advance(session.id); // round 2 countdown
     expect((await live.getPlayer(session.id, late.player.id))!.data?.animal).toBeDefined();
   });
@@ -240,6 +252,7 @@ describe('Embolsau activity', () => {
       await push(live, ana.token, { seq: ++seq, ago: [900, 700, 500, 300, 100] }, never);
     }
     await tick(session.id);
+    await finishedThenNext(session.id);
     expect(await ended(session.id)).toBe(true);
   });
 
@@ -250,11 +263,32 @@ describe('Embolsau activity', () => {
     await runSeconds(session.id, 2, [{ p: ana, rate: 6 }], new Map());
     clock += ROUND_MAX_MS.short;
     await Promise.allSettled([tick(session.id), tick(session.id), live.advance(session.id)]);
+    expect((await state(session.id)).state.phase).toBe('finished');
+    await Promise.allSettled([live.advance(session.id), live.advance(session.id)]);
     expect(publisher.events.filter((e) => e.event.type === 'ended')).toHaveLength(1);
     expect(publisher.events.filter((e) => e.event.type === 'embolsau.roundResults')).toHaveLength(0);
     const player = (await live.getPlayer(session.id, ana.player.id))!;
     // Alone and not finished: 300 × meters / track, added once.
     expect(player.score).toBe(pointsFor({ timeMs: null, meters: player.data!.meters as number }, { winnerMs: null, closedAtMs: ROUND_MAX_MS.short, trackMeters: TRACK_METERS.short }));
+  });
+
+  it('the race waits on the big screen until the presenter asks for the results', async () => {
+    const session = await newRace({ rounds: 2 });
+    const ana = await live.join(session.pin, 'Ana');
+    await toRace(session.id);
+    await runSeconds(session.id, 3, [{ p: ana, rate: 5 }], new Map([[ana.player.id, 0]]));
+    clock += ROUND_MAX_MS.short;
+    await tick(session.id);
+    expect((await state(session.id)).state.phase).toBe('finished');
+    const metersAtEnd = (publisher.last('embolsau.standings')!.runners as { meters: number }[])[0]!.meters;
+    // Time goes by: ticks change nothing, taps no longer count.
+    clock += 60_000;
+    expect((await tick(session.id)).phase).toBe('finished');
+    await expect(push(live, ana.token, { seq: 99, ago: [100] }, never)).rejects.toThrow('not_racing');
+    await live.advance(session.id);
+    expect((await state(session.id)).state.phase).toBe('roundResults');
+    const r1 = publisher.last('embolsau.roundResults')!.top as { meters: number }[];
+    expect(r1[0]!.meters).toBeCloseTo(metersAtEnd);
   });
 
   it('pointsFor: 1000 to the winner, by time gap for finishers, by meters for the rest', () => {

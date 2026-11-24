@@ -60,9 +60,10 @@ export function isRaceOn(session: Session<EmbolsauState>, now: number): boolean 
   return phase === 'racing' || phase === 'closing' || (phase === 'countdown' && now >= raceStartedAt);
 }
 
-/** When the round stops accepting taps: the end of the closing window, or the round's time limit. */
+/** When the round stops accepting taps: when it finished, the end of the closing window, or the round's time limit. */
 export function roundCutoff(state: EmbolsauState): number {
   const limit = state.raceStartedAt! + ROUND_MAX_MS[state.config.track];
+  if (state.closedAt != null) return Math.min(state.closedAt, limit);
   return state.phase === 'closing' && state.phaseEndsAt !== null ? Math.min(state.phaseEndsAt, limit) : limit;
 }
 

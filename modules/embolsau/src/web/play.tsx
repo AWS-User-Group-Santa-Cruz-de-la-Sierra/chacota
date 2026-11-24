@@ -145,6 +145,16 @@ export function EmbolsauPlay({ token, apiUrl, snapshot, clock, playerId, subscri
     );
   }
 
+  if (phase.phase === 'finished') {
+    return (
+      <Centered>
+        {header}
+        <p className="font-display text-4xl font-extrabold text-sol">{t('raceOver')}</p>
+        <p className="text-lg text-niebla">{t('lookAtScreen')}</p>
+      </Centered>
+    );
+  }
+
   if (!inRound) {
     return (
       <Centered>

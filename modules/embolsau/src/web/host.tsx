@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ANIMALS, TRACK_METERS, type Animal, type EmbolsauEvent, type HostSnapshot, type PhaseInfo, type RoundPlace, type RoundRank } from '../model';
 import { ART, SCENERY } from './art';
 import { HISTORY, type Snapshot } from './camera';
-import { drawRace, fitFrame, FRAME, type Scenery, type Sprites } from './race-canvas';
+import { drawMinimap, drawRace, fitFrame, FRAME, type Scenery, type Sprites } from './race-canvas';
 
 const TICK_MS = 500;
 const TICKING = new Set(['picking', 'countdown', 'racing', 'closing']);
@@ -15,7 +15,7 @@ const TICKING = new Set(['picking', 'countdown', 'racing', 'closing']);
 type LastRound = { round: number; top: RoundPlace[]; ranks: Record<string, RoundRank> };
 
 /** Presenter screen while Embolsau runs: picking, 3-2-1, the race, and each round's results. */
-export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostAction, setAdvanceLabel, setSubtitle }: HostScreenProps) {
+export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostAction, setAdvanceLabel, setSubtitle, setFooter }: HostScreenProps) {
   const s0 = snapshot as unknown as HostSnapshot;
   const t = useTranslations('embolsau.host');
   const [phase, setPhase] = useState<PhaseInfo>(s0);
@@ -69,7 +69,9 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
         ? t('advance.starting')
         : phase.phase === 'racing' || phase.phase === 'closing'
           ? t('advance.endRound')
-          : last
+          : phase.phase === 'finished' && !last
+            ? t('advance.results')
+            : last
             ? t('advance.podium')
             : t('advance.nextRound');
   useEffect(() => setAdvanceLabel(label), [label, setAdvanceLabel]);
@@ -136,6 +138,8 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
       now={clock.now}
       trackMeters={trackMeters}
       closingEndsAt={phase.phase === 'closing' ? phase.phaseEndsAt : null}
+      setFooter={setFooter}
+      banner={phase.phase === 'finished' ? t('phase.finished') : null}
       overlay={
         phase.phase === 'countdown' &&
         left !== null &&
@@ -157,27 +161,41 @@ function RaceView({
   now,
   trackMeters,
   closingEndsAt,
+  setFooter,
+  banner,
   overlay,
 }: {
   runners: React.RefObject<Snapshot[]>;
   now: () => number;
   trackMeters: number;
   closingEndsAt: number | null;
+  setFooter: HostScreenProps['setFooter'];
+  /** Big text at the top of the track, like "the race is over". */
+  banner: string | null;
   /** Shown over the track, centered: the 3-2-1 before the start. */
   overlay?: ReactNode;
 }) {
   const t = useTranslations('embolsau.host');
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const minimap = useRef<HTMLCanvasElement>(null);
   const closing = useRef(closingEndsAt);
   closing.current = closingEndsAt;
+  const bannerText = useRef(banner);
+  bannerText.current = banner;
   const labels = useRef({
     behind: (n: number) => t('behind', { count: n }),
     leaders: t('leaders'),
-    all: t('everyone'),
     bump: t('bump'),
     closing: (s: number) => t('closingLeft', { seconds: s }),
   });
+
+  // The minimap with everybody goes in the presenter's footer, so the race gets all the room above.
+  const everyone = t('everyone');
+  useEffect(() => {
+    setFooter(<canvas ref={minimap} className="block h-12 w-full" aria-label={everyone} role="img" />);
+    return () => setFooter(null);
+  }, [setFooter, everyone]);
 
   useEffect(() => {
     const el = canvas.current;
@@ -199,8 +217,7 @@ function RaceView({
     let frame = 0;
     const camera = { x: 0, at: 0 };
     const draw = () => {
-      // The whole width of the space the frame leaves, getting shorter rather than smaller, so the
-      // strip at the bottom never falls off the screen.
+      // All the space the frame leaves: the drawing takes its shape (see fitFrame).
       const css = fitFrame(area.clientWidth, area.clientHeight);
       if (el.style.width !== `${css.width}px` || el.style.height !== `${css.height}px`) {
         el.style.width = `${css.width}px`;
@@ -216,17 +233,30 @@ function RaceView({
       }
       ctx.setTransform(width / FRAME.width, 0, 0, height / css.frameHeight, 0, 0);
       const at = now();
-      drawRace(ctx, {
+      const drawn = drawRace(ctx, {
         history: runners.current,
         camera,
         height: css.frameHeight,
         now: at,
         trackMeters,
         closingLeftMs: closing.current === null ? null : Math.max(0, closing.current - at),
+        banner: bannerText.current,
         sprites,
         scenery,
         labels: labels.current,
       });
+      const mini = minimap.current;
+      const miniCtx = mini?.getContext('2d');
+      if (mini && miniCtx && mini.clientWidth > 0) {
+        const w = Math.round(mini.clientWidth * ratio);
+        const h = Math.round(mini.clientHeight * ratio);
+        if (mini.width !== w || mini.height !== h) {
+          mini.width = w;
+          mini.height = h;
+        }
+        miniCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        drawMinimap(miniCtx, { ...drawn, trackMeters, width: mini.clientWidth, height: mini.clientHeight });
+      }
       frame = requestAnimationFrame(draw);
     };
     frame = requestAnimationFrame(draw);

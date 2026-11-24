@@ -3,7 +3,7 @@
 Dos recorridos completos en Chrome, uno detrás del otro:
 
 - **Tiluchi** (`src/game.ts`): presentador más tres celulares, reconexión, código de verificación, resultados, CSV y activar/desactivar la actividad.
-- **Embolsau** (`src/embolsau.ts`): el formulario "Nueva carrera", una sesión llena (el tercer celular recibe "Este juego ya está lleno."), elegir animalito, empujar a dos ritmos hasta que la ronda cierra sola, podio, código y las columnas del historial. Usa su propia organización (`e2e-embolsau`).
+- **Embolsau** (`src/embolsau.ts`): el formulario "Nueva carrera", una sesión llena (el tercer celular recibe "Este juego ya está lleno."), elegir animalito, empujar a dos ritmos hasta que la ronda cierra sola, la carrera esperando al presentador, "Ver podio", código y las columnas del historial. Usa su propia organización (`e2e-embolsau`).
 
 Requisitos:
 

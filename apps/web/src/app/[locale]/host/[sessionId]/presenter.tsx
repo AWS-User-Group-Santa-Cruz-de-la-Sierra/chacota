@@ -4,7 +4,7 @@ import { channels, createEventHub, frameOnEvent, type LiveEvent, type PlatformEv
 import { mediaUrl, readableTextColor } from '@chacota/core';
 import { useServerClock } from '@chacota/live/react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from 'react';
 import { activityWebs } from '@/activities/registry.client';
 import { useRealtime } from '@/components/game/use-realtime';
 import { BackLink } from '@/components/back-link';
@@ -49,6 +49,7 @@ export function Presenter(props: Props) {
   const [podium, setPodium] = useState<Standing[]>([]);
   const [advanceLabel, setAdvanceLabel] = useState(t('next'));
   const [subtitle, setSubtitle] = useState<string | null>(null);
+  const [activityFooter, setFooter] = useState<ReactNode | null>(null);
   const [pending, startTransition] = useTransition();
   const [background, setBackground] = useState<string | null>(null);
   const [brokenMedia, setBrokenMedia] = useState<ReadonlySet<string>>(new Set());
@@ -261,6 +262,7 @@ export function Presenter(props: Props) {
             advance={advance}
             setAdvanceLabel={setAdvanceLabel}
             setSubtitle={setSubtitle}
+            setFooter={setFooter}
             hostAction={hostAction}
             setBackground={setBackground}
             mediaUrl={toUrl}
@@ -272,6 +274,7 @@ export function Presenter(props: Props) {
 
       <footer className="relative flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-niebla">{status !== 'ended' ? t('keyboardHint') : t('finished')}</span>
+        {status === 'running' && activityFooter && <div className="min-w-0 flex-1 self-stretch">{activityFooter}</div>}
         <div className="flex gap-2">
           {status === 'running' && (
             <button
