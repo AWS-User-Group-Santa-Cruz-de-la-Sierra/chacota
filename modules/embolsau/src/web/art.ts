@@ -8,13 +8,15 @@ import jochiRun from './assets/jochi-run.svg';
 import nanduDown from './assets/nandu-down.svg';
 import nanduIcon from './assets/nandu-icon.svg';
 import nanduRun from './assets/nandu-run.svg';
-import tatuDown from './assets/tatu-down.svg';
-import tatuIcon from './assets/tatu-icon.svg';
-import tatuRun from './assets/tatu-run.svg';
+import tatuDown from './assets/tatu-down.png';
+import tatuIcon from './assets/tatu-icon.png';
+import tatuRun from './assets/tatu-run.png';
 
 /**
- * Each critter's pictures: running (upper body out of the sack), fallen, and the icon to pick it.
- * Placeholders until the final art arrives; replace the files, keep the names.
+ * Each critter's pictures, square with a transparent background, facing right, sack included:
+ * running (feet near the bottom edge), fallen (drawn already lying down), and the icon to pick it.
+ * The tatú is final art; the rest are placeholders until theirs arrive (replace the files, keep the names).
+ * Players are told apart by a colored shadow the screen draws under each one (BAGS).
  */
 export const ART: Record<Animal, { run: string; down: string; icon: string }> = {
   jochi: { run: jochiRun.src, down: jochiDown.src, icon: jochiIcon.src },
@@ -23,5 +25,5 @@ export const ART: Record<Animal, { run: string; down: string; icon: string }> = 
   capibara: { run: capibaraRun.src, down: capibaraDown.src, icon: capibaraIcon.src },
 };
 
-/** Sack colors, indexed by bagOf(playerId). */
+/** Player colors (the shadow under each runner), indexed by bagOf(playerId). */
 export const BAGS = ['#D63A72', '#FFC629', '#0B8048', '#8A5CF0', '#C9A46A', '#3FA7D6'];

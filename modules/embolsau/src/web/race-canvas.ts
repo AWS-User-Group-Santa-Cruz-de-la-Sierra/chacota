@@ -6,6 +6,9 @@ import { behindCount, cameraX, interpolate, laneOf, VIEW_METERS, type RunnerView
 export const FRAME = { width: 1280, height: 720 };
 /** Base sprite size, chosen with the mockups (about 75 m in view). */
 const SIZE = 28;
+/** The square picture is this many times SIZE wide, and its feet are this far down it. */
+const ART_SCALE = 3;
+const FEET = 0.96;
 
 export interface RaceLabels {
   behind: (n: number) => string;
@@ -67,30 +70,27 @@ export function drawRace(
     const x = toX(r.meters);
     const y = top + SIZE * 3 + lane * (bottom - top - SIZE * 3);
     const hop = r.down || r.finished ? 0 : Math.abs(Math.sin(now / 110 + lane * 20)) * s * 0.5;
-    ctx.save();
-    ctx.translate(x, y - hop);
-    // The sack, in the player's color (tipped over on a fall), and the critter coming out of it.
-    // The "down" picture is already drawn fallen, so only the sack is rotated.
-    ctx.save();
-    if (r.down) ctx.rotate(Math.PI / 2.4);
+    // The player's color: a shadow on the ground (it stays put while the critter hops).
     ctx.fillStyle = BAGS[r.bag % BAGS.length]!;
+    ctx.globalAlpha = 0.85;
     ctx.beginPath();
-    ctx.roundRect(-s * 0.6, -s * 1.2, s * 1.2, s * 1.2, s * 0.2);
+    ctx.ellipse(x, y, s * (r.down ? 1.3 : 0.9), s * 0.22, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
+    ctx.globalAlpha = 1;
+    // The critter with its sack; the fallen picture is already drawn lying down.
     const img = r.down ? sprites[r.animal].down : sprites[r.animal].run;
-    if (img.complete) ctx.drawImage(img, r.down ? -s * 0.2 : -s, r.down ? -s * 1.8 : -s * 2.6, s * 2, s * 2);
-    ctx.restore();
+    const box = s * ART_SCALE;
+    if (img.complete) ctx.drawImage(img, x - box / 2, y - hop - box * FEET, box, box);
     if (r.down) {
       ctx.fillStyle = COLORS.sol;
       ctx.font = `bold ${Math.round(s * 0.8)}px sans-serif`;
-      ctx.fillText(labels.bump, x + s * 0.6, y - s * 2);
+      ctx.fillText(labels.bump, x + s * 0.8, y - box * 0.7);
     }
     if (r.place <= 3) {
       ctx.fillStyle = COLORS.blanco;
       ctx.font = `bold ${Math.round(Math.max(16, s * 0.7))}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(r.nickname, x, y - hop - s * 2.9);
+      ctx.fillText(r.nickname, x, y - hop - box * FEET - 4);
       ctx.textAlign = 'left';
     }
   }
