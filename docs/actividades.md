@@ -78,7 +78,7 @@ Reglas:
 - **Tope de jugadores:** si `prepare` devuelve `maxPlayers`, la plataforma no deja entrar a nadie más cuando se llena (`session_full`, "Este juego ya está lleno"). Sin `maxPlayers` no hay tope.
 - **Sin celulares:** si `prepare` devuelve `phones: false`, la sesión nace en `running`, nadie puede unirse (`join` responde `session_not_found`) y el presentador no muestra PIN ni QR. Esas sesiones no guardan resultados, así que tampoco hay link "Resultados".
 - **Datos finales:** `finalSnapshot` es lo que ve `Final` (presentador) y `PlayFinal` (celular) cuando la sesión terminó. Llega como `snapshot().module` en vez de lo que devuelve `snapshot`.
-- **Terminar:** llamá a `live.end(session.id)`. La plataforma guarda los resultados, publica `ended` y muestra el podio.
+- **Terminar:** llamá a `live.end(session.id)`. La plataforma guarda los resultados, publica `ended` y muestra el podio (o tu `Final`, si la definiste). Las sesiones sin celulares no guardan resultados.
 - **Tiempos:** se miden con el reloj del servidor (`live.now()`), nunca con el del celular.
 
 ## 3. Datos: cero infraestructura nueva
@@ -108,9 +108,9 @@ export const ruletaWeb: ActivityWeb = {
 };
 ```
 
-- **`Host`** recibe `subscribe` (los eventos de tu actividad, incluidos los que llegaron antes de montarse), `advance`, `setAdvanceLabel` (el texto del botón principal), `setAdvanceDisabled(true)` (deshabilita el botón principal y también la barra espaciadora, la flecha y el clicker mientras tu actividad está ocupada, por ejemplo en una animación), `setSubtitle` (el progreso que se muestra junto al título, por ejemplo "Pregunta 2 de 10"), `hostAction` y `clock`. Para imágenes: `mediaUrl(key)` da la URL pública de una clave de S3 (guardá claves, nunca URLs) y `setBackground(key | null)` pone una imagen detrás de toda la pantalla, con un velo oscuro, por ejemplo `useEffect(() => setBackground(ronda.fondo ?? null), [ronda])`. El lobby, el podio, el botón "Terminar" y la pantalla completa son de la plataforma.
+- **`Host`** recibe `subscribe` (los eventos de tu actividad, incluidos los que llegaron antes de montarse), `advance`, `setAdvanceLabel` (el texto del botón principal), `setAdvanceDisabled(true)` (deshabilita el botón principal y también la barra espaciadora, la flecha y el clicker mientras tu actividad está ocupada, por ejemplo en una animación; también bloquea las llamadas a `advance()` de tu propia actividad), `setSubtitle` (el progreso que se muestra junto al título, por ejemplo "Pregunta 2 de 10"), `hostAction` y `clock`. Para imágenes: `mediaUrl(key)` da la URL pública de una clave de S3 (guardá claves, nunca URLs) y `setBackground(key | null)` pone una imagen detrás de toda la pantalla, con un velo oscuro, por ejemplo `useEffect(() => setBackground(ronda.fondo ?? null), [ronda])`. El lobby, el podio, el botón "Terminar" y la pantalla completa son de la plataforma.
 - **`Play`** recibe `token` y `apiUrl` para llamar a tus rutas (`${apiUrl}/m/<id>/...`), `subscribe`, `clock` y `setScore`. Unirse, el lobby, la reconexión y la pantalla final con el código son de la plataforma.
-- **`Final` y `PlayFinal`:** sin ellos, al terminar la plataforma muestra el podio y el puesto de cada jugador. Con `Final`, el presentador ve tu pantalla en lugar del podio; con `PlayFinal`, el celular ve la tuya en lugar del puesto, y el código de verificación sigue abajo. Los dos reciben lo que devuelve `finalSnapshot`.
+- **`Final` y `PlayFinal`:** sin ellos, al terminar la plataforma muestra el podio y el puesto de cada jugador. Con `Final`, el presentador ve tu pantalla en lugar del podio; con `PlayFinal`, el celular ve la tuya en lugar del puesto, y el código de verificación sigue abajo. Los dos reciben lo que devuelve `finalSnapshot`; `PlayFinal` recibe además el `playerId`, y `finalSnapshot` recibe el `playerId` solo cuando lo pide un celular.
 - **Estilos:** usá las clases de Tailwind y los colores de la marca (`bg-noche`, `bg-morado`, `bg-verde`, `bg-tajibo`, `bg-sol`, `text-niebla`). Tailwind lee `modules/*/src`, así que tus clases funcionan.
 - **Accesibilidad:** los botones son `<button>` y las respuestas no dependen solo del color.
 

@@ -144,9 +144,17 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       if (e.type === 'ended') {
         const mine = e.ranks[session.playerId];
         if (mine) setScore(mine.score);
-        setScreen({ kind: 'ended', rank: mine?.rank });
-        // The activity's own final data comes with the state.
-        if (session && activityWebs[session.module]?.PlayFinal) void resync(session);
+        const ended: Screen = { kind: 'ended', rank: mine?.rank };
+        setScreen(ended);
+        // The activity's own final data comes with the state. Retry while it fails, unless the
+        // screen moved on (resync succeeded, or the player left).
+        if (activityWebs[session.module]?.PlayFinal) {
+          void (async () => {
+            for (let n = 0; screenNow.current === ended && !(await resync(session)); n++) {
+              await new Promise((resolve) => setTimeout(resolve, resumeRetryDelay(n)));
+            }
+          })();
+        }
         return;
       }
       const current = screenNow.current.kind;

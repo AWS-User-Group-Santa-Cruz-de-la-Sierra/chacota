@@ -69,6 +69,23 @@ export function Presenter(props: Props) {
 
   useEffect(() => clock.sync(props.initial.serverNow), []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /** Fetches the activity's final data, retrying a few times before falling back to an empty screen. */
+  const loadFinal = useCallback(async () => {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        setFinal(await finalSnapshotAction(props.sessionId));
+        return;
+      } catch (error) {
+        console.error('final snapshot failed', error);
+        if (attempt >= 3) {
+          setFinal({});
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
+      }
+    }
+  }, [props.sessionId]);
+
   const onEvent = useCallback(
     (event: LiveEvent) => {
       const serverNow = (event as { serverNow?: unknown }).serverNow;
@@ -80,7 +97,7 @@ export function Presenter(props: Props) {
       }
       if (e.type === 'ended') {
         setPodium(e.podium);
-        if (activity.Final) finalSnapshotAction(props.sessionId).then(setFinal, () => setFinal({}));
+        if (activity.Final) void loadFinal();
         setBackground(null);
       }
       const step = frameOnEvent(statusNow.current, event.type);
@@ -91,7 +108,7 @@ export function Presenter(props: Props) {
       }
       if (step.deliver) hub.emit(event);
     },
-    [clock, hub, activity, props.sessionId],
+    [clock, hub, activity, loadFinal],
   );
   const { connected } = useRealtime(props.realtime, [channels.public(props.sessionId), channels.host(props.sessionId)], onEvent, () =>
     window.location.reload(),
@@ -280,7 +297,9 @@ export function Presenter(props: Props) {
         )}
 
         {status === 'ended' &&
-          (activity.Final ? final && <activity.Final snapshot={final} /> : <Podium title={t('podium')} mentionsLabel={t('mentions')} podium={podium} />)}
+          (activity.Final ? (
+            final ? <activity.Final snapshot={final} /> : <p className="text-center text-2xl text-niebla">…</p>
+          ) : <Podium title={t('podium')} mentionsLabel={t('mentions')} podium={podium} />)}
       </main>
 
       <footer className="relative flex flex-wrap items-center justify-between gap-3">

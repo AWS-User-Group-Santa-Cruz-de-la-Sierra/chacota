@@ -22,7 +22,7 @@ export interface HostScreenProps {
   advance(): void;
   /** Label of the presenter's main button for the current step. */
   setAdvanceLabel(label: string): void;
-  /** Disables the main button, and the keyboard and clicker shortcuts, while the activity is busy (e.g. an animation). */
+  /** Disables the main button, and the keyboard and clicker shortcuts, while the activity is busy (e.g. an animation). Also blocks the activity's own `advance()` calls. */
   setAdvanceDisabled(disabled: boolean): void;
   /** Short progress text shown next to the title in the header (e.g. "Question 2 of 10"), or null. */
   setSubtitle(text: string | null): void;
