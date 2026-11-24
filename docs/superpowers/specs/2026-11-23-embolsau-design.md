@@ -77,11 +77,11 @@ Las fases que dependen del tiempo (fin de la elección, de la cuenta regresiva y
 - El servidor valida los instantes contra su propio reloj: el lote no puede durar más que el tiempo real transcurrido desde el lote anterior (con un margen chico), los instantes van en orden y no se aceptan lotes repetidos ni del futuro. Con eso reproduce los toques en orden, integra la física y sortea las caídas. El celular informa qué hizo el dedo, y el servidor decide qué pasa.
 - Física: cada toque suma velocidad, la bolsa frena con el tiempo y la posición avanza.
 - **Tropiezo:** por encima de un umbral de velocidad, la probabilidad de caerse crece con lo que se pasa (zona amarilla: poco riesgo; zona roja: mucho). El sorteo se hace en el servidor con un generador aleatorio seguro. Caerse frena al jugador del todo durante algo más de un segundo, con algo de variación.
-  - Zonas y probabilidad de caerte si te quedás un segundo en cada una, decididas por el maintainer después de probarlo (simuladas con 2000 carreras por ritmo):
-    - **Verde**, hasta 8 m/s (unos 6 toques/s): 2 %, en cuanto te movés. Quieto no te caés.
-    - **Amarillo**, de 8 a 13 m/s (6–10 toques/s): de 5 % a 15 %. Es la mejor apuesta en promedio.
-    - **Rojo**, de 13 a 16 m/s (10–12 toques/s): de 26 % a 57 %. Es una apuesta: puede dar la carrera más rápida o hundirla.
-    - Una caída dura entre 1 y 1,4 s.
+  - Zonas para dedos humanos y probabilidad de caerte si te quedás un segundo en cada una, decididas por el maintainer después de probarlo (simuladas con 2000 carreras por ritmo, pista normal):
+    - **Verde**, hasta 8 m/s (3–4 toques/s): 2 % en cuanto te movés; caída de 1–1,4 s. Seguro y lento (~23 s a 4 toques/s).
+    - **Amarillo**, de 8 a 13 m/s (5–6 toques/s): de 4 % a 17 %; caída de 1–1,4 s. Rinde parejo (~18–20 s).
+    - **Rojo**, desde 13 m/s (7–8 toques/s): turbo (cada toque empuja 30 % más), 22 % parejo y una caída fea de 2,5–3,5 s. La apuesta: con suerte 10–14 s, con mala suerte 24 s.
+    - Pasados los 8 toques/s, cada toque extra vale la mitad que el anterior: suma un poco, nunca resta. Más de 12 por segundo se descartan (scripts).
 - **Anti-trampa:** se limita la cantidad de toques por segundo que se aceptan (un valor humano, alrededor de 12). Con más que eso igual se cae, porque queda en rojo. *Decisión del diseñador:* un bot que toca a un ritmo justo y parejo no se detecta en esta versión. Los premios de un meetup son chicos, el medidor deja que cualquier persona apunte al mismo ritmo, y el código de 4 letras más la mirada del presentador ya sirven de control. Si hiciera falta, después se puede detectar un ritmo demasiado regular a partir de los instantes de cada toque.
 - La función de física y de riesgo es pura y se comparte entre el servidor (que decide) y el celular (que solo la usa para dibujar el medidor). Las constantes se ajustan jugando.
 - Cada jugador tiene un registro propio en su partición con posición, velocidad, `downUntil`, caídas, `finishedAt` y animalito. Lo escribe solo su propio `push`, así que no hay choques.
