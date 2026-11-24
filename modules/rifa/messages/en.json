@@ -18,7 +18,33 @@
   },
   "host": {
     "bag": "The bag",
-    "status": { "bag": "in the bag", "out": "overboard", "won": "won" }
+    "advance": { "open": "Open the raffle", "draw": "Draw a round", "drawing": "Drawing…" },
+    "subtitle": "Round {round} · {count} in the bag",
+    "subtitleStart": "{count} in the bag",
+    "lobbySummary": {
+      "qr": "They sign up with the QR · {overboard} overboard per round",
+      "list": "{count, plural, one {# name} other {# names}} · {overboard} overboard per round"
+    },
+    "ready": "Who will it be?",
+    "caption": { "waiting": "Round {round}", "out": "Overboard · {n} of {total}", "winner": "Round {round} · winner" },
+    "announce": { "out": "{name} goes overboard.", "winner": "{name} wins!" },
+    "winners": "Winners",
+    "noWinners": "No winners yet.",
+    "round": "round {round}",
+    "reset": "Reset",
+    "empty": "Nobody is in the bag yet.",
+    "chip": { "discard": "Discard {name}", "restore": "Put {name} back in the bag", "won": "{name} won" },
+    "hint": "Tap a name to discard it or put it back.",
+    "onOverboard": { "label": "Overboard:", "discard": "discard", "return": "back in the bag" },
+    "resetButton": "Reset",
+    "confirmReset": "Reset the raffle? Everyone goes back in the bag, winners too. The winners list stays, with a reset mark.",
+    "actionFailed": "The change didn't go through. The bag was reloaded; try again."
+  },
+  "final": {
+    "title": "Winners",
+    "none": "This raffle ended without winners.",
+    "round": "Round {round}",
+    "reset": "Reset"
   },
   "play": {
     "status": { "bag": "You are in the bag. Good luck!", "out": "You went overboard.", "won": "You won!" }

@@ -60,6 +60,6 @@ export function resetBag(state: RifaState): RifaState {
   return { ...state, discarded: [], won: [], winners };
 }
 
-export function isPlaying(state: RifaState, now: number): boolean {
+export function isPlaying(state: Pick<RifaState, 'round'>, now: number): boolean {
   return state.round !== null && now < state.round.endsAt;
 }

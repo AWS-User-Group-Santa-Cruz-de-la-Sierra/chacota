@@ -18,7 +18,33 @@
   },
   "host": {
     "bag": "La bolsa",
-    "status": { "bag": "en la bolsa", "out": "al agua", "won": "ganó" }
+    "advance": { "open": "Abrir la rifa", "draw": "Sortear ronda", "drawing": "Sorteando…" },
+    "subtitle": "Ronda {round} · {count} en la bolsa",
+    "subtitleStart": "{count} en la bolsa",
+    "lobbySummary": {
+      "qr": "Se anotan con el QR · {overboard} al agua por ronda",
+      "list": "{count, plural, one {# nombre} other {# nombres}} · {overboard} al agua por ronda"
+    },
+    "ready": "¿Quién será?",
+    "caption": { "waiting": "Ronda {round}", "out": "Al agua · {n} de {total}", "winner": "Ronda {round} · ganador" },
+    "announce": { "out": "{name} se va al agua.", "winner": "¡Ganó {name}!" },
+    "winners": "Ganadores",
+    "noWinners": "Todavía no hay ganadores.",
+    "round": "ronda {round}",
+    "reset": "Reinicio",
+    "empty": "Todavía no hay nadie en la bolsa.",
+    "chip": { "discard": "Descartar a {name}", "restore": "Devolver a {name} a la bolsa", "won": "{name} ganó" },
+    "hint": "Tocá un nombre para descartarlo o devolverlo.",
+    "onOverboard": { "label": "Al agua:", "discard": "descartar", "return": "vuelven a la bolsa" },
+    "resetButton": "Reiniciar",
+    "confirmReset": "¿Reiniciar la rifa? Todos vuelven a la bolsa, también los ganadores. La lista de ganadores queda, con una marca de reinicio.",
+    "actionFailed": "No se pudo hacer el cambio. La bolsa se volvió a cargar; probá de nuevo."
+  },
+  "final": {
+    "title": "Ganadores",
+    "none": "Esta rifa terminó sin ganadores.",
+    "round": "Ronda {round}",
+    "reset": "Reinicio"
   },
   "play": {
     "status": { "bag": "Estás en la bolsa. ¡Suerte!", "out": "Te fuiste al agua.", "won": "¡Ganaste!" }
