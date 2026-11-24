@@ -274,7 +274,7 @@ export function Presenter(props: Props) {
 
       <footer className="relative flex flex-wrap items-center justify-between gap-3">
         <span className="text-sm text-niebla">{status !== 'ended' ? t('keyboardHint') : t('finished')}</span>
-        {status === 'running' && activityFooter && <div className="min-w-0 flex-1 self-stretch">{activityFooter}</div>}
+        {status === 'running' && activityFooter && <div className="mx-4 min-w-0 flex-1 self-center lg:mx-10">{activityFooter}</div>}
         <div className="flex gap-2">
           {status === 'running' && (
             <button
