@@ -1,13 +1,13 @@
 import type { Animal } from '../model';
-import capibaraDown from './assets/capibara-down.svg';
-import capibaraIcon from './assets/capibara-icon.svg';
-import capibaraRun from './assets/capibara-run.svg';
-import jochiDown from './assets/jochi-down.svg';
-import jochiIcon from './assets/jochi-icon.svg';
-import jochiRun from './assets/jochi-run.svg';
-import nanduDown from './assets/nandu-down.svg';
-import nanduIcon from './assets/nandu-icon.svg';
-import nanduRun from './assets/nandu-run.svg';
+import capibaraDown from './assets/capibara-down.png';
+import capibaraIcon from './assets/capibara-icon.png';
+import capibaraRun from './assets/capibara-run.png';
+import jochiDown from './assets/jochi-down.png';
+import jochiIcon from './assets/jochi-icon.png';
+import jochiRun from './assets/jochi-run.png';
+import nanduDown from './assets/nandu-down.png';
+import nanduIcon from './assets/nandu-icon.png';
+import nanduRun from './assets/nandu-run.png';
 import tatuDown from './assets/tatu-down.png';
 import tatuIcon from './assets/tatu-icon.png';
 import tatuRun from './assets/tatu-run.png';
@@ -15,7 +15,7 @@ import tatuRun from './assets/tatu-run.png';
 /**
  * Each critter's pictures, square with a transparent background, facing right, sack included:
  * running (feet near the bottom edge), fallen (drawn already lying down), and the icon to pick it.
- * The tatú is final art; the rest are placeholders until theirs arrive (replace the files, keep the names).
+ * Final art: to change it, replace the files and keep the names.
  * Players are told apart by a colored shadow the screen draws under each one (BAGS).
  */
 export const ART: Record<Animal, { run: string; down: string; icon: string }> = {
