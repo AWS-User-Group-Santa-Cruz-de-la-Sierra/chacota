@@ -139,8 +139,17 @@ export function drawRace(
     for (const x of tileStarts(camX * pxPerMeter * BACKDROP_PARALLAX, tileW, w)) ctx.drawImage(scenery.backdrop, x, 0, tileW, top);
   }
   if (scenery?.track.complete && scenery.track.naturalWidth > 0) {
+    // 20 m wide, keeping the drawing's proportions, repeated across and down inside the track.
     const tileW = TRACK_TILE_METERS * pxPerMeter;
-    for (const x of tileStarts(camX * pxPerMeter, tileW, w)) ctx.drawImage(scenery.track, x, top, tileW + 1, bottom - top);
+    const tileH = (tileW * scenery.track.naturalHeight) / scenery.track.naturalWidth;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, top, w, bottom - top);
+    ctx.clip();
+    for (let y = top; y < bottom; y += tileH) {
+      for (const x of tileStarts(camX * pxPerMeter, tileW, w)) ctx.drawImage(scenery.track, x, y, tileW + 1, tileH + 1);
+    }
+    ctx.restore();
   } else {
     ctx.fillStyle = COLORS.pista;
     ctx.fillRect(0, top, w, bottom - top);
