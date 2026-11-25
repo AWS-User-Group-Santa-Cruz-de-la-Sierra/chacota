@@ -5,6 +5,21 @@ import { behindCount, cameraX, laneOf, RENDER_DELAY_MS, sampleAt, smoothCamera, 
 
 /** The drawing works in a 1280×720 frame; the canvas scales it to its real size. */
 export const FRAME = { width: 1280, height: 720 };
+
+/** The drawing's height stays within these (frame units): thinner, the track gets cramped; taller, it is mostly empty dirt. */
+export const MIN_FRAME_HEIGHT = 420;
+export const MAX_FRAME_HEIGHT = 900;
+
+/**
+ * How the race fills a `width` × `height` box (CSS px). The drawing is always 1280 units wide and
+ * takes the box's shape, so it fills it whole; only a box past MIN/MAX_FRAME_HEIGHT leaves a margin.
+ */
+export function fitFrame(width: number, height: number): { width: number; height: number; frameHeight: number } {
+  const frameHeight = width > 0 ? Math.max(MIN_FRAME_HEIGHT, Math.min(MAX_FRAME_HEIGHT, (height * FRAME.width) / width)) : FRAME.height;
+  const scale = Math.max(0, Math.min(width / FRAME.width, height / frameHeight));
+  return { width: Math.round(FRAME.width * scale), height: Math.round(frameHeight * scale), frameHeight };
+}
+
 /** Base sprite size, chosen with the mockups (about 75 m in view). */
 const SIZE = 28;
 /** The square picture is this many times SIZE wide; FEET is where its feet are until it is measured. */
@@ -71,7 +86,6 @@ const FEET = 0.96;
 export interface RaceLabels {
   behind: (n: number) => string;
   leaders: string;
-  all: string;
   bump: string;
   closing: (seconds: number) => string | null;
 }
@@ -107,15 +121,20 @@ export function drawRace(
     now: number;
     trackMeters: number;
     closingLeftMs: number | null;
+    /** Big text at the top center instead of the closing seconds (the race is over). */
+    banner?: string | null;
     sprites: Sprites;
     /** Optional: without it the track is a flat color. */
     scenery?: Scenery;
     labels: RaceLabels;
     /** Camera state kept between frames, so it follows smoothly. */
     camera: { x: number; at: number };
+    /** Height of the drawing in frame units (see fitFrame); 720 when left out. */
+    height?: number;
   },
 ) {
-  const { width: w, height: h } = FRAME;
+  const w = FRAME.width;
+  const h = input.height ?? FRAME.height;
   const { now, trackMeters, sprites, labels } = input;
   const runners = sampleAt(input.history, now - RENDER_DELAY_MS, trackMeters).map((r) => ({ ...r, meters: drawnMeters(r, trackMeters) }));
   ctx.clearRect(0, 0, w, h);
@@ -128,7 +147,8 @@ export function drawRace(
   const camX = cam.x;
   const toX = (m: number) => ((m - camX) / VIEW_METERS) * w;
   const top = 90;
-  const bottom = h - 130;
+  // Room under the track for the meter marks only: the minimap lives in the presenter's footer.
+  const bottom = h - 34;
 
   // Track, a line every 10 m, and the finish line.
   const pxPerMeter = w / VIEW_METERS;
@@ -261,7 +281,7 @@ export function drawRace(
   ctx.font = '22px sans-serif';
   ctx.fillText(leadersText, w - boxWidth + titleWidth + 20, 52);
 
-  const closing = input.closingLeftMs === null ? null : labels.closing(Math.ceil(input.closingLeftMs / 1000));
+  const closing = input.banner ?? (input.closingLeftMs === null ? null : labels.closing(Math.ceil(input.closingLeftMs / 1000)));
   if (closing) {
     ctx.fillStyle = COLORS.sol;
     ctx.font = 'bold 40px sans-serif';
@@ -270,21 +290,36 @@ export function drawRace(
     ctx.textAlign = 'left';
   }
 
-  // The strip with everybody, and the part the camera shows.
-  const sy = h - 60;
-  const sx = (m: number) => 24 + (m / trackMeters) * (w - 48);
-  ctx.fillStyle = COLORS.niebla;
-  ctx.font = '16px sans-serif';
-  ctx.fillText(labels.all, 24, sy - 30);
+  return { runners, camX };
+}
+
+/**
+ * The minimap with everybody, `width` × `height` CSS px: one dot per runner on the whole track, and
+ * the part the big view shows in a frame. Uses what drawRace returned for the same frame.
+ */
+export function drawMinimap(
+  ctx: CanvasRenderingContext2D,
+  input: { runners: { id: string; meters: number; bag: number; down: boolean }[]; camX: number; trackMeters: number; width: number; height: number },
+) {
+  const { runners, camX, trackMeters, width: w, height: h } = input;
+  const pad = 8;
+  const sx = (m: number) => pad + (Math.min(m, trackMeters) / trackMeters) * (w - pad * 2);
+  ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = COLORS.pista;
-  ctx.fillRect(24, sy - 22, w - 48, 44);
+  ctx.beginPath();
+  ctx.roundRect(0, 0, w, h, 10);
+  ctx.fill();
+  // The finish line.
+  ctx.fillStyle = COLORS.blanco;
+  ctx.fillRect(sx(trackMeters) - 1, 4, 2, h - 8);
   ctx.strokeStyle = COLORS.sol;
   ctx.lineWidth = 2;
-  ctx.strokeRect(sx(camX), sy - 22, sx(camX + VIEW_METERS) - sx(camX), 44);
-  for (const r of runners) {
-    ctx.fillStyle = r.down ? COLORS.blanco : BAGS[r.bag % BAGS.length]!;
+  ctx.strokeRect(sx(camX), 2, sx(camX + VIEW_METERS) - sx(camX), h - 4);
+  const r = Math.max(3, h / 12);
+  for (const runner of runners) {
+    ctx.fillStyle = runner.down ? COLORS.blanco : BAGS[runner.bag % BAGS.length]!;
     ctx.beginPath();
-    ctx.arc(sx(Math.min(r.meters, trackMeters)), sy - 16 + laneOf(r.id) * 32, 4, 0, Math.PI * 2);
+    ctx.arc(sx(runner.meters), r + 4 + laneOf(runner.id) * (h - 2 * r - 8), r, 0, Math.PI * 2);
     ctx.fill();
   }
 }

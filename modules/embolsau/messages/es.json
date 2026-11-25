@@ -36,7 +36,8 @@
       "countdown": "¡Preparados!",
       "racing": "¡A correr!",
       "closing": "¡Últimos segundos!",
-      "roundResults": "Resultados de la carrera"
+      "roundResults": "Resultados de la carrera",
+      "finished": "¡Terminó la carrera!"
     },
     "animals": {
       "jochi": "Jochi",
@@ -52,7 +53,8 @@
       "starting": "Largando…",
       "endRound": "Terminar carrera",
       "nextRound": "Siguiente carrera",
-      "podium": "Ver podio"
+      "podium": "Ver podio",
+      "results": "Ver resultados"
     },
     "roundTitle": "Carrera {round}",
     "table": {
@@ -99,6 +101,7 @@
       "green": "Tranqui",
       "yellow": "Cuidado",
       "red": "¡Te caés!"
-    }
+    },
+    "raceOver": "¡Terminó la carrera!"
   }
 }

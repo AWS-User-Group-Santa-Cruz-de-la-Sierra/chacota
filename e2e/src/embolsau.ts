@@ -1,6 +1,6 @@
 /**
  * An Embolsau race in Chrome: the "Nueva carrera" form, a full session (third phone refused),
- * picking critters, pushing at different paces, straight to the podium, verification code and the history columns.
+ * picking critters, pushing at different paces, the race waiting for the presenter, straight to the podium, verification code and the history columns.
  * Needs the local services running (see e2e/README.md).
  */
 import { mkdirSync } from 'node:fs';
@@ -95,13 +95,20 @@ try {
   await shot(ana, '3-player-race');
   if (!/\d+°/.test((await ana.locator('body').textContent()) ?? '')) fail('The phone does not show its place during the race');
   step('the race runs and each phone shows its place');
-  // The only (so last) race goes straight to the podium: no round ranking to spoil it.
-  await host.getByText('¡Felicidades!').waitFor({ timeout: 45000 });
+  // The race ends by itself and waits on the big screen until the presenter moves on.
+  await ana.getByText('¡Terminó la carrera!').waitFor({ timeout: 45000 });
   await stopTapping(ana);
   await stopTapping(beto);
+  await host.waitForTimeout(1500);
+  if (await host.getByText('¡Felicidades!').count()) fail('The race went on to the podium without the presenter');
+  await shot(host, '4-host-finished');
+  step('the race closed by itself and waits for the presenter');
+  // The only (so last) race goes straight to the podium: no round ranking to spoil it.
+  await host.getByRole('button', { name: 'Ver podio' }).click();
+  await host.getByText('¡Felicidades!').waitFor({ timeout: 10000 });
   if (await host.getByRole('heading', { name: 'Carrera 1' }).count()) fail('A round ranking was shown before the podium');
   await ana.locator('span.font-mono').waitFor({ timeout: 8000 });
-  step('the race closed by itself and went straight to the podium');
+  step('the next button went straight to the podium');
   const code = ((await ana.locator('span.font-mono').textContent()) ?? '').trim();
   if (!/^[A-Z2-9]{4}$/.test(code)) fail(`Bad player code ${code}`);
   await shot(host, '5-host-podium');

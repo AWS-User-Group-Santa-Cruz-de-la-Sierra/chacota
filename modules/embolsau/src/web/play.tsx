@@ -71,7 +71,16 @@ export function EmbolsauPlay({ token, apiUrl, snapshot, clock, playerId, subscri
     },
     [apiUrl, token],
   );
-  const tap = usePushLoop(raceOn, send, clock.now);
+  // The loop starts with the 3-2-1: until the start the server only answers "not racing", but those
+  // calls wake the participant Lambda up, so the first real taps don't wait for a cold start.
+  const pushing = raceOn || (inRound && phase.phase === 'countdown' && phase.raceStartedAt !== null);
+  const tap = usePushLoop(pushing, send, clock.now);
+
+  // Picking lasts several seconds: enough to warm the Lambda up even if nobody picks.
+  const picking = phase.phase === 'picking';
+  useEffect(() => {
+    if (picking) fetch(`${apiUrl}/health`).catch(() => null);
+  }, [picking, apiUrl]);
 
   // The meter follows the phone's own taps; the server still decides everything.
   useEffect(() => {
@@ -132,6 +141,16 @@ export function EmbolsauPlay({ token, apiUrl, snapshot, clock, playerId, subscri
           <p className="text-lg text-niebla">{t('nextRound')}</p>
         )}
         <p className="text-niebla">{last ? t('lookAtScreen') : t('getReadyNext')}</p>
+      </Centered>
+    );
+  }
+
+  if (phase.phase === 'finished') {
+    return (
+      <Centered>
+        {header}
+        <p className="font-display text-4xl font-extrabold text-sol">{t('raceOver')}</p>
+        <p className="text-lg text-niebla">{t('lookAtScreen')}</p>
       </Centered>
     );
   }

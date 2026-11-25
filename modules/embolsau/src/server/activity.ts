@@ -1,10 +1,11 @@
 import { GetCommand, PutCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { strip } from '@chacota/db';
+import { isConditionalCheckFailure, strip } from '@chacota/db';
 import { channels, LiveError, sessionKeys, shardOf, type ActivityServer, type LiveService, type Player, type Session } from '@chacota/live';
 import { embolsauManifest } from '../manifest';
 import {
   ANIMAL_NAMES,
   ANIMALS,
+  bagOf,
   CLOSING_MS,
   DEFAULT_TITLE,
   COUNTDOWN_MS,
@@ -16,6 +17,7 @@ import {
   type EmbolsauState,
   type Phase,
 } from '../model';
+import { startRunner } from '../physics';
 import { parseConfig } from './config';
 import { placesKey, roundSk, roundsPk, runnerSk, runnersPk } from './keys';
 import { embolsauRoutes } from './routes';
@@ -43,37 +45,68 @@ async function moveTo(live: LiveService, s: S, phase: Phase, patch: Partial<Embo
   return publishPhase(live, updated);
 }
 
-/** Whoever didn't pick gets a random animal: choosing is only visual. */
-async function assignMissingAnimals(live: LiveService, s: S): Promise<void> {
+/**
+ * Gets everyone onto the start line: whoever didn't pick gets a random animal (choosing is only
+ * visual), and every player gets a runner at 0 m, so the presenter's screen shows the whole crowd
+ * from the countdown on instead of waiting for each phone's first push.
+ */
+async function lineUp(live: LiveService, s: S, round: number, raceStartedAt: number): Promise<void> {
   const players = await live.listPlayers(s.id);
   await Promise.all(
-    players
-      .filter((p) => !ANIMALS.includes(p.data?.animal as Animal))
-      .map((p) =>
-        live.db.doc.send(
+    players.map(async (p) => {
+      let animal = p.data?.animal as Animal;
+      if (!ANIMALS.includes(animal)) {
+        animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)]!;
+        await live.db.doc.send(
           new UpdateCommand({
             TableName: live.db.tableName,
             Key: sessionKeys.player(s.id, p.id),
             UpdateExpression: 'SET #data = :data',
             ExpressionAttributeNames: { '#data': 'data' },
-            ExpressionAttributeValues: { ':data': { ...p.data, animal: ANIMALS[Math.floor(Math.random() * ANIMALS.length)] } },
+            ExpressionAttributeValues: { ':data': { ...p.data, animal } },
           }),
-        ),
-      ),
+        );
+      }
+      const runner: StoredRunner = { ...startRunner(raceStartedAt), playerId: p.id, nickname: p.nickname, animal, bag: bagOf(p.id), seq: 0 };
+      try {
+        await live.db.doc.send(
+          new PutCommand({
+            TableName: live.db.tableName,
+            Item: { pk: runnersPk(s.id, round, shardOf(p.id)), sk: runnerSk(p.id), ...runner, ttl: live.ttl() },
+            // A push that got there first (the clocks are close at the start) wins.
+            ConditionExpression: 'attribute_not_exists(pk)',
+          }),
+        );
+      } catch (error) {
+        if (!isConditionalCheckFailure(error)) throw error;
+      }
+    }),
   );
 }
 
 async function startCountdown(live: LiveService, s: S, round: number): Promise<S> {
-  await assignMissingAnimals(live, s);
   const raceStartedAt = live.now() + COUNTDOWN_MS;
-  return moveTo(live, s, 'countdown', { round, phaseEndsAt: raceStartedAt, raceStartedAt });
+  await lineUp(live, s, round, raceStartedAt);
+  return moveTo(live, s, 'countdown', { round, phaseEndsAt: raceStartedAt, raceStartedAt, closedAt: null });
 }
 
 const eligibleOf = (players: Player[], s: S) => players.filter((p) => p.joinedAt <= s.state.raceStartedAt!);
 
-async function closeRound(live: LiveService, s: S): Promise<S> {
+/**
+ * The race is over: taps stop counting and the final positions stay on the big screen until the
+ * presenter asks for the results (closeRound).
+ */
+async function finishRace(live: LiveService, s: S): Promise<S> {
   const closedAt = Math.min(live.now(), roundCutoff(s.state));
-  // The transition is the lock: only one caller (tick or button) gets past it and adds the points.
+  const finished = await moveTo(live, s, 'finished', { phaseEndsAt: null, closedAt });
+  // Where everybody ended up, so the screen settles on it.
+  await publishStandings(live, finished, closedAt, true);
+  return finished;
+}
+
+async function closeRound(live: LiveService, s: S): Promise<S> {
+  const closedAt = s.state.closedAt ?? Math.min(live.now(), roundCutoff(s.state));
+  // The transition is the lock: only one press of the button gets past it and adds the points.
   const updated = await live.transition(s, { state: { ...s.state, phase: 'roundResults', phaseEndsAt: null } });
   const [runners, players] = await Promise.all([listRunners(live, s.id, s.state.round), live.listPlayers(s.id)]);
   const trackMeters = TRACK_METERS[s.state.config.track];
@@ -127,12 +160,8 @@ async function publishPicks(live: LiveService, s: S): Promise<void> {
   await live.publish(s.id, { type: 'embolsau.picks', counts, picked: Object.values(counts).reduce((a, b) => a + b, 0) }, channels.host(s.id));
 }
 
-/** Ranks the runners now, tells the presenter's screen, and stores each place for the phones. */
-async function race(live: LiveService, s: S): Promise<S> {
-  const now = live.now();
-  const cutoff = roundCutoff(s.state);
-  if (now >= cutoff) return closeRound(live, s);
-
+/** Ranks the runners at `now`, tells the presenter's screen, and stores each place for the phones. */
+async function publishStandings(live: LiveService, s: S, now: number, final = false): Promise<StoredRunner[]> {
   const trackMeters = TRACK_METERS[s.state.config.track];
   const runners = sortRunners((await listRunners(live, s.id, s.state.round)).map((r) => project(r, now, trackMeters)));
   const places = Object.fromEntries(runners.map((r, i) => [r.playerId, i + 1]));
@@ -150,7 +179,8 @@ async function race(live: LiveService, s: S): Promise<S> {
           animal: r.animal,
           bag: r.bag,
           meters: r.meters,
-          speed: r.speed,
+          // The final positions stand still: the screen doesn't glide anyone past where they stopped.
+          speed: final ? 0 : r.speed,
           down: now < r.downUntil,
           place: i + 1,
           finished: r.finishedAt !== null,
@@ -159,12 +189,19 @@ async function race(live: LiveService, s: S): Promise<S> {
       channels.host(s.id),
     ),
   ]);
+  return runners;
+}
+
+async function race(live: LiveService, s: S): Promise<S> {
+  const now = live.now();
+  if (now >= roundCutoff(s.state)) return finishRace(live, s);
+  const runners = await publishStandings(live, s, now);
 
   const finished = runners.filter((r) => r.finishedAt !== null).length;
   if (finished === 0) return s;
   const eligible = eligibleOf(await live.listPlayers(s.id), s).length;
   // Everybody is in: no need to wait for the rest of the closing.
-  if (finished >= eligible) return closeRound(live, s);
+  if (finished >= eligible) return finishRace(live, s);
   if (s.state.phase === 'racing' && finished >= PODIUM_FINISHERS) return moveTo(live, s, 'closing', { phaseEndsAt: now + CLOSING_MS });
   return s;
 }
@@ -181,10 +218,12 @@ async function tick(live: LiveService, session: S): Promise<{ phase: Phase | nul
       else await publishPicks(live, s);
     } else if (phase === 'countdown') {
       if (isRaceOn(s, now)) s = await race(live, await moveTo(live, s, 'racing', { phaseEndsAt: null }));
+      // The crowd waits on the start line while the screen counts down.
+      else await publishStandings(live, s, now);
     } else if (phase === 'racing') {
       s = await race(live, s);
     } else if (phase === 'closing') {
-      s = phaseEndsAt !== null && now >= phaseEndsAt ? await closeRound(live, s) : await race(live, s);
+      s = phaseEndsAt !== null && now >= phaseEndsAt ? await finishRace(live, s) : await race(live, s);
     }
   } catch (error) {
     // Another tick or the presenter's button moved the session first: nothing to do.
@@ -224,6 +263,8 @@ export const embolsauActivity: ActivityServer<EmbolsauConfig, EmbolsauState> = {
         return s;
       case 'racing':
       case 'closing':
+        return finishRace(live, s);
+      case 'finished':
         return closeRound(live, s);
       case 'roundResults':
         return s.state.round < s.state.config.rounds ? startCountdown(live, s, s.state.round + 1) : live.end<EmbolsauState>(s.id);

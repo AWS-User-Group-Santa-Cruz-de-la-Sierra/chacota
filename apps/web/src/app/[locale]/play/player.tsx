@@ -7,7 +7,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { activityWebs } from '@/activities/registry.client';
 import { useRealtime } from '@/components/game/use-realtime';
 import { Logo } from '@/components/logo';
-import { readSessionCookie, resumeRetryDelay, sessionCookie, shouldForgetSession } from '@/lib/player-session';
+import {
+  nicknameCookie,
+  readNicknameCookie,
+  readSessionCookie,
+  readSessionFragment,
+  resumeRetryDelay,
+  sessionCookie,
+  sessionFragment,
+  shouldForgetSession,
+} from '@/lib/player-session';
 import { buttonClass } from '@/components/ui';
 
 interface Session {
@@ -36,6 +45,7 @@ interface Snapshot {
 }
 
 const STORAGE_KEY = 'chacota:session';
+const NICKNAME_KEY = 'chacota:nickname';
 const STATE_TIMEOUT_MS = 8000;
 
 function fromStorage(): Partial<Session> | null {
@@ -47,9 +57,13 @@ function fromStorage(): Partial<Session> | null {
   }
 }
 
-/** localStorage first, then the cookie copy (camera apps' viewers may not keep localStorage). */
+/**
+ * The URL's fragment first (it survives a reload anywhere), then localStorage, then the cookie copy
+ * (camera apps' viewers may keep neither of those).
+ */
 function loadSession(): Session | null {
-  const session = fromStorage() ?? (readSessionCookie(document.cookie) as Partial<Session> | null);
+  const session =
+    (readSessionFragment(location.hash) as Partial<Session> | null) ?? fromStorage() ?? (readSessionCookie(document.cookie) as Partial<Session> | null);
   // Sessions saved before sessions had these fields cannot be resumed.
   return session?.sessionId && session.module && session.token ? (session as Session) : null;
 }
@@ -64,7 +78,33 @@ function saveSession(session: Session | null) {
   try {
     document.cookie = sessionCookie(session, location.protocol === 'https:');
   } catch {
-    // Cookies blocked too: the game still works, it just can't resume after a reload.
+    // Cookies blocked too: the fragment below still lets the player resume after a reload.
+  }
+  // Same page, same history entry: only the fragment changes.
+  history.replaceState(history.state, '', `${location.pathname}${location.search}${session ? sessionFragment(session) : ''}`);
+}
+
+/** The last nickname used on this phone; it stays after leaving a game, to fill in the next one. */
+function loadNickname(): string {
+  try {
+    const saved = localStorage.getItem(NICKNAME_KEY);
+    if (saved) return saved;
+  } catch {
+    // Fall back to the cookie.
+  }
+  return readNicknameCookie(document.cookie);
+}
+
+function saveNickname(nickname: string) {
+  try {
+    localStorage.setItem(NICKNAME_KEY, nickname);
+  } catch {
+    // The cookie below is enough.
+  }
+  try {
+    document.cookie = nicknameCookie(nickname, location.protocol === 'https:');
+  } catch {
+    // Nothing to fill in next time: not worth more.
   }
 }
 
@@ -82,6 +122,7 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
     setScreenState(next);
   }, []);
   const [score, setScore] = useState(0);
+  const [lastNickname, setLastNickname] = useState('');
 
   /** Loads the current state. False when the API could not answer for now (network, 429, 5xx). */
   const resync = useCallback(
@@ -115,10 +156,13 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
   // Until /state answers the phone shows "reconnecting", not the join form: joining again from
   // there would create a second player and lose the score.
   useEffect(() => {
+    // localStorage and the URL's fragment only exist after hydration, so these syncs happen in an effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLastNickname(loadNickname());
     const stored = loadSession();
     if (!stored || (initialPin && initialPin !== stored.pin)) return;
-    // localStorage only exists after hydration, so this sync has to happen in an effect.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    // Wherever it was found, keep all three copies, so the next reload finds it too.
+    saveSession(stored);
     setSession(stored);
     setScreen({ kind: 'resuming' });
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -187,6 +231,8 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       pin,
     };
     saveSession(s);
+    saveNickname(s.nickname);
+    setLastNickname(s.nickname);
     setSession(s);
     setScore(0);
     await resync(s);
@@ -219,7 +265,8 @@ export function PlayerApp({ apiUrl, realtime, initialPin }: { apiUrl: string; re
       </header>
 
       <main className="flex flex-1 flex-col">
-        {screen.kind === 'join' && <JoinForm initialPin={initialPin} onJoin={join} />}
+        {/* key: the form starts over with the last nickname once it is read after hydration. */}
+        {screen.kind === 'join' && <JoinForm key={lastNickname} initialPin={initialPin} initialNickname={lastNickname} onJoin={join} />}
 
         {screen.kind === 'resuming' && (
           <Centered>
@@ -286,10 +333,18 @@ function Centered({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">{children}</div>;
 }
 
-function JoinForm({ initialPin, onJoin }: { initialPin: string; onJoin: (pin: string, nickname: string) => Promise<string | null> }) {
+function JoinForm({
+  initialPin,
+  initialNickname,
+  onJoin,
+}: {
+  initialPin: string;
+  initialNickname: string;
+  onJoin: (pin: string, nickname: string) => Promise<string | null>;
+}) {
   const t = useTranslations('play');
   const [pin, setPin] = useState(initialPin);
-  const [nickname, setNickname] = useState('');
+  const [nickname, setNickname] = useState(initialNickname);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const errorKey = (code: string) =>

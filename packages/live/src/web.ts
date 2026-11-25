@@ -2,7 +2,7 @@
  * UI contract of an activity. The platform renders the frame (lobby with PIN and QR, joining,
  * reconnection, podium, verification code); the activity renders what happens while it runs.
  */
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { LiveEvent } from './model';
 
 export interface Clock {
@@ -26,6 +26,8 @@ export interface HostScreenProps {
   setAdvanceDisabled(disabled: boolean): void;
   /** Short progress text shown next to the title in the header (e.g. "Question 2 of 10"), or null. */
   setSubtitle(text: string | null): void;
+  /** Something small shown in the footer, between the keyboard hint and the buttons (e.g. a race's minimap), or null. */
+  setFooter(node: ReactNode | null): void;
   /** Runs an activity's host action. A result with a numeric `version` keeps the main button in sync with phases the action moved. */
   hostAction(name: string, args?: unknown): Promise<unknown>;
   /** Shows an image (S3 key) behind the whole presenter screen, under a dark veil; null removes it. */

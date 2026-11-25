@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ANIMALS, TRACK_METERS, type Animal, type EmbolsauEvent, type HostSnapshot, type PhaseInfo, type RoundPlace, type RoundRank } from '../model';
 import { ART, SCENERY } from './art';
 import { HISTORY, type Snapshot } from './camera';
-import { drawRace, FRAME, type Scenery, type Sprites } from './race-canvas';
+import { drawMinimap, drawRace, fitFrame, FRAME, type Scenery, type Sprites } from './race-canvas';
 
 const TICK_MS = 500;
 const TICKING = new Set(['picking', 'countdown', 'racing', 'closing']);
@@ -15,25 +15,28 @@ const TICKING = new Set(['picking', 'countdown', 'racing', 'closing']);
 type LastRound = { round: number; top: RoundPlace[]; ranks: Record<string, RoundRank> };
 
 /** Presenter screen while Embolsau runs: picking, 3-2-1, the race, and each round's results. */
-export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostAction, setAdvanceLabel, setSubtitle }: HostScreenProps) {
+export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostAction, setAdvanceLabel, setSubtitle, setFooter }: HostScreenProps) {
   const s0 = snapshot as unknown as HostSnapshot;
   const t = useTranslations('embolsau.host');
   const [phase, setPhase] = useState<PhaseInfo>(s0);
   const [picks, setPicks] = useState<{ counts: Record<Animal, number>; picked: number } | null>(null);
   const [lastRound, setLastRound] = useState<LastRound | undefined>(s0.lastRound);
   const runners = useRef<Snapshot[]>([]);
+  const runnersRound = useRef<number | null>(null);
   const trackMeters = TRACK_METERS[s0.track];
 
   useEffect(
     () =>
       subscribe((event) => {
         const e = event as EmbolsauEvent;
-        if (e.type === 'embolsau.phase') {
-          setPhase(e);
-          if (e.phase === 'countdown') runners.current = [];
-        } else if (e.type === 'embolsau.picks') setPicks(e);
-        else if (e.type === 'embolsau.standings')
-          runners.current = [...runners.current, { at: e.at, runners: e.runners.map((r) => ({ ...r, at: e.at })) }].slice(-HISTORY);
+        if (e.type === 'embolsau.phase') setPhase(e);
+        else if (e.type === 'embolsau.picks') setPicks(e);
+        else if (e.type === 'embolsau.standings') {
+          // A new round starts its history over (the first standings come during the countdown).
+          const kept = runnersRound.current === e.round ? runners.current : [];
+          runnersRound.current = e.round;
+          runners.current = [...kept, { at: e.at, runners: e.runners.map((r) => ({ ...r, at: e.at })) }].slice(-HISTORY);
+        }
         else if (e.type === 'embolsau.roundResults') setLastRound(e);
       }),
     [subscribe],
@@ -66,7 +69,9 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
         ? t('advance.starting')
         : phase.phase === 'racing' || phase.phase === 'closing'
           ? t('advance.endRound')
-          : last
+          : phase.phase === 'finished' && !last
+            ? t('advance.results')
+            : last
             ? t('advance.podium')
             : t('advance.nextRound');
   useEffect(() => setAdvanceLabel(label), [label, setAdvanceLabel]);
@@ -92,17 +97,6 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
           {t('picked', { picked: picks?.picked ?? 0, total: playerCount })}
           {left !== null && ` · ${t('secondsLeft', { seconds: Math.ceil(left / 1000) })}`}
         </p>
-      </Screen>
-    );
-  }
-
-  if (phase.phase === 'countdown' && left !== null && left > 0) {
-    return (
-      <Screen>
-        <p className="font-display text-[14rem] leading-none font-extrabold text-sol" aria-live="assertive">
-          {Math.ceil(left / 1000)}
-        </p>
-        <p className="text-3xl text-niebla">{t('phase.countdown')}</p>
       </Screen>
     );
   }
@@ -144,6 +138,20 @@ export function EmbolsauHost({ snapshot, clock, playerCount, subscribe, hostActi
       now={clock.now}
       trackMeters={trackMeters}
       closingEndsAt={phase.phase === 'closing' ? phase.phaseEndsAt : null}
+      setFooter={setFooter}
+      banner={phase.phase === 'finished' ? t('phase.finished') : null}
+      overlay={
+        phase.phase === 'countdown' &&
+        left !== null &&
+        left > 0 && (
+          <div className="flex flex-col items-center gap-2 rounded-[3rem] bg-noche/70 px-16 py-8 text-center">
+            <p className="font-display text-[12rem] leading-none font-extrabold text-sol" aria-live="assertive">
+              {Math.ceil(left / 1000)}
+            </p>
+            <p className="text-3xl text-niebla">{t('phase.countdown')}</p>
+          </div>
+        )
+      }
     />
   );
 }
@@ -153,28 +161,47 @@ function RaceView({
   now,
   trackMeters,
   closingEndsAt,
+  setFooter,
+  banner,
+  overlay,
 }: {
   runners: React.RefObject<Snapshot[]>;
   now: () => number;
   trackMeters: number;
   closingEndsAt: number | null;
+  setFooter: HostScreenProps['setFooter'];
+  /** Big text at the top of the track, like "the race is over". */
+  banner: string | null;
+  /** Shown over the track, centered: the 3-2-1 before the start. */
+  overlay?: ReactNode;
 }) {
   const t = useTranslations('embolsau.host');
+  const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  const minimap = useRef<HTMLCanvasElement>(null);
   const closing = useRef(closingEndsAt);
   closing.current = closingEndsAt;
+  const bannerText = useRef(banner);
+  bannerText.current = banner;
   const labels = useRef({
     behind: (n: number) => t('behind', { count: n }),
     leaders: t('leaders'),
-    all: t('everyone'),
     bump: t('bump'),
     closing: (s: number) => t('closingLeft', { seconds: s }),
   });
 
+  // The minimap with everybody goes in the presenter's footer, so the race gets all the room above.
+  const everyone = t('everyone');
+  useEffect(() => {
+    setFooter(<canvas ref={minimap} className="block h-12 w-full" aria-label={everyone} role="img" />);
+    return () => setFooter(null);
+  }, [setFooter, everyone]);
+
   useEffect(() => {
     const el = canvas.current;
+    const area = box.current;
     const ctx = el?.getContext('2d');
-    if (!el || !ctx) return;
+    if (!el || !area || !ctx) return;
     const sprites = Object.fromEntries(
       ANIMALS.map((a) => {
         const run = new Image();
@@ -190,34 +217,60 @@ function RaceView({
     let frame = 0;
     const camera = { x: 0, at: 0 };
     const draw = () => {
-      // Draw at the canvas's real resolution, in the 1280×720 frame's coordinates.
+      // All the space the frame leaves: the drawing takes its shape (see fitFrame).
+      const css = fitFrame(area.clientWidth, area.clientHeight);
+      if (el.style.width !== `${css.width}px` || el.style.height !== `${css.height}px`) {
+        el.style.width = `${css.width}px`;
+        el.style.height = `${css.height}px`;
+      }
+      // Draw at the canvas's real resolution, in the frame's coordinates (1280 units wide).
       const ratio = window.devicePixelRatio || 1;
-      const cssWidth = el.clientWidth;
-      const width = Math.round(cssWidth * ratio);
-      const height = Math.round(((cssWidth * FRAME.height) / FRAME.width) * ratio);
+      const width = Math.round(css.width * ratio);
+      const height = Math.round(css.height * ratio);
       if (el.width !== width || el.height !== height) {
         el.width = width;
         el.height = height;
       }
-      ctx.setTransform(width / FRAME.width, 0, 0, height / FRAME.height, 0, 0);
+      ctx.setTransform(width / FRAME.width, 0, 0, height / css.frameHeight, 0, 0);
       const at = now();
-      drawRace(ctx, {
+      const drawn = drawRace(ctx, {
         history: runners.current,
         camera,
+        height: css.frameHeight,
         now: at,
         trackMeters,
         closingLeftMs: closing.current === null ? null : Math.max(0, closing.current - at),
+        banner: bannerText.current,
         sprites,
         scenery,
         labels: labels.current,
       });
+      const mini = minimap.current;
+      const miniCtx = mini?.getContext('2d');
+      if (mini && miniCtx && mini.clientWidth > 0) {
+        const w = Math.round(mini.clientWidth * ratio);
+        const h = Math.round(mini.clientHeight * ratio);
+        if (mini.width !== w || mini.height !== h) {
+          mini.width = w;
+          mini.height = h;
+        }
+        miniCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        drawMinimap(miniCtx, { ...drawn, trackMeters, width: mini.clientWidth, height: mini.clientHeight });
+      }
       frame = requestAnimationFrame(draw);
     };
     frame = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frame);
   }, [now, runners, trackMeters]);
 
-  return <canvas ref={canvas} className="aspect-video w-full rounded-2xl" aria-label={t('phase.racing')} role="img" />;
+  return (
+    <div ref={box} className="relative min-h-0 w-full flex-1 basis-0">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <canvas ref={canvas} className="rounded-2xl" aria-label={t('phase.racing')} role="img" />
+      </div>
+      {overlay && <div className="absolute inset-0 flex items-center justify-center">{overlay}</div>}
+    </div>
+  );
 }
 
 function Screen({ children }: { children: ReactNode }) {
