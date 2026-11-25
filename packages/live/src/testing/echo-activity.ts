@@ -10,12 +10,12 @@ export interface EchoState {
   rounds: number;
 }
 
-export const echoActivity: ActivityServer<{ rounds: number; maxPlayers?: number }, EchoState> = {
+export const echoActivity: ActivityServer<{ rounds: number; maxPlayers?: number; phones?: false }, EchoState> = {
   manifest: { id: 'echo', contractVersion: 1, status: 'hidden', usesPhones: true, color: '#0B8048' },
 
   prepare(content) {
     if (!Number.isInteger(content?.rounds) || content.rounds < 1) throw new LiveError('not_playable');
-    return { title: `Echo ${content.rounds}`, state: { round: 0, rounds: content.rounds }, maxPlayers: content.maxPlayers };
+    return { title: `Echo ${content.rounds}`, state: { round: 0, rounds: content.rounds }, maxPlayers: content.maxPlayers, ...(content.phones === false ? { phones: false as const } : {}) };
   },
 
   async advance(live, session) {
@@ -27,6 +27,10 @@ export const echoActivity: ActivityServer<{ rounds: number; maxPlayers?: number 
 
   async snapshot(_live, session) {
     return { round: session.state.round };
+  },
+
+  async finalSnapshot(_live, session) {
+    return { rounds: session.state.round };
   },
 
   async results(_live, session, players) {

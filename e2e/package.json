@@ -5,10 +5,11 @@
   "type": "module",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "tsx src/game.ts && tsx src/embolsau.ts",
+    "start": "tsx src/game.ts && tsx src/embolsau.ts && tsx src/rifa.ts",
     "typecheck": "tsc --noEmit",
     "start:tiluchi": "tsx src/game.ts",
-    "start:embolsau": "tsx src/embolsau.ts"
+    "start:embolsau": "tsx src/embolsau.ts",
+    "start:rifa": "tsx src/rifa.ts"
   },
   "dependencies": {
     "@aws-sdk/client-cognito-identity-provider": "^3.1175.0",

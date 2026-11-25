@@ -22,6 +22,8 @@ export interface HostScreenProps {
   advance(): void;
   /** Label of the presenter's main button for the current step. */
   setAdvanceLabel(label: string): void;
+  /** Disables the main button, and the keyboard and clicker shortcuts, while the activity is busy (e.g. an animation). Also blocks the activity's own `advance()` calls. */
+  setAdvanceDisabled(disabled: boolean): void;
   /** Short progress text shown next to the title in the header (e.g. "Question 2 of 10"), or null. */
   setSubtitle(text: string | null): void;
   /** Something small shown in the footer, between the keyboard hint and the buttons (e.g. a race's minimap), or null. */
@@ -55,4 +57,8 @@ export interface ActivityWeb {
   ResultsDetails?: ComponentType<{ details: unknown }>;
   /** Short summary under the title in the lobby (e.g. "12 questions · about 8 minutes"). */
   LobbySummary?: ComponentType<{ snapshot: Record<string, unknown> }>;
+  /** Replaces the podium on the presenter's screen once the session ended. */
+  Final?: ComponentType<{ snapshot: Record<string, unknown> }>;
+  /** Replaces the "you finished Nth" line on the phone; the verification code stays. */
+  PlayFinal?: ComponentType<{ snapshot: Record<string, unknown>; playerId: string }>;
 }

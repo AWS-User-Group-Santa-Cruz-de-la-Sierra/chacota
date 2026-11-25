@@ -54,3 +54,16 @@ export async function seedEmbolsau(ownerUserId: string): Promise<{ orgSlug: stri
   await setOrgActivities(db, org.id, ['embolsau']);
   return { orgSlug: org.slug };
 }
+
+export const RIFA_ORG_SLUG = 'e2e-rifa';
+
+/** Organization for the Rifa run. Rifa is experimental, so it has to be enabled on the org. Idempotent. */
+export async function seedRifa(ownerUserId: string): Promise<{ orgSlug: string }> {
+  const env = webEnv();
+  const db = createDb({ tableName: env.CHACOTA_TABLE!, endpoint: env.DYNAMODB_ENDPOINT });
+  const org =
+    (await getOrgBySlug(db, RIFA_ORG_SLUG)) ??
+    (await createOrg(db, { slug: RIFA_ORG_SLUG, name: 'E2E Rifa', primaryColor: '#D63A72' }, ownerUserId, 'active'));
+  await setOrgActivities(db, org.id, ['rifa']);
+  return { orgSlug: org.slug };
+}

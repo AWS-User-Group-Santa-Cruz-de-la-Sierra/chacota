@@ -17,6 +17,7 @@
     "@chacota/db": "workspace:*",
     "@chacota/embolsau": "workspace:*",
     "@chacota/live": "workspace:*",
+    "@chacota/rifa": "workspace:*",
     "@chacota/tiluchi": "workspace:*",
     "aws-amplify": "^6.22.2",
     "canvas-confetti": "^1.9.4",

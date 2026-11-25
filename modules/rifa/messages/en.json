@@ -1,0 +1,80 @@
+{
+  "card": { "name": "Charity raffle", "description": "A raffle with imps: some go overboard and one wins." },
+  "form": {
+    "title": "New raffle",
+    "name": "Name",
+    "defaultName": "Charity raffle",
+    "mode": "How do people sign up?",
+    "modes": { "list": "I type the names", "qr": "They sign up with the QR" },
+    "overboard": "Overboard per round",
+    "names": "One name per line",
+    "count": "{count, plural, =0 {No names yet} one {# name} other {# names}}.",
+    "min": "Enter at least {min}.",
+    "tooMany": "Too many names: the limit is {max}.",
+    "tooLong": "{count, plural, one {This name is longer than {max} characters: {names}. Shorten it to start.} other {These # names are longer than {max} characters: {names}. Shorten them to start.}}",
+    "duplicates": "Some names are repeated: they count as separate tickets.",
+    "start": "Start raffle",
+    "starting": "Getting ready…",
+    "invalid": "The raffle options are not valid.",
+    "hostOnly": "Only people who can present set up raffles."
+  },
+  "host": {
+    "bag": "The bag",
+    "advance": { "open": "Open the raffle", "draw": "Draw a round", "drawing": "Drawing…" },
+    "subtitle": "Round {round} · {count} in the bag",
+    "subtitleStart": "{count} in the bag",
+    "lobbySummary": {
+      "qr": "They sign up with the QR · {overboard} overboard per round",
+      "list": "{count, plural, one {# name} other {# names}} · {overboard} overboard per round"
+    },
+    "ready": "Who will it be?",
+    "caption": { "waiting": "Round {round}", "out": "Overboard · {n} of {total}", "winner": "Round {round} · winner" },
+    "announce": { "out": "{name} goes overboard.", "winner": "{name} wins!" },
+    "winners": "Winners",
+    "noWinners": "No winners yet.",
+    "round": "round {round}",
+    "reset": "Reset",
+    "empty": "Nobody is in the bag yet.",
+    "chip": { "discard": "Discard {name}", "restore": "Put {name} back in the bag", "won": "{name} won" },
+    "hint": "Tap a name to discard it or put it back.",
+    "onOverboard": { "label": "Overboard:", "discard": "discard", "return": "back in the bag" },
+    "resetButton": "Reset",
+    "confirmReset": "Reset the raffle? Everyone goes back in the bag, winners too. The winners list stays, with a reset mark.",
+    "actionFailed": "The change didn't go through. The bag was reloaded; try again.",
+    "bagFailed": "Couldn't load the bag.",
+    "retry": "Try again"
+  },
+  "final": {
+    "title": "Winners",
+    "none": "This raffle ended without winners.",
+    "failed": "Couldn't load the winners. Reload the page.",
+    "round": "Round {round}",
+    "reset": "Reset"
+  },
+  "play": {
+    "idle": { "bag": "You are in the bag", "out": "You were discarded", "won": "You won round {round}!" },
+    "hint": { "bag": "Good luck! Watch the screen.", "out": "The raffle continues on the screen.", "won": "The raffle continues on the screen." },
+    "round": "Round {round}",
+    "announce": { "out": "{name} goes overboard.", "winner": "{name} wins!" },
+    "flood": { "oops": "Oops!", "title": "You went overboard", "return": "You go back in the bag", "discard": "You were discarded" },
+    "won": { "title": "You won!", "announce": "You won round {round}!" },
+    "final": "{count, plural, one {You won round {rounds}} other {You won rounds {rounds}}}"
+  },
+  "scenes": {
+    "alAgua": "Overboard!",
+    "carnavalito": "Carnavalito",
+    "stop": "BUS STOP",
+    "para72": "Stop, 72!",
+    "winner": "WINNER!",
+    "candy": "candy",
+    "labels": {
+      "waiting": "The round is about to start",
+      "retrete": "{name}'s sign falls into a toilet and spirals down the drain",
+      "globazo": "Two water balloons hit {name}'s imp and tear the sign in half",
+      "lagarto": "A caiman grabs {name}'s imp and drags it into the river; the hat and the sign float up",
+      "micro72": "{name}'s imp waits for bus 72, gets soaked by a downpour, and the bus drives past without stopping",
+      "reduced": "{name}'s sign falls into the water and gets soaked",
+      "winner": "{name} wins: their name in neon, a crown, and an imp with a bag of candy"
+    }
+  }
+}

@@ -12,12 +12,15 @@ export interface ActivityServer<TContent = unknown, TState = unknown> {
   /**
    * Validates the content a host starts with and builds the initial state. Throws LiveError('not_playable').
    * `maxPlayers` caps how many can join; past it, joining fails with LiveError('session_full').
+   * `phones: false` means no lobby and no players: the session starts running and joining is refused.
    */
-  prepare(content: TContent): { title: string; state: TState; maxPlayers?: number };
+  prepare(content: TContent): { title: string; state: TState; maxPlayers?: number; phones?: false };
   /** The presenter moves forward while the session runs. Use live.transition/publish, or live.end when done. */
   advance(live: LiveService, session: Session<TState>): Promise<Session<TState>>;
   /** What a reconnecting client needs (the presenter when playerId is undefined). */
   snapshot(live: LiveService, session: Session<TState>, playerId?: string): Promise<Record<string, unknown>>;
+  /** What the final screens need once the session ended (the presenter when playerId is undefined). */
+  finalSnapshot?(live: LiveService, session: Session<TState>, playerId?: string): Promise<Record<string, unknown>>;
   /** Extra result columns and details, computed once when the session ends. */
   results(live: LiveService, session: Session<TState>, players: Player[]): Promise<ModuleResults>;
   /** Presenter actions besides advancing (Tiluchi: count answers). */

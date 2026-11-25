@@ -1,0 +1,80 @@
+{
+  "card": { "name": "Rifa solidaria", "description": "Sorteo con duendes: unos se van al agua y uno gana." },
+  "form": {
+    "title": "Nueva rifa",
+    "name": "Nombre",
+    "defaultName": "Rifa solidaria",
+    "mode": "¿Cómo se anota la gente?",
+    "modes": { "list": "Escribo los nombres", "qr": "Se anotan con el QR" },
+    "overboard": "Al agua por ronda",
+    "names": "Un nombre por línea",
+    "count": "{count, plural, =0 {Ningún nombre todavía} one {# nombre} other {# nombres}}.",
+    "min": "Escribí al menos {min}.",
+    "tooMany": "Hay demasiados nombres: el máximo es {max}.",
+    "tooLong": "{count, plural, one {Este nombre tiene más de {max} caracteres: {names}. Acortalo para poder empezar.} other {Estos # nombres tienen más de {max} caracteres: {names}. Acortalos para poder empezar.}}",
+    "duplicates": "Hay nombres repetidos: cuentan como boletos separados.",
+    "start": "Empezar rifa",
+    "starting": "Preparando…",
+    "invalid": "Las opciones de la rifa no son válidas.",
+    "hostOnly": "Solo quienes pueden presentar arman rifas."
+  },
+  "host": {
+    "bag": "La bolsa",
+    "advance": { "open": "Abrir la rifa", "draw": "Sortear ronda", "drawing": "Sorteando…" },
+    "subtitle": "Ronda {round} · {count} en la bolsa",
+    "subtitleStart": "{count} en la bolsa",
+    "lobbySummary": {
+      "qr": "Se anotan con el QR · {overboard} al agua por ronda",
+      "list": "{count, plural, one {# nombre} other {# nombres}} · {overboard} al agua por ronda"
+    },
+    "ready": "¿Quién será?",
+    "caption": { "waiting": "Ronda {round}", "out": "Al agua · {n} de {total}", "winner": "Ronda {round} · ganador" },
+    "announce": { "out": "{name} se va al agua.", "winner": "¡Ganó {name}!" },
+    "winners": "Ganadores",
+    "noWinners": "Todavía no hay ganadores.",
+    "round": "ronda {round}",
+    "reset": "Reinicio",
+    "empty": "Todavía no hay nadie en la bolsa.",
+    "chip": { "discard": "Descartar a {name}", "restore": "Devolver a {name} a la bolsa", "won": "{name} ganó" },
+    "hint": "Tocá un nombre para descartarlo o devolverlo.",
+    "onOverboard": { "label": "Al agua:", "discard": "descartar", "return": "vuelven a la bolsa" },
+    "resetButton": "Reiniciar",
+    "confirmReset": "¿Reiniciar la rifa? Todos vuelven a la bolsa, también los ganadores. La lista de ganadores queda, con una marca de reinicio.",
+    "actionFailed": "No se pudo hacer el cambio. La bolsa se volvió a cargar; probá de nuevo.",
+    "bagFailed": "No se pudo cargar la bolsa.",
+    "retry": "Reintentar"
+  },
+  "final": {
+    "title": "Ganadores",
+    "none": "Esta rifa terminó sin ganadores.",
+    "failed": "No se pudieron cargar los ganadores. Recargá la página.",
+    "round": "Ronda {round}",
+    "reset": "Reinicio"
+  },
+  "play": {
+    "idle": { "bag": "Estás en la bolsa", "out": "Quedaste descartado", "won": "¡Ganaste en la ronda {round}!" },
+    "hint": { "bag": "¡Suerte! Mirá la pantalla.", "out": "La rifa sigue en la pantalla.", "won": "La rifa sigue en la pantalla." },
+    "round": "Ronda {round}",
+    "announce": { "out": "{name} se va al agua.", "winner": "¡Ganó {name}!" },
+    "flood": { "oops": "¡Uy!", "title": "Te fuiste al agua", "return": "Volvés a la bolsa", "discard": "Quedaste descartado" },
+    "won": { "title": "¡Ganaste!", "announce": "¡Ganaste en la ronda {round}!" },
+    "final": "{count, plural, one {Ganaste en la ronda {rounds}} other {Ganaste en las rondas {rounds}}}"
+  },
+  "scenes": {
+    "alAgua": "¡Al agua!",
+    "carnavalito": "Carnavalito",
+    "stop": "PARADA",
+    "para72": "¡Pará, 72!",
+    "winner": "¡GANADOR!",
+    "candy": "dulces",
+    "labels": {
+      "waiting": "Se viene la ronda",
+      "retrete": "El cartel de {name} cae a un retrete y se va en espiral",
+      "globazo": "Le tiran dos globazos al duende de {name} y se le rompe el cartel",
+      "lagarto": "Un lagarto atrapa al duende de {name} y lo jala al río; flotan el sombrero y el cartel",
+      "micro72": "El duende de {name} espera el micro 72, lo moja un diluvio y el micro pasa sin levantarlo",
+      "reduced": "El cartel de {name} cae al agua y se moja",
+      "winner": "{name} gana: su nombre en neón, una corona y un duende con una bolsa de dulces"
+    }
+  }
+}

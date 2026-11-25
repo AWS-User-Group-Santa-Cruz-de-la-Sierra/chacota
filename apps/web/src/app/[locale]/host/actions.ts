@@ -72,3 +72,9 @@ export async function hostActionAction(sessionId: string, name: string, args?: u
   await requireSessionHost(sessionId);
   return getLive().hostAction(sessionId, name, args);
 }
+
+/** The activity's final data of an ended session (what `finalSnapshot` returns), for `Final`. */
+export async function finalSnapshotAction(sessionId: string): Promise<Record<string, unknown>> {
+  await requireSessionHost(sessionId);
+  return (await getLive().snapshot(sessionId)).module;
+}
