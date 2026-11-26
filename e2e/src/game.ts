@@ -71,8 +71,10 @@ try {
   await ana.getByText('¡Respuesta enviada!').waitFor();
   await host.getByText('2 respuestas').first().waitFor({ timeout: 5000 });
   step('presenter counts 2 answers');
-  await host.getByRole('button', { name: 'Mostrar respuesta' }).click();
-  await ana.getByText('¡Correcto!').waitFor({ timeout: 5000 });
+  // Caro doesn't answer, so the time runs out: the presenter reveals on its own. Question 2 must then
+  // stay open (a presenter that kept the "0 left" revealed every question after a timed-out one at once).
+  await ana.getByText('¡Correcto!').waitFor({ timeout: 35000 });
+  step('presenter auto-reveals when the time runs out');
   await beto.getByText('Incorrecto').waitFor();
   await caro.getByText('No respondiste').waitFor();
   step('phones show correct / incorrect / no answer');
@@ -86,9 +88,11 @@ try {
   if (!first.includes('Ana')) fail(`Expected Ana first, got ${first}`);
   step('ranking shows Ana first');
 
-  // Question 2: true/false, everyone answers → auto reveal
+  // Question 2: true/false, right after one that timed out; everyone answers → auto reveal
   await host.getByRole('button', { name: 'Siguiente pregunta' }).click();
   for (const p of players) await p.getByRole('button', { name: 'Verdadero' }).waitFor({ timeout: 10000 });
+  // Still open after the reading time: not revealed the moment it appeared.
+  await host.getByRole('button', { name: 'Mostrar respuesta' }).waitFor({ timeout: 2000 });
   for (const p of players) await p.getByRole('button', { name: 'Verdadero' }).click();
   // Last question: after the answer it goes straight to the podium.
   await host.getByRole('button', { name: 'Ver podio' }).waitFor({ timeout: 8000 });

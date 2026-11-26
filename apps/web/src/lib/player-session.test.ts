@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   nicknameCookie,
+  playUrl,
   readNicknameCookie,
   readSessionCookie,
   readSessionFragment,
@@ -76,5 +77,21 @@ describe('last nickname', () => {
 
   it('is empty when there is none', () => {
     expect(readNicknameCookie('a=1')).toBe('');
+  });
+});
+
+describe('playUrl', () => {
+  const session = { token: 't', sessionId: 's', module: 'tiluchi', playerId: 'p', nickname: 'Ana', pin: '309674' };
+
+  it("points the link's PIN at the game joined, so a reload of a reused tab resumes instead of showing the form", () => {
+    // The tab came from an earlier game's QR (?pin=643630); the player typed the new PIN in the form.
+    const url = playUrl('/play', '?pin=643630', session);
+    expect(url).toBe(`/play?pin=309674${sessionFragment(session)}`);
+  });
+
+  it('keeps the rest of the link, and leaves it alone when the player leaves', () => {
+    expect(playUrl('/en/play', '?utm=qr&pin=1', session)).toBe(`/en/play?utm=qr&pin=309674${sessionFragment(session)}`);
+    expect(playUrl('/play', '', session)).toBe(`/play?pin=309674${sessionFragment(session)}`);
+    expect(playUrl('/play', '?pin=309674', null)).toBe('/play?pin=309674');
   });
 });

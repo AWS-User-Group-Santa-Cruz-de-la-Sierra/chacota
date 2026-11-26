@@ -9,12 +9,12 @@ import { useRealtime } from '@/components/game/use-realtime';
 import { Logo } from '@/components/logo';
 import {
   nicknameCookie,
+  playUrl,
   readNicknameCookie,
   readSessionCookie,
   readSessionFragment,
   resumeRetryDelay,
   sessionCookie,
-  sessionFragment,
   shouldForgetSession,
 } from '@/lib/player-session';
 import { buttonClass } from '@/components/ui';
@@ -80,8 +80,8 @@ function saveSession(session: Session | null) {
   } catch {
     // Cookies blocked too: the fragment below still lets the player resume after a reload.
   }
-  // Same page, same history entry: only the fragment changes.
-  history.replaceState(history.state, '', `${location.pathname}${location.search}${session ? sessionFragment(session) : ''}`);
+  // Same page, same history entry: only the link's PIN and fragment change.
+  history.replaceState(history.state, '', playUrl(location.pathname, location.search, session));
 }
 
 /** The last nickname used on this phone; it stays after leaving a game, to fill in the next one. */
