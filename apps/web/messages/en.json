@@ -302,5 +302,16 @@
       "upload": "The image couldn't be uploaded. Try again.",
       "not_an_image": "That file isn't an image the browser can open."
     }
+  },
+  "localAuth": {
+    "title": "Local sign-in · AWS Emulator",
+    "badge": "Local",
+    "intro": "This sign-in uses the AWS Emulator's Cognito and only exists in local development.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "hint": "Users from pnpm local:init: dev@chacota.local (superadmin) and e2e@chacota.local, password Chacota-local-1.",
+    "error": "Wrong email or password, or the emulator isn't responding. If you restarted it, run pnpm local:init and restart pnpm dev."
   }
 }

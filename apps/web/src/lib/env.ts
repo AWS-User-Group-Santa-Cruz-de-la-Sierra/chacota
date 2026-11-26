@@ -1,4 +1,5 @@
 import 'server-only';
+import { localAuthMode } from './local-auth';
 
 function required(name: string): string {
   const value = process.env[name];
@@ -18,8 +19,13 @@ export const env = {
     return {
       userPoolId: required('COGNITO_USER_POOL_ID'),
       clientId: required('COGNITO_CLIENT_ID'),
-      domain: required('COGNITO_DOMAIN'),
+      /** Hosted UI domain. Not used with local auth (the emulator has no hosted UI). */
+      domain: localAuthMode() ? (process.env.COGNITO_DOMAIN ?? '') : required('COGNITO_DOMAIN'),
     };
+  },
+  /** Local sign-in against the AWS Emulator's Cognito (CHACOTA_LOCAL_AUTH=emulator), else null. */
+  get localAuth(): { endpoint: string } | null {
+    return localAuthMode() ? { endpoint: required('COGNITO_LOCAL_ENDPOINT') } : null;
   },
   get autoApproveOrgs() {
     return process.env.CHACOTA_AUTO_APPROVE_ORGS === 'true';
