@@ -32,7 +32,7 @@ Chacota es una plataforma de **actividades**: cada organización elige cuáles o
 
 ## Desarrollo local
 
-Requiere Node 22+ y Podman o Docker. No necesitás cuenta de AWS: todo corre sobre el AWS Emulator oficial (Cognito, S3, AppSync Events) y DynamoDB Local.
+Requiere Node 22+ y Podman o Docker. Los scripts locales asumen macOS, Linux o WSL (shell POSIX). No necesitás cuenta de AWS: todo corre sobre el AWS Emulator oficial (Cognito, S3, AppSync Events) y DynamoDB Local.
 
 ```sh
 corepack enable            # o: npm i -g pnpm
@@ -44,6 +44,8 @@ pnpm local:init            # tabla, bucket, user pool, AppSync y organización d
 pnpm dev:game              # API de participantes :4000
 pnpm dev                   # http://localhost:3000
 ```
+
+En Linux con Docker rootful, el contenedor escribe `~/.aws/emulator` (y la CA `ca.pem`) como root: `pnpm dev:services` ya crea el directorio con tu usuario antes de levantar, pero si la CA queda ilegible corré `sudo chmod -R a+rX ~/.aws/emulator`. `pnpm local:init` espera a que los servicios y la CA estén listos (hasta 60 s) antes de empezar.
 
 Ingresá en http://localhost:3000 con `dev@chacota.local` / `Chacota-local-1` (superadmin, solo local).
 

@@ -25,7 +25,13 @@ const credentials = { accessKeyId: 'local', secretAccessKey: 'local' };
 
 // 1. Bucket
 const s3 = createS3({ endpoint: EMULATOR, caFile: process.env.NODE_EXTRA_CA_CERTS });
-const bucketExists = await s3.send(new HeadBucketCommand({ Bucket: BUCKET })).then(() => true, () => false);
+const bucketExists = await s3.send(new HeadBucketCommand({ Bucket: BUCKET })).then(
+  () => true,
+  (error: { name?: string; $metadata?: { httpStatusCode?: number } }) => {
+    if (error.name === 'NotFound' || error.name === 'NoSuchBucket' || error.$metadata?.httpStatusCode === 404) return false;
+    throw error;
+  },
+);
 if (!bucketExists) await s3.send(new CreateBucketCommand({ Bucket: BUCKET }));
 console.log(`bucket ${BUCKET} ${bucketExists ? 'ya existía' : 'creado'}`);
 

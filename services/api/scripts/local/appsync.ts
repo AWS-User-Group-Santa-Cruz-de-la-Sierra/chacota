@@ -44,8 +44,10 @@ export async function ensureEventApi(client: AppSyncClient): Promise<{ apiId: st
   }
   const apiId = api.apiId!;
   const keys = await client.send(new ListApiKeysCommand({ apiId }));
-  const existing = keys.apiKeys?.find((k) => k.id);
+  const now = Math.floor(Date.now() / 1000);
+  // Reuse only keys with more than a day left; AppSync allows at most 365 days.
+  const existing = keys.apiKeys?.find((k) => k.id && (k.expires ?? 0) > now + 86400);
   if (existing?.id) return { apiId, apiKey: existing.id };
-  const key = await client.send(new CreateApiKeyCommand({ apiId }));
+  const key = await client.send(new CreateApiKeyCommand({ apiId, expires: now + 365 * 86400 }));
   return { apiId, apiKey: key.apiKey!.id! };
 }
