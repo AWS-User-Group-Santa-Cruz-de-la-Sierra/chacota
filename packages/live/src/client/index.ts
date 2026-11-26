@@ -1,14 +1,14 @@
 /**
- * Minimal AppSync Events WebSocket client (also spoken by the local broker).
+ * Minimal AppSync Events WebSocket client (also spoken by the AWS Emulator).
  * Protocol: https://docs.aws.amazon.com/appsync/latest/eventapi/event-api-websocket-protocol.html
  * Browser-safe: no Node imports.
  */
 import type { LiveEvent } from '../model';
 
 export interface RealtimeConfig {
-  /** Host used for authorization, e.g. xxx.appsync-api.us-east-1.amazonaws.com or localhost:4001 */
+  /** Host used for authorization, e.g. xxx.appsync-api.us-east-1.amazonaws.com or 127.0.0.1:4101 (emulator) */
   httpDns: string;
-  /** wss://xxx.appsync-realtime-api.us-east-1.amazonaws.com/event/realtime or ws://localhost:4001/event/realtime */
+  /** wss://xxx.appsync-realtime-api.us-east-1.amazonaws.com/event/realtime or ws://127.0.0.1:4100/event/realtime (emulator, via realtime-tls) */
   realtimeUrl: string;
   apiKey?: string;
 }

@@ -10,11 +10,11 @@ pnpm is used through corepack (`corepack pnpm …`; plain `pnpm` may not be inst
 
 ```sh
 corepack pnpm install
-pnpm dev:services          # DynamoDB Local on :8000 + AWS Emulator (S3) on :9297, Podman/Docker (tests need DynamoDB)
-pnpm db:init               # create the local table "chacota-local"
-pnpm media:init            # create the bucket "chacota-media-local" in AWS Emulator (:9297, in-memory: rerun after a restart)
-pnpm dev:game              # participant API on :4000 + AppSync Events–compatible broker on :4001
-pnpm dev                   # Next.js on :3000 (apps/web/.env.local, see apps/web/.env.example)
+pnpm dev:services          # DynamoDB Local on :8000 + AWS Emulator on :9297 (S3, Cognito, AppSync Events on :4101/:4102) + realtime-tls (plain ws on :4100 for browsers), Podman/Docker
+cp apps/web/.env.example apps/web/.env.local
+pnpm local:init            # idempotent: table, bucket, user pool, AppSync API, demo org; writes ids to apps/web/.env.{development,production}.local and ends with a smoke check
+pnpm dev:game              # participant API on :4000 (+ /media/*); events go through the emulator's AppSync
+pnpm dev                   # Next.js on :3000; sign in as dev@chacota.local (superadmin) / Chacota-local-1 (local only)
 
 pnpm test                  # every workspace package (Vitest)
 pnpm typecheck
@@ -22,10 +22,10 @@ pnpm --filter @chacota/live test                           # one package
 pnpm --filter @chacota/tiluchi exec vitest run test/activity.test.ts -t "full game"   # one test
 cd apps/web && npx eslint src                              # lint (only apps/web has an ESLint config; root `pnpm lint` has none)
 cd apps/web && npx next typegen                            # route types (RouteContext…); the web typecheck script runs it first
-pnpm e2e                   # full game in Chrome; needs dev services + E2E_EMAIL/E2E_PASSWORD + AWS creds (see e2e/README.md)
+pnpm e2e                   # both flows in Chrome (user e2e@chacota.local); needs only the three steps above + dev + dev:game, no AWS account (see e2e/README.md)
 ```
 
-Infra (CDK, stack `Chacota-<stage>`; `dev` is disposable, `prod` is protected): `cd infra && npx cdk deploy Chacota-dev -c chacota:stage=dev --outputs-file cdk-outputs.dev.json`. `NodejsFunction` bundling shells out to `pnpm`, so it must be on `PATH`. Add `-c chacota:loadTest=true` to deploy the in-AWS 1000-player load test; the README shows how to invoke it, and you redeploy without the flag afterwards.
+Infra (CDK, stack `Chacota-<stage>`; `dev` is disposable and only for testing real deploys, not for local dev; `prod` is protected): `cd infra && npx cdk deploy Chacota-dev -c chacota:stage=dev --outputs-file cdk-outputs.dev.json`. `NodejsFunction` bundling shells out to `pnpm`, so it must be on `PATH`. Add `-c chacota:loadTest=true` to deploy the in-AWS 1000-player load test; the README shows how to invoke it, and you redeploy without the flag afterwards.
 
 ## Architecture
 
@@ -77,6 +77,8 @@ Disabling an activity hides it and blocks new sessions (`startSessionGuard`), bu
 - Next 16 specifics in use: `proxy.ts` instead of middleware, async `params`, `experimental.authInterrupts` for `forbidden()`.
 - Media: content stores S3 keys (`orgs/<orgId>/media/<uuid>.<ext>`, see `packages/core/src/media.ts`), never URLs; `mediaUrl(MEDIA_PUBLIC_URL, key)` builds them (CloudFront in the cloud). Saving checks `isOrgMediaKey`. Activities show images through `HostScreenProps.mediaUrl` and `setBackground`. Phones never load media.
 - Media in local dev: AWS Emulator only serves HTTPS with its own CA (`~/.aws/emulator/9297/ca.pem`, regenerated on each start), which browsers don't trust. So the browser uploads and reads through `local-server.ts` (`/media/*` on :4000), which talks to the emulator. Restart `pnpm dev:game` and the web after restarting the emulator.
-- Local dev is hybrid: DynamoDB Local and the local broker, but real Cognito from the `dev` stack (callbacks to localhost). `ADMIN_USER_PASSWORD_AUTH` is enabled only on non-prod pools, for the e2e login.
+- Local dev runs entirely on the AWS Emulator (no AWS account): Cognito, S3, AppSync Events and DynamoDB Local. `apps/web/src/lib/local-auth.ts` + `/local-sign-in` replace the Hosted UI, only with `CHACOTA_LOCAL_AUTH=emulator` (the web refuses to start with it on Amplify or a non-localhost production origin); no token refresh, sign in again when the id token expires. Commands that talk to the emulator run with `NODE_EXTRA_CA_CERTS` set to its CA.
+- The emulator keeps everything in memory and its CA changes on each start. After restarting it, rerun `pnpm local:init` (it detects the new user pool and resets the local world: table wiped, demo org reseeded) and restart `pnpm dev` and `pnpm dev:game`, since Node reads the CA only at startup. Old cookies are rejected (back to sign-in). The emulator image is unpinned (AWS only publishes `latest`); the smoke check in `local:init` fails loudly if its behaviour changes.
+- CI (`.github/workflows/e2e.yml`) runs both e2e flows on every PR and push to main with no secrets; failures upload `e2e-evidencias`.
 - Server-side tests that touch DynamoDB use `useTestDb()` from `@chacota/db/testing` (a throwaway table per file).
 - Commits: the maintainer approves commits explicitly. Never commit `.claude/`, `.env*` (except `.env.example`) or `.superpowers/`.
