@@ -19,6 +19,6 @@ Correr:
 pnpm e2e
 ```
 
-Termina con `ALL PASSED` y `ALL PASSED (Embolsau)`. Para correr uno solo: `corepack pnpm --filter @chacota/e2e start:tiluchi` o `start:embolsau` . Las capturas quedan en `e2e/out/`. `E2E_BASE_URL` cambia la URL base (por defecto `http://localhost:3000`).
+Termina con `ALL PASSED` y `ALL PASSED (Embolsau)`. Para correr uno solo: `corepack pnpm --filter @chacota/e2e start:tiluchi` o `start:embolsau`. Las capturas quedan en `e2e/out/`. `E2E_BASE_URL` cambia la URL base (por defecto `http://localhost:3000`). `E2E_EMAIL` y `E2E_PASSWORD` reemplazan al usuario por defecto (`e2e@chacota.local`).
 
 En CI, `.github/workflows/e2e.yml` corre los dos recorridos en cada PR, en cada push a main y a demanda, sin secretos. Si falla, sube capturas y logs como el artefacto `e2e-evidencias`. Que bloquee o no el merge depende de la protección de la rama.

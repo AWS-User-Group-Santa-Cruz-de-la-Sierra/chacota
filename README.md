@@ -62,6 +62,17 @@ EVENTS_REALTIME_URL=ws://192.168.1.10:4100/event/realtime
 y arrancas el juego con `ALLOWED_ORIGINS=http://localhost:3000,http://192.168.1.10:3000 pnpm dev:game`.
 
 
+## Primer superadmin (nube)
+
+Solo en un despliegue real: en local no hace falta, porque `dev@chacota.local` ya es superadmin. Para aprobar organizaciones, registrate una vez y luego:
+
+```sh
+aws cognito-idp admin-add-user-to-group --user-pool-id <UserPoolId> \
+  --username <tu-email> --group-name superadmin --profile <tu-perfil>
+```
+
+Después cerrá sesión y volvé a entrar.
+
 ## Tests
 
 ```sh
