@@ -8,10 +8,23 @@
 import { JwtRsaVerifier } from 'aws-jwt-verify';
 import type { Jwks } from 'aws-jwt-verify/jwk';
 
+const LOCAL_HOSTS = ['localhost', '127.0.0.1'];
+
+function localUrl(value: string | undefined, protocols: string[]): boolean {
+  try {
+    const url = new URL(value ?? '');
+    return protocols.includes(url.protocol) && LOCAL_HOSTS.includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function localAuthMode(env: NodeJS.ProcessEnv = process.env): boolean {
   if (env.CHACOTA_LOCAL_AUTH !== 'emulator') return false;
-  const prodBuild = env.NODE_ENV === 'production' && !env.AMPLIFY_APP_ORIGIN?.startsWith('http://localhost');
-  if (env.AWS_APP_ID || env.AWS_BRANCH || prodBuild) {
+  const prodBuild = env.NODE_ENV === 'production' && !localUrl(env.AMPLIFY_APP_ORIGIN, ['http:']);
+  // COGNITO_LOCAL_ENDPOINT decides whose JWKS is trusted, so it must be this machine.
+  const foreignEndpoint = !!env.COGNITO_LOCAL_ENDPOINT && !localUrl(env.COGNITO_LOCAL_ENDPOINT, ['http:', 'https:']);
+  if (env.AWS_APP_ID || env.AWS_BRANCH || prodBuild || foreignEndpoint) {
     throw new Error('CHACOTA_LOCAL_AUTH=emulator is for local development only');
   }
   return true;

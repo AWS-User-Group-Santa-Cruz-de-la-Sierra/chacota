@@ -20,6 +20,24 @@ describe('localAuthMode', () => {
     ).toThrow(msg);
   });
 
+  it('does not trust look-alike hosts in production', () => {
+    expect(() =>
+      mode({ CHACOTA_LOCAL_AUTH: 'emulator', NODE_ENV: 'production', AMPLIFY_APP_ORIGIN: 'http://localhost.evil.com' }),
+    ).toThrow();
+    expect(() => mode({ CHACOTA_LOCAL_AUTH: 'emulator', NODE_ENV: 'production' })).toThrow();
+    expect(() => mode({ CHACOTA_LOCAL_AUTH: 'emulator', NODE_ENV: 'production', AMPLIFY_APP_ORIGIN: 'nope' })).toThrow();
+    expect(
+      mode({ CHACOTA_LOCAL_AUTH: 'emulator', NODE_ENV: 'production', AMPLIFY_APP_ORIGIN: 'http://127.0.0.1:3000' }),
+    ).toBe(true);
+  });
+
+  it('refuses a non-local Cognito endpoint', () => {
+    expect(() => mode({ CHACOTA_LOCAL_AUTH: 'emulator', COGNITO_LOCAL_ENDPOINT: 'https://evil.example.com' })).toThrow(
+      'CHACOTA_LOCAL_AUTH=emulator is for local development only',
+    );
+    expect(mode({ CHACOTA_LOCAL_AUTH: 'emulator', COGNITO_LOCAL_ENDPOINT: 'https://127.0.0.1:9297' })).toBe(true);
+  });
+
   it('allows next start on localhost (CI)', () => {
     expect(
       mode({ CHACOTA_LOCAL_AUTH: 'emulator', NODE_ENV: 'production', AMPLIFY_APP_ORIGIN: 'http://localhost:3000' }),
@@ -88,5 +106,6 @@ describe('verifyLocalIdToken', () => {
     expect(await verifyLocalIdToken(sign({ ...base, aud: 'c2' }, privateKey, 'k1'), opts)).toBeNull();
     expect(await verifyLocalIdToken(sign({ ...base, token_use: 'access' }, privateKey, 'k1'), opts)).toBeNull();
     expect(await verifyLocalIdToken(sign(base, other, 'k2'), opts)).toBeNull();
+    expect(await verifyLocalIdToken(sign({ ...base, iss: 'https://evil.example.com/us-east-1_p' }, privateKey, 'k1'), opts)).toBeNull();
   });
 });

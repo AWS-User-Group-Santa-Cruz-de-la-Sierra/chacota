@@ -7,7 +7,10 @@ import { clearAuthCookies, localAuthMode } from '@/lib/local-auth';
 /** CHACOTA_LOCAL_AUTH=emulator: no hosted UI, so sign-in goes to our own page. */
 async function localAuthRoute(request: NextRequest, ctx: RouteContext<'/api/auth/[slug]'>) {
   const { slug } = await ctx.params;
-  if (slug === 'sign-in') return NextResponse.redirect(new URL('/local-sign-in', request.url));
+  if (slug === 'sign-in') {
+    const path = (await cookies()).get('NEXT_LOCALE')?.value === 'en' ? '/en/local-sign-in' : '/local-sign-in';
+    return NextResponse.redirect(new URL(path, request.url));
+  }
   if (slug === 'sign-out') {
     clearAuthCookies(env.cognito.clientId, await cookies());
     return NextResponse.redirect(new URL('/', request.url));
