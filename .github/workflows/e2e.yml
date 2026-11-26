@@ -32,6 +32,10 @@ jobs:
             sleep 1
           done
           echo "los servicios no levantaron en 60 s"; exit 1
+      - name: Permisos de la CA (la escribe el contenedor como root)
+        run: |
+          for i in $(seq 1 30); do [ -f "$HOME/.aws/emulator/9297/ca.pem" ] && break; sleep 1; done
+          sudo chmod -R a+rX "$HOME/.aws/emulator"
       - run: cp apps/web/.env.example apps/web/.env.local
       - run: pnpm local:init
       - run: pnpm --filter @chacota/web build
