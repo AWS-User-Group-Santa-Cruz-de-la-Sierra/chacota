@@ -1,0 +1,62 @@
+name: E2E
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: CA del emulador para Node
+        run: echo "NODE_EXTRA_CA_CERTS=$HOME/.aws/emulator/9297/ca.pem" >> "$GITHUB_ENV"
+      - name: Servicios locales
+        run: |
+          mkdir -p "$HOME/.aws/emulator"
+          docker compose up -d --build
+      - name: Esperar a los servicios
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sk https://127.0.0.1:9297/__admin/health >/dev/null && curl -s http://127.0.0.1:8000 >/dev/null; then
+              echo "servicios listos"; exit 0
+            fi
+            sleep 1
+          done
+          echo "los servicios no levantaron en 60 s"; exit 1
+      - run: cp apps/web/.env.example apps/web/.env.local
+      - run: pnpm local:init
+      - run: pnpm --filter @chacota/web build
+      - name: Levantar web y API
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          nohup pnpm --filter @chacota/web start > "$RUNNER_TEMP/logs/web.log" 2>&1 &
+          nohup pnpm dev:game > "$RUNNER_TEMP/logs/game.log" 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null http://127.0.0.1:3000 && curl -s -o /dev/null http://127.0.0.1:4000/health; then
+              echo "web y API listos"; exit 0
+            fi
+            sleep 1
+          done
+          echo "web o API no levantaron en 60 s"; exit 1
+      - run: pnpm e2e
+      - name: Recoger logs de los servicios
+        if: failure()
+        run: mkdir -p "$RUNNER_TEMP/logs" && docker compose logs --no-color > "$RUNNER_TEMP/logs/compose.log" 2>&1 || true
+      - name: Subir evidencias
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-evidencias
+          path: |
+            e2e/out/
+            ${{ runner.temp }}/logs/
+          if-no-files-found: warn
