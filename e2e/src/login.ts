@@ -24,7 +24,7 @@ export async function cognitoLogin(): Promise<Login> {
       UserPoolId: poolId,
       ClientId: clientId,
       AuthFlow: 'ADMIN_USER_PASSWORD_AUTH',
-      AuthParameters: { USERNAME: process.env.E2E_EMAIL ?? 'e2e@chacota.local', PASSWORD: process.env.E2E_PASSWORD ?? 'Chacota-local-1' },
+      AuthParameters: { USERNAME: process.env.E2E_EMAIL ?? 'e2e@chacota.local', PASSWORD: process.env.E2E_PASSWORD ?? 'chacota' },
     }),
   );
   if (!auth?.IdToken || !auth.AccessToken || !auth.RefreshToken) throw new Error('Cognito did not return tokens');

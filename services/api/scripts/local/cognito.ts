@@ -6,6 +6,7 @@ import {
   CreateGroupCommand,
   CreateUserPoolClientCommand,
   CreateUserPoolCommand,
+  UpdateUserPoolCommand,
   ListUserPoolClientsCommand,
   ListUserPoolsCommand,
   GroupExistsException,
@@ -18,7 +19,11 @@ export const CLIENT_NAME = 'chacota-web';
 export const DEV_EMAIL = 'dev@chacota.local';
 export const E2E_EMAIL = 'e2e@chacota.local';
 /** Solo para desarrollo local. */
-export const LOCAL_PASSWORD = 'Chacota-local-1';
+export const LOCAL_PASSWORD = 'chacota';
+/** Política mínima que acepta LOCAL_PASSWORD (Cognito exige al menos 6 caracteres). Solo en el pool local. */
+const LOCAL_PASSWORD_POLICY = {
+  PasswordPolicy: { MinimumLength: 6, RequireUppercase: false, RequireLowercase: false, RequireNumbers: false, RequireSymbols: false },
+};
 
 async function createUser(client: CognitoIdentityProviderClient, userPoolId: string, email: string): Promise<void> {
   await client.send(
@@ -31,9 +36,6 @@ async function createUser(client: CognitoIdentityProviderClient, userPoolId: str
         { Name: 'email_verified', Value: 'true' },
       ],
     }),
-  );
-  await client.send(
-    new AdminSetUserPasswordCommand({ UserPoolId: userPoolId, Username: email, Password: LOCAL_PASSWORD, Permanent: true }),
   );
 }
 
@@ -51,6 +53,10 @@ async function ensureUser(client: CognitoIdentityProviderClient, userPoolId: str
     throw e;
   });
   if (!exists) await createUser(client, userPoolId, email);
+  // Siempre, para que un pool creado con otra contraseña quede con la actual.
+  await client.send(
+    new AdminSetUserPasswordCommand({ UserPoolId: userPoolId, Username: email, Password: LOCAL_PASSWORD, Permanent: true }),
+  );
 }
 
 /**
@@ -66,9 +72,16 @@ export async function ensureUserPool(
     found ??
     (
       await client.send(
-        new CreateUserPoolCommand({ PoolName: POOL_NAME, UsernameAttributes: ['email'], AutoVerifiedAttributes: ['email'] }),
+        new CreateUserPoolCommand({
+          PoolName: POOL_NAME,
+          UsernameAttributes: ['email'],
+          AutoVerifiedAttributes: ['email'],
+          Policies: LOCAL_PASSWORD_POLICY,
+        }),
       )
     ).UserPool!.Id!;
+  // Un pool creado antes de relajar la política la recibe acá.
+  if (found) await client.send(new UpdateUserPoolCommand({ UserPoolId: userPoolId, AutoVerifiedAttributes: ['email'], Policies: LOCAL_PASSWORD_POLICY }));
 
   const clients = await client.send(new ListUserPoolClientsCommand({ UserPoolId: userPoolId, MaxResults: 60 }));
   let clientId = clients.UserPoolClients?.find((c) => c.ClientName === CLIENT_NAME)?.ClientId;

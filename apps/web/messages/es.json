@@ -311,7 +311,7 @@
     "password": "Contraseña",
     "submit": "Entrar",
     "submitting": "Entrando…",
-    "hint": "Usuarios de pnpm local:init: dev@chacota.local (superadmin) y e2e@chacota.local, contraseña Chacota-local-1.",
+    "hint": "Usuarios de pnpm local:init: dev@chacota.local (superadmin) y e2e@chacota.local, contraseña chacota.",
     "error": "Correo o contraseña incorrectos, o el emulador no responde. Si lo reiniciaste, corré pnpm local:init y reiniciá pnpm dev."
   }
 }

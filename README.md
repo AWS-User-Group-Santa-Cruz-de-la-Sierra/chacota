@@ -43,11 +43,13 @@ pnpm local:init            # tabla, bucket, user pool, AppSync y organización d
 
 pnpm dev:game              # API de participantes :4000
 pnpm dev                   # http://localhost:3000
+# o todo en una terminal (servicios, local:init, API y web):
+pnpm dev:all
 ```
 
 En Linux con Docker rootful, el contenedor escribe `~/.aws/emulator` (y la CA `ca.pem`) como root: `pnpm dev:services` ya crea el directorio con tu usuario antes de levantar, pero si la CA queda ilegible corré `sudo chmod -R a+rX ~/.aws/emulator`. `pnpm local:init` espera a que los servicios y la CA estén listos (hasta 60 s) antes de empezar.
 
-Ingresá en http://localhost:3000 con `dev@chacota.local` / `Chacota-local-1` (superadmin, solo local).
+Ingresá en http://localhost:3000 con `dev@chacota.local` / `chacota` (superadmin, solo local).
 
 El emulador guarda todo en memoria. Si lo reiniciás, corré `pnpm local:init` otra vez (empieza el mundo local de cero) y reiniciá `pnpm dev` y `pnpm dev:game`. Si venís de la configuración anterior, corré una vez `podman compose up -d --build` (si compose se queja, borrá el contenedor viejo `chacota-realtime-tls-1`). El stack `dev` de CDK ya no hace falta para desarrollar: sirve solo para probar despliegues reales.
 

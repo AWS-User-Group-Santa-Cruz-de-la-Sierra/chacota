@@ -18,6 +18,7 @@
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "dev:all": "pnpm dev:services && pnpm local:init && NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$HOME/.aws/emulator/9297/ca.pem} pnpm --parallel --filter @chacota/api --filter @chacota/web dev",
     "dev:game": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$HOME/.aws/emulator/9297/ca.pem} pnpm --filter @chacota/api dev",
     "e2e": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$HOME/.aws/emulator/9297/ca.pem} corepack pnpm --filter @chacota/e2e start"
   }

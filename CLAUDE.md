@@ -14,7 +14,8 @@ pnpm dev:services          # DynamoDB Local on :8000 + AWS Emulator on :9297 (S3
 cp apps/web/.env.example apps/web/.env.local
 pnpm local:init            # idempotent: table, bucket, user pool, AppSync API, demo org; writes ids to apps/web/.env.{development,production}.local and ends with a smoke check
 pnpm dev:game              # participant API on :4000 (+ /media/*); events go through the emulator's AppSync
-pnpm dev                   # Next.js on :3000; sign in as dev@chacota.local (superadmin) / Chacota-local-1 (local only)
+pnpm dev                   # Next.js on :3000; sign in as dev@chacota.local (superadmin) / chacota (local only)
+pnpm dev:all               # the four above in one terminal: dev:services, local:init, then dev:game + dev in parallel
 
 pnpm test                  # every workspace package (Vitest)
 pnpm typecheck
