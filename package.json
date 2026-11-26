@@ -8,16 +8,18 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev:services": "podman compose up -d || docker compose up -d",
+    "dev:services": "mkdir -p \"$HOME/.aws/emulator\" && (podman compose up -d || docker compose up -d)",
     "db:init": "CHACOTA_TABLE=chacota-local pnpm --filter @chacota/db create-local-table",
+    "local:init": "node scripts/wait-services.mjs && NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$HOME/.aws/emulator/9297/ca.pem} pnpm --filter @chacota/api local-init",
     "media:init": "pnpm --filter @chacota/db create-local-bucket",
-    "dev": "pnpm --filter @chacota/web dev",
+    "dev": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$HOME/.aws/emulator/9297/ca.pem} pnpm --filter @chacota/web dev",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "dev:game": "pnpm --filter @chacota/api dev",
-    "e2e": "corepack pnpm --filter @chacota/e2e start"
+    "dev:all": "pnpm dev:services && pnpm local:init && NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$HOME/.aws/emulator/9297/ca.pem} pnpm --parallel --filter @chacota/api --filter @chacota/web dev",
+    "dev:game": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$HOME/.aws/emulator/9297/ca.pem} pnpm --filter @chacota/api dev",
+    "e2e": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-$HOME/.aws/emulator/9297/ca.pem} corepack pnpm --filter @chacota/e2e start"
   }
 }

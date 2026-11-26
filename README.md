@@ -32,53 +32,57 @@ Chacota es una plataforma de **actividades**: cada organización elige cuáles o
 
 ## Desarrollo local
 
-Requiere Node 22+, Podman o Docker, y una cuenta de AWS solo para Cognito (el login).
+Requiere Node 22+ y Podman o Docker. Los scripts locales asumen macOS, Linux o WSL (shell POSIX). No necesitás cuenta de AWS: todo corre sobre el AWS Emulator oficial (Cognito, S3, AppSync Events) y DynamoDB Local.
 
 ```sh
 corepack enable            # o: npm i -g pnpm
-pnpm install
+corepack pnpm install
+pnpm dev:services          # DynamoDB Local + AWS Emulator
+cp apps/web/.env.example apps/web/.env.local
+pnpm local:init            # tabla, bucket, user pool, AppSync y organización demo; es idempotente
 
-# 1. Login real con Cognito (una sola vez). Crea un User Pool "dev" con callbacks a localhost.
-cd infra && AWS_PROFILE=<tu-perfil> npx cdk deploy Chacota-dev -c chacota:stage=dev --outputs-file cdk-outputs.dev.json && cd ..
-
-# 2. Emuladores oficiales de AWS: DynamoDB Local (tabla) y AWS Emulator (S3 para imágenes)
-pnpm dev:services
-pnpm db:init
-pnpm media:init   # repetilo si reiniciás el emulador: guarda todo en memoria
-
-# 3. Variables de entorno: copia apps/web/.env.example a apps/web/.env.local
-#    y completa COGNITO_* con los valores de infra/cdk-outputs.dev.json
-
-pnpm dev:game              # API de participantes :4000 + broker de eventos :4001 (emula AppSync Events)
+pnpm dev:game              # API de participantes :4000
 pnpm dev                   # http://localhost:3000
+# o todo en una terminal (servicios, local:init, API y web):
+pnpm dev:all
 ```
+
+En Linux con Docker rootful, el contenedor escribe `~/.aws/emulator` (y la CA `ca.pem`) como root: `pnpm dev:services` ya crea el directorio con tu usuario antes de levantar, pero si la CA queda ilegible corré `sudo chmod -R a+rX ~/.aws/emulator`. `pnpm local:init` espera a que los servicios y la CA estén listos (hasta 60 s) antes de empezar.
+
+Ingresá en http://localhost:3000 con `dev@chacota.local` / `chacota` (superadmin, solo local).
+
+El emulador guarda todo en memoria. Si lo reiniciás, corré `pnpm local:init` otra vez (empieza el mundo local de cero) y reiniciá `pnpm dev` y `pnpm dev:game`. Si venís de la configuración anterior, corré una vez `podman compose up -d --build` (si compose se queja, borrá el contenedor viejo `chacota-realtime-tls-1`). El stack `dev` de CDK ya no hace falta para desarrollar: sirve solo para probar despliegues reales.
 
 Para jugar desde celulares en la misma red WiFi, el presentador sigue en `localhost` y en `apps/web/.env.local` usas la IP de tu máquina (por ejemplo `192.168.1.10`):
 
 ```sh
 CHACOTA_PUBLIC_ORIGIN=http://192.168.1.10:3000   # lo que muestra el QR
 GAME_API_URL=http://192.168.1.10:4000
-EVENTS_HTTP_DNS=192.168.1.10:4001
-EVENTS_REALTIME_URL=ws://192.168.1.10:4001/event/realtime
+EVENTS_REALTIME_URL=ws://192.168.1.10:4100/event/realtime
 ```
+
+(`realtime-tls` de `compose.yaml` publica el 4100 solo en `127.0.0.1`: para celulares cambiá ese puerto a `4100:4100`.)
 
 y arrancas el juego con `ALLOWED_ORIGINS=http://localhost:3000,http://192.168.1.10:3000 pnpm dev:game`.
 
-Para ser superadmin (aprobar organizaciones), regístrate una vez y luego:
+
+## Primer superadmin (nube)
+
+Solo en un despliegue real: en local no hace falta, porque `dev@chacota.local` ya es superadmin. Para aprobar organizaciones, registrate una vez y luego:
 
 ```sh
 aws cognito-idp admin-add-user-to-group --user-pool-id <UserPoolId> \
   --username <tu-email> --group-name superadmin --profile <tu-perfil>
 ```
 
-Después cierra sesión y vuelve a entrar.
+Después cerrá sesión y volvé a entrar.
 
 ## Tests
 
 ```sh
 pnpm test        # todos los paquetes (necesita DynamoDB Local corriendo)
 pnpm typecheck
-pnpm e2e         # partida completa en Chrome (ver e2e/README.md)
+pnpm e2e         # partidas completas en Chrome, sin cuenta de AWS (ver e2e/README.md)
 ```
 
 ## Prueba de carga

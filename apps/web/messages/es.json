@@ -302,5 +302,16 @@
       "upload": "No se pudo subir la imagen. Probá de nuevo.",
       "not_an_image": "Ese archivo no es una imagen que el navegador pueda abrir."
     }
+  },
+  "localAuth": {
+    "title": "Ingreso local · AWS Emulator",
+    "badge": "Local",
+    "intro": "Este ingreso usa el Cognito del AWS Emulator y solo existe en desarrollo local.",
+    "email": "Correo",
+    "password": "Contraseña",
+    "submit": "Entrar",
+    "submitting": "Entrando…",
+    "hint": "Usuarios de pnpm local:init: dev@chacota.local (superadmin) y e2e@chacota.local, contraseña chacota.",
+    "error": "Correo o contraseña incorrectos, o el emulador no responde. Si lo reiniciaste, corré pnpm local:init y reiniciá pnpm dev."
   }
 }

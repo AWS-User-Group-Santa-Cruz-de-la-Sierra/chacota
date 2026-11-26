@@ -7,6 +7,8 @@ import { forbidden, notFound, redirect } from 'next/navigation';
 import { cache } from 'react';
 import { runWithAmplifyServerContext } from './amplify-server';
 import { getDb } from './db';
+import { env } from './env';
+import { idTokenFromCookies, localAuthMode, verifyLocalIdToken } from './local-auth';
 
 export const SUPERADMIN_GROUP = 'superadmin';
 
@@ -16,12 +18,8 @@ export interface SessionUser extends User {
 
 /** Data Access Layer: the only place that turns the Cognito session into a user. */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
-  const session = await runWithAmplifyServerContext({
-    nextServerContext: { cookies },
-    operation: (ctx) => fetchAuthSession(ctx).catch(() => null),
-  });
-  const claims = session?.tokens?.idToken?.payload;
-  if (!claims?.sub || typeof claims.email !== 'string') return null;
+  const claims = localAuthMode() ? await localClaims() : await amplifyClaims();
+  if (!claims?.sub || typeof claims.sub !== 'string' || typeof claims.email !== 'string') return null;
 
   const db = getDb();
   const id = claims.sub;
@@ -36,6 +34,23 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const groups = Array.isArray(claims['cognito:groups']) ? claims['cognito:groups'] : [];
   return { ...user, isSuperadmin: groups.includes(SUPERADMIN_GROUP) };
 });
+
+async function amplifyClaims() {
+  const session = await runWithAmplifyServerContext({
+    nextServerContext: { cookies },
+    operation: (ctx) => fetchAuthSession(ctx).catch(() => null),
+  });
+  return session?.tokens?.idToken?.payload;
+}
+
+/** CHACOTA_LOCAL_AUTH=emulator: the adapter can't verify the emulator's tokens, so we do. */
+async function localClaims() {
+  const cookieStore = await cookies();
+  const { userPoolId, clientId } = env.cognito;
+  const token = idTokenFromCookies((name) => cookieStore.get(name)?.value, clientId);
+  if (!token) return null;
+  return verifyLocalIdToken(token, { endpoint: env.localAuth!.endpoint, userPoolId, clientId });
+}
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSessionUser();

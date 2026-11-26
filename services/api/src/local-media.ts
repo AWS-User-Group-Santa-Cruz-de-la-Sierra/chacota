@@ -26,7 +26,7 @@ export function localMediaRoutes(connect: () => MediaStore, allowedOrigins: stri
     try {
       connected ??= connect();
     } catch (error) {
-      console.warn(`[media] AWS Emulator not available: ${(error as Error).message}. Run pnpm dev:services and pnpm media:init.`);
+      console.warn(`[media] AWS Emulator not available: ${(error as Error).message}. Run pnpm dev:services and pnpm local:init.`);
       return c.json({ error: 'media_unavailable' }, 503);
     }
     await next();

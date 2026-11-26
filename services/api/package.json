@@ -7,7 +7,8 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "dev": "tsx watch src/local-server.ts"
+    "dev": "tsx watch --env-file-if-exists=../../apps/web/.env.local --env-file-if-exists=../../apps/web/.env.development.local src/local-server.ts",
+    "local-init": "tsx scripts/local-init.ts"
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.1175.0",
@@ -17,14 +18,16 @@
     "@chacota/tiluchi": "workspace:*",
     "@hono/node-server": "^2.1.11",
     "hono": "^4.13.20",
-    "ws": "^8.23.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@aws-sdk/client-appsync": "^3.1178.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.1175.0",
     "@aws-sdk/client-dynamodb": "^3.1175.0",
     "@aws-sdk/client-lambda": "^3.1175.0",
+    "@aws-sdk/client-s3": "^3.1175.0",
+    "@aws-sdk/lib-dynamodb": "^3.1175.0",
     "@types/node": "^26.6.6",
-    "@types/ws": "^8.18.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.1"
