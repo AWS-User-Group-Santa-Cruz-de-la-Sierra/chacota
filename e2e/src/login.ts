@@ -1,5 +1,5 @@
 import { AdminInitiateAuthCommand, CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
-import { required, webEnv } from './env';
+import { webEnv } from './env';
 
 export interface Login {
   userId: string;
@@ -7,20 +7,24 @@ export interface Login {
 }
 
 /**
- * Signs the e2e user in with ADMIN_USER_PASSWORD_AUTH (enabled only on the dev stack) and
- * returns the cookies Amplify's Next.js adapter expects. Needs AWS credentials for the dev account.
+ * Signs the e2e user in against the AWS Emulator's Cognito (ADMIN_USER_PASSWORD_AUTH) and
+ * returns the cookies Amplify's Next.js adapter expects. No AWS account needed.
  */
 export async function cognitoLogin(): Promise<Login> {
   const env = webEnv();
   const poolId = env.COGNITO_USER_POOL_ID!;
   const clientId = env.COGNITO_CLIENT_ID!;
-  const client = new CognitoIdentityProviderClient({ region: poolId.split('_')[0] });
+  const client = new CognitoIdentityProviderClient({
+    region: poolId.split('_')[0],
+    endpoint: env.COGNITO_LOCAL_ENDPOINT ?? 'https://127.0.0.1:9297',
+    credentials: { accessKeyId: 'test', secretAccessKey: 'test' },
+  });
   const { AuthenticationResult: auth } = await client.send(
     new AdminInitiateAuthCommand({
       UserPoolId: poolId,
       ClientId: clientId,
       AuthFlow: 'ADMIN_USER_PASSWORD_AUTH',
-      AuthParameters: { USERNAME: required('E2E_EMAIL'), PASSWORD: required('E2E_PASSWORD') },
+      AuthParameters: { USERNAME: process.env.E2E_EMAIL ?? 'e2e@chacota.local', PASSWORD: process.env.E2E_PASSWORD ?? 'Chacota-local-1' },
     }),
   );
   if (!auth?.IdToken || !auth.AccessToken || !auth.RefreshToken) throw new Error('Cognito did not return tokens');

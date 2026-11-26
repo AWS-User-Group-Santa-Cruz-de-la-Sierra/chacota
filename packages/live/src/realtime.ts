@@ -55,20 +55,6 @@ export class AppSyncPublisher implements Publisher {
   }
 }
 
-/** Publishes to the local development broker (see local-server.ts). */
-export class LocalPublisher implements Publisher {
-  constructor(private readonly url: string) {}
-
-  async publish(channel: string, event: LiveEvent): Promise<void> {
-    const response = await fetch(`${this.url}/event`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ channel, events: [JSON.stringify(event)] }),
-    });
-    if (!response.ok) throw new Error(`Local publish failed (${response.status})`);
-  }
-}
-
 /** Collects events in memory; used by tests. */
 export class MemoryPublisher implements Publisher {
   readonly events: { channel: string; event: LiveEvent }[] = [];
@@ -81,8 +67,7 @@ export class MemoryPublisher implements Publisher {
 }
 
 export function publisherFromEnv(): Publisher {
-  if (process.env.EVENTS_LOCAL_URL) return new LocalPublisher(process.env.EVENTS_LOCAL_URL);
   const httpDns = process.env.EVENTS_HTTP_DNS;
-  if (!httpDns) throw new Error('Set EVENTS_HTTP_DNS (AppSync Events) or EVENTS_LOCAL_URL (local broker)');
+  if (!httpDns) throw new Error('Set EVENTS_HTTP_DNS (AppSync Events)');
   return new AppSyncPublisher(httpDns, process.env.AWS_REGION ?? 'us-east-1');
 }
