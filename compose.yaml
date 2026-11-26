@@ -13,18 +13,34 @@ services:
   aws-emulator:
     # Emulador oficial de AWS (S3 para logos e imágenes): https://github.com/aws/aws-emulator
     # AWS no publica imagen; se construye desde el paquete oficial (dev/aws-emulator/Dockerfile).
-    # Guarda todo en memoria: después de reiniciarlo, corré `pnpm media:init` otra vez.
+    # Guarda todo en memoria: después de reiniciarlo, volvé a inicializarlo.
+    # Las APIs de AppSync Events que crea usan puertos fijos del rango 4101-4110:
+    # la primera queda en 4101 (HTTP) y 4102 (realtime). El 4100 lo publica acá
+    # porque realtime-tls comparte la red de este contenedor.
     build: ./dev/aws-emulator
     image: localhost/chacota-aws-emulator
     command: ['-p', '9297', '--auth', 'off']
     mem_limit: 2g
     environment:
       HOME: ${HOME}
+      EMULATOR_LISTENER_PORT_RANGE: '4101-4110'
     ports:
       - '127.0.0.1:9297:9297'
+      - '127.0.0.1:4100:4100'
+      - '127.0.0.1:4101:4101'
+      - '127.0.0.1:4102:4102'
     volumes:
       # Ahí escribe ca.pem, el certificado de su HTTPS, que el SDK de Node lee.
       - ${HOME}/.aws/emulator:${HOME}/.aws/emulator
+
+  realtime-tls:
+    # El realtime del emulador habla TLS con su propia CA, que el navegador no confía.
+    # Este reenvío expone el mismo puerto en ws:// plano (4100) para el navegador.
+    image: docker.io/alpine/socat:latest
+    network_mode: service:aws-emulator
+    depends_on: [aws-emulator]
+    restart: unless-stopped
+    command: TCP-LISTEN:4100,fork,reuseaddr OPENSSL:127.0.0.1:4102,verify=0
 
 volumes:
   dynamodb-data:
