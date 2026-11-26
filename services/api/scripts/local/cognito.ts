@@ -8,6 +8,8 @@ import {
   CreateUserPoolCommand,
   ListUserPoolClientsCommand,
   ListUserPoolsCommand,
+  GroupExistsException,
+  UserNotFoundException,
   type CognitoIdentityProviderClient,
 } from '@aws-sdk/client-cognito-identity-provider';
 
@@ -43,36 +45,54 @@ export async function devUserSub(client: CognitoIdentityProviderClient, userPool
   return sub;
 }
 
-/** Busca el pool por nombre o lo crea con su cliente, el grupo superadmin y los dos usuarios. */
+async function ensureUser(client: CognitoIdentityProviderClient, userPoolId: string, email: string): Promise<void> {
+  const exists = await client.send(new AdminGetUserCommand({ UserPoolId: userPoolId, Username: email })).then(() => true, (e) => {
+    if (e instanceof UserNotFoundException) return false;
+    throw e;
+  });
+  if (!exists) await createUser(client, userPoolId, email);
+}
+
+/**
+ * Busca el pool por nombre o lo crea. Completa lo que falte (cliente, grupo superadmin, usuarios),
+ * así una corrida interrumpida no deja pools duplicados ni a medias.
+ */
 export async function ensureUserPool(
   client: CognitoIdentityProviderClient,
 ): Promise<{ userPoolId: string; clientId: string; created: boolean }> {
   const pools = await client.send(new ListUserPoolsCommand({ MaxResults: 60 }));
-  const found = pools.UserPools?.find((p) => p.Name === POOL_NAME);
-  if (found?.Id) {
-    const clients = await client.send(new ListUserPoolClientsCommand({ UserPoolId: found.Id, MaxResults: 60 }));
-    const existing = clients.UserPoolClients?.find((c) => c.ClientName === CLIENT_NAME);
-    if (existing?.ClientId) return { userPoolId: found.Id, clientId: existing.ClientId, created: false };
-  }
+  const found = pools.UserPools?.find((p) => p.Name === POOL_NAME)?.Id;
+  const userPoolId =
+    found ??
+    (
+      await client.send(
+        new CreateUserPoolCommand({ PoolName: POOL_NAME, UsernameAttributes: ['email'], AutoVerifiedAttributes: ['email'] }),
+      )
+    ).UserPool!.Id!;
 
-  const pool = await client.send(
-    new CreateUserPoolCommand({ PoolName: POOL_NAME, UsernameAttributes: ['email'], AutoVerifiedAttributes: ['email'] }),
-  );
-  const userPoolId = pool.UserPool!.Id!;
-  const app = await client.send(
-    new CreateUserPoolClientCommand({
-      UserPoolId: userPoolId,
-      ClientName: CLIENT_NAME,
-      GenerateSecret: false,
-      ExplicitAuthFlows: ['ALLOW_ADMIN_USER_PASSWORD_AUTH', 'ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
-      IdTokenValidity: 12,
-      AccessTokenValidity: 12,
-      TokenValidityUnits: { IdToken: 'hours', AccessToken: 'hours' },
-    }),
-  );
-  await client.send(new CreateGroupCommand({ UserPoolId: userPoolId, GroupName: 'superadmin' }));
-  await createUser(client, userPoolId, DEV_EMAIL);
-  await createUser(client, userPoolId, E2E_EMAIL);
+  const clients = await client.send(new ListUserPoolClientsCommand({ UserPoolId: userPoolId, MaxResults: 60 }));
+  let clientId = clients.UserPoolClients?.find((c) => c.ClientName === CLIENT_NAME)?.ClientId;
+  if (!clientId) {
+    const app = await client.send(
+      new CreateUserPoolClientCommand({
+        UserPoolId: userPoolId,
+        ClientName: CLIENT_NAME,
+        GenerateSecret: false,
+        ExplicitAuthFlows: ['ALLOW_ADMIN_USER_PASSWORD_AUTH', 'ALLOW_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
+        IdTokenValidity: 12,
+        AccessTokenValidity: 12,
+        TokenValidityUnits: { IdToken: 'hours', AccessToken: 'hours' },
+      }),
+    );
+    clientId = app.UserPoolClient!.ClientId!;
+  }
+  await client
+    .send(new CreateGroupCommand({ UserPoolId: userPoolId, GroupName: 'superadmin' }))
+    .catch((e) => {
+      if (!(e instanceof GroupExistsException)) throw e;
+    });
+  await ensureUser(client, userPoolId, DEV_EMAIL);
+  await ensureUser(client, userPoolId, E2E_EMAIL);
   await client.send(new AdminAddUserToGroupCommand({ UserPoolId: userPoolId, Username: DEV_EMAIL, GroupName: 'superadmin' }));
-  return { userPoolId, clientId: app.UserPoolClient!.ClientId!, created: true };
+  return { userPoolId, clientId, created: !found };
 }

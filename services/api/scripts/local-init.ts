@@ -6,16 +6,15 @@ process.env.AWS_ACCESS_KEY_ID ||= 'local';
 process.env.AWS_SECRET_ACCESS_KEY ||= 'local';
 process.env.AWS_REGION ||= 'us-east-1';
 
-import { DescribeTableCommand } from '@aws-sdk/client-dynamodb';
 import { AppSyncClient } from '@aws-sdk/client-appsync';
 import { CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
 import { CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
-import { createDb, createTable } from '@chacota/db';
+import { createDb } from '@chacota/db';
 import { createS3 } from '@chacota/db/s3';
 import { ensureEventApi, HTTP_DNS, REALTIME_DNS } from './local/appsync';
 import { DEV_EMAIL, devUserSub, E2E_EMAIL, ensureUserPool, LOCAL_PASSWORD } from './local/cognito';
 import { writeEnvFiles } from './local/env-file';
-import { DYNAMODB_ENDPOINT, dynamoClient, seedFresh } from './local/seed';
+import { DYNAMODB_ENDPOINT, isSeededFor, seedFresh } from './local/seed';
 import { smokeCheck } from './local/smoke';
 
 const EMULATOR = 'https://127.0.0.1:9297';
@@ -37,19 +36,12 @@ console.log(pool.created ? 'user pool creado (user pool created)' : 'user pool r
 
 // 3. Tabla y org de demo
 const db = createDb({ tableName: TABLE, endpoint: DYNAMODB_ENDPOINT });
-if (pool.created) {
-  await seedFresh(db, await devUserSub(cognito, pool.userPoolId));
+if (await isSeededFor(db, pool.userPoolId)) {
+  console.log('tabla existente, org de demo ya cargada');
+} else {
+  await seedFresh(db, await devUserSub(cognito, pool.userPoolId), pool.userPoolId);
   console.log('tabla reiniciada (table reset)');
   console.log('org de demo cargada (demo org seeded)');
-} else {
-  const client = dynamoClient();
-  const exists = await client.send(new DescribeTableCommand({ TableName: TABLE })).then(() => true, () => false);
-  if (!exists) {
-    await createTable(client, TABLE);
-    console.log('tabla creada porque faltaba (la org de demo no se cargó: borrá el user pool o reiniciá el emulador)');
-  } else {
-    console.log('tabla existente');
-  }
 }
 
 // 4. Event API
@@ -73,4 +65,8 @@ Listo. Entorno local:
   emulador             ${EMULATOR}
   Events HTTP/realtime ${HTTP_DNS} / ${REALTIME_DNS}
   DynamoDB             ${DYNAMODB_ENDPOINT} (tabla ${TABLE})
-  org de demo          /app/orgs/demo`);
+  org de demo          /app/orgs/demo
+  user pool id         ${pool.userPoolId}
+  app client id        ${pool.clientId}
+  Event API id         ${events.apiId}
+  Events API key       ${events.apiKey}`);
