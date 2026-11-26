@@ -39,6 +39,27 @@ export async function smokeCheck(ids: { cognito: CognitoIdentityProviderClient; 
     fail('Cognito admin-initiate-auth', error);
   }
 
+  // Camino del navegador: ws plano por el reenvío de compose (realtime-tls).
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const socket = new WebSocket('ws://127.0.0.1:4100/event/realtime', [
+        'aws-appsync-event-ws',
+        `header-${Buffer.from(JSON.stringify({ host: HTTP_DNS, 'x-api-key': ids.apiKey })).toString('base64url')}`,
+      ]);
+      const timer = setTimeout(() => (socket.close(), reject(new Error('sin respuesta en 5 s'))), 5000);
+      socket.onopen = () => socket.send(JSON.stringify({ type: 'connection_init' }));
+      socket.onmessage = (message) => {
+        if (JSON.parse(String(message.data)).type !== 'connection_ack') return;
+        clearTimeout(timer);
+        socket.close();
+        resolve();
+      };
+      socket.onerror = () => (clearTimeout(timer), reject(new Error('no conecta con ws://127.0.0.1:4100')));
+    });
+  } catch (error) {
+    fail('reenvío ws del navegador (servicio realtime-tls en :4100)', error);
+  }
+
   const connection = connectRealtime({ httpDns: HTTP_DNS, realtimeUrl: `wss://${REALTIME_DNS}/event/realtime`, apiKey: ids.apiKey });
   try {
     const received = new Promise<void>((resolve, reject) => {
