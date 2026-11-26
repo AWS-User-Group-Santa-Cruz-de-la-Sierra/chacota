@@ -56,7 +56,8 @@ export function TiluchiHost({
   const questions = initial.questions ?? [];
   const total = initial.total;
   const [screen, setScreen] = useState<Screen>(() => fromSnapshot(initial));
-  const [answerCount, setAnswerCount] = useState(0);
+  // Tagged with its question: a count still in flight from the previous question must not count for this one.
+  const [answers, setAnswers] = useState({ index: -1, count: 0 });
   const autoRevealed = useRef(-1);
 
   useEffect(
@@ -65,7 +66,6 @@ export function TiluchiHost({
         const e = event as TiluchiEvent;
         switch (e.type) {
           case 'tiluchi.question':
-            setAnswerCount(0);
             setScreen({ kind: 'question', index: e.index, startedAt: e.startedAt });
             break;
           case 'tiluchi.reveal':
@@ -105,22 +105,25 @@ export function TiluchiHost({
   const ready = msLeftOrNull !== null && leadLeftOrNull !== null;
   const msLeft = msLeftOrNull ?? 0;
   const leadLeft = leadLeftOrNull ?? QUESTION_LEAD_MS;
+  const answerCount = screen.kind === 'question' && answers.index === screen.index ? answers.count : 0;
 
   useEffect(() => {
     if (screen.kind !== 'question') return;
     const index = screen.index;
-    const timer = setInterval(async () => setAnswerCount((await hostAction('countAnswers', { index })) as number), 1000);
+    const timer = setInterval(async () => setAnswers({ index, count: (await hostAction('countAnswers', { index })) as number }), 1000);
     return () => clearInterval(timer);
   }, [screen, hostAction]);
 
   useEffect(() => {
     if (screen.kind !== 'question' || autoRevealed.current === screen.index) return;
     const everyone = playerCount > 0 && answerCount >= playerCount;
-    if ((ready && deadline && msLeft === 0) || everyone) {
+    // The clock check repeats the countdown's: revealing a question that is still open loses everyone's answers.
+    const timeUp = ready && deadline !== undefined && msLeft === 0 && clock.now() >= deadline;
+    if (timeUp || everyone) {
       autoRevealed.current = screen.index;
       advance();
     }
-  }, [screen, msLeft, ready, answerCount, playerCount, deadline, advance]);
+  }, [screen, msLeft, ready, answerCount, playerCount, deadline, advance, clock]);
 
   return (
     <>

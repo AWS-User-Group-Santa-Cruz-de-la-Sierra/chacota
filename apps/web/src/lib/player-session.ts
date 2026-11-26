@@ -74,6 +74,18 @@ export function readSessionFragment(hash: string): Record<string, unknown> | nul
   }
 }
 
+/**
+ * The phone's URL after saving `session`: its fragment copy, and a `?pin=` that matches it. A tab reused
+ * from an earlier game keeps that game's PIN in the link when the player types the new one in the form;
+ * the frame does not resume a session whose PIN differs from the link's, so a reload showed the form.
+ */
+export function playUrl(pathname: string, search: string, session: { pin: string } | null): string {
+  if (!session) return `${pathname}${search}`;
+  const params = new URLSearchParams(search);
+  params.set('pin', session.pin);
+  return `${pathname}?${params.toString()}${sessionFragment(session)}`;
+}
+
 /** The last nickname used on this phone, to fill in the join form. Kept apart from the session, for a year. */
 export const NICKNAME_COOKIE = 'chacota_nickname';
 const NICKNAME_COOKIE_MAX_AGE = 365 * 24 * 60 * 60;

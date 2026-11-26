@@ -20,15 +20,31 @@ export function useServerClock() {
 
 export type ServerClock = ReturnType<typeof useServerClock>;
 
+interface Measured {
+  deadline: number;
+  left: number;
+}
+
+/**
+ * What `useCountdown` reports: the last measurement, only if it was taken for this same deadline.
+ * A screen that stays mounted from one question to the next must not see the previous question's
+ * "0 left" as the new one's: Tiluchi's presenter auto-reveals on 0, so it revealed every question
+ * that followed one that ran out of time, the moment it appeared.
+ */
+export function countdownLeft(measured: Measured | null, deadline: number | undefined): number | null {
+  return deadline !== undefined && measured?.deadline === deadline ? measured.left : null;
+}
+
 /**
  * Milliseconds left until `deadline` (server time), re-rendering a few times per second.
- * Returns null until mounted: time depends on the client clock, so it must not be server-rendered.
+ * Null until measured for the current deadline: on mount (time depends on the client clock, so it
+ * must not be server-rendered) and again each time the deadline changes.
  */
 export function useCountdown(deadline: number | undefined, serverNow: () => number): number | null {
-  const [left, setLeft] = useState<number | null>(null);
+  const [measured, setMeasured] = useState<Measured | null>(null);
   useEffect(() => {
     if (deadline === undefined) return;
-    const tick = () => setLeft(Math.max(0, deadline - serverNow()));
+    const tick = () => setMeasured({ deadline, left: Math.max(0, deadline - serverNow()) });
     const first = setTimeout(tick, 0);
     const timer = setInterval(tick, 200);
     return () => {
@@ -36,5 +52,5 @@ export function useCountdown(deadline: number | undefined, serverNow: () => numb
       clearInterval(timer);
     };
   }, [deadline, serverNow]);
-  return deadline === undefined ? null : left;
+  return countdownLeft(measured, deadline);
 }
